@@ -5,7 +5,7 @@
 set -euo pipefail
 
 : "${APP_DIR:?}" "${WEB_DIR:?}"
-PHP=/opt/cpanel/ea-php84/root/usr/bin/php
+PHP="${PHP:-/opt/cpanel/ea-php84/root/usr/bin/php}"
 cd "$APP_DIR"
 
 # 1. Μόνιμοι φάκελοι (δεν σβήνονται ποτέ από το upload)
@@ -22,11 +22,18 @@ if [ ! -f .env ]; then
 fi
 
 # 3. Δημόσια αρχεία → document root, χωρίς να αγγίζουμε τα αρχεία του cPanel
-rsync -a --delete \
-  --filter='P .htaccess' --filter='P .user.ini' --filter='P php.ini' \
-  --filter='P .well-known/' --filter='P cgi-bin/' --filter='P storage' \
-  --exclude='index.php' --exclude='.htaccess' --exclude='storage' \
-  public/ "$WEB_DIR/"
+#    (ο server δεν έχει rsync: tar + λίστα αρχείων για να σβήνουμε τα παλιά)
+MANIFEST_OLD="$APP_DIR/storage/app/web-manifest.txt"
+MANIFEST_NEW="$MANIFEST_OLD.new"
+(cd public && find . -type f ! -path './index.php' ! -path './.htaccess' | sort) > "$MANIFEST_NEW"
+tar -C public -cf - -T "$MANIFEST_NEW" | tar -C "$WEB_DIR" -xf -
+if [ -f "$MANIFEST_OLD" ]; then
+  # Σβήνουμε μόνο ό,τι είχαμε ανεβάσει εμείς και δεν υπάρχει πια
+  comm -23 "$MANIFEST_OLD" "$MANIFEST_NEW" | while IFS= read -r f; do
+    rm -f -- "$WEB_DIR/${f#./}"
+  done
+fi
+mv "$MANIFEST_NEW" "$MANIFEST_OLD"
 
 # index.php που δείχνει στον κώδικα εκτός document root
 sed "s#__DIR__.'/../#'$APP_DIR/#g" public/index.php > "$WEB_DIR/index.php.new"
