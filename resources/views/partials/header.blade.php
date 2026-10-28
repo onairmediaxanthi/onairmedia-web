@@ -1,8 +1,8 @@
 @php($nav = $menu ?? [])
 <header x-data="{ open: false }" class="sticky top-0 z-40 bg-surface/90 backdrop-blur border-b border-line">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 h-16 flex items-center gap-3 sm:gap-6">
-        <a href="{{ route('home') }}" wire:navigate class="min-w-0 shrink overflow-hidden" aria-label="Αρχική σελίδα">
-            <x-site-logo class="h-9 sm:h-12 -my-1 max-w-24 sm:max-w-none object-contain object-left" />
+        <a href="{{ route('home') }}" wire:navigate class="flex shrink-0 items-center" aria-label="Αρχική σελίδα">
+            <x-site-logo class="h-10 sm:h-12 w-auto max-w-none" />
         </a>
 
         <nav class="hidden lg:flex items-center gap-1 text-[15px] font-medium" aria-label="Κύριο μενού">
