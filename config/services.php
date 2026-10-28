@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'news' => [
+        'feed_url' => env('NEWS_FEED_URL', 'https://thrakitoday.gr/feed'),
+    ],
+
 ];
