@@ -104,7 +104,7 @@ class CampaignResource extends Resource
     {
         return $table
             ->defaultSort('created_at', 'desc')
-            ->modifyQueryUsing(fn ($q) => $q->withCount([
+            ->modifyQueryUsing(fn ($query) => $query->withCount([
                 'recipients', 'recipients as sent_count' => fn ($r) => $r->where('status', 'sent'),
                 'recipients as unsub_count' => fn ($r) => $r->whereNotNull('unsubscribed_at'),
             ]))

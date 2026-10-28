@@ -23,7 +23,7 @@ class RecipientsRelationManager extends RelationManager
     {
         return $table
             ->poll('15s')
-            ->modifyQueryUsing(fn ($q) => $q->with('user.business'))
+            ->modifyQueryUsing(fn ($query) => $query->with('user.business'))
             ->columns([
                 TextColumn::make('user.business.legal_name')->label('Πελάτης')->searchable()->placeholder('—'),
                 TextColumn::make('email')->label('Email')->searchable(),

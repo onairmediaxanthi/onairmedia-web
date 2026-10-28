@@ -76,6 +76,8 @@ class CampaignsTest extends TestCase
             'name' => 'Black Friday', 'subject' => 'Προσφορές Black Friday', 'body' => '<p>Μεγάλες εκπτώσεις!</p>', 'audience' => ['mode' => 'all'],
         ])->call('create')->assertHasNoFormErrors();
         $campaign = Campaign::query()->firstOrFail();
+        Livewire::test(\App\Filament\Resources\Campaigns\Pages\ListCampaigns::class)->assertOk()->assertSee('Black Friday');
+        Livewire::test(\App\Filament\Resources\Campaigns\RelationManagers\RecipientsRelationManager::class, ['ownerRecord' => $campaign, 'pageClass' => EditCampaign::class])->assertOk();
 
         Livewire::test(EditCampaign::class, ['record' => $campaign->id])->callAction('test');
         Mail::assertSent(CampaignMail::class, fn ($m) => $m->hasTo('boss@example.com'));
