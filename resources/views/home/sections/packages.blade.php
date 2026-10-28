@@ -1,7 +1,9 @@
 @php
     $list = $packages[$section->id] ?? collect();
     $canSeePrices = $canSeePrices ?? false;
-    $registerUrl = \Illuminate\Support\Facades\Route::has('register') ? route('register') : '#';
+    // Συνδεδεμένος αλλά ανεπιβεβαίωτος → τον στέλνουμε να επιβεβαιώσει, όχι να ξαναγραφτεί
+    $registerUrl = auth()->check() ? route('verification.notice') : route('register');
+    $unlockLabel = auth()->check() ? 'με επιβεβαίωση του email σας' : 'με δωρεάν εγγραφή επαγγελματία';
 @endphp
 @if ($list->isNotEmpty())
 <section class="mx-auto max-w-7xl px-4 sm:px-6 py-20" aria-labelledby="pk-title-{{ $section->id }}">
@@ -11,7 +13,7 @@
             <p class="mt-3 text-lg text-slate">{{ $section->subtitle ?: 'Διαλέξτε ένα έτοιμο πακέτο ή ξεκινήστε από αυτό και φτιάξτε το δικό σας.' }}</p>
         </div>
         @unless ($canSeePrices)
-            <a href="{{ $registerUrl }}" class="font-semibold text-onair hover:underline underline-offset-4">Δωρεάν εγγραφή για να δείτε τιμές</a>
+            <a href="{{ $registerUrl }}" class="font-semibold text-onair hover:underline underline-offset-4">{{ auth()->check() ? 'Επιβεβαιώστε το email σας για να δείτε τιμές' : 'Δωρεάν εγγραφή για να δείτε τιμές' }}</a>
         @endunless
     </div>
 
@@ -66,7 +68,7 @@
                             <a href="{{ $registerUrl }}" class="flex items-center justify-between gap-3 rounded-xl border border-dashed border-line px-4 py-3 hover:border-onair">
                                 <span>
                                     <span class="block font-semibold">Δείτε την τιμή</span>
-                                    <span class="block text-sm text-slate">με δωρεάν εγγραφή επαγγελματία</span>
+                                    <span class="block text-sm text-slate">{{ $unlockLabel }}</span>
                                 </span>
                                 <svg class="h-5 w-5 text-slate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 018 0v4"/></svg>
                             </a>

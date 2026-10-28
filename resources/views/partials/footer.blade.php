@@ -26,6 +26,8 @@
     <div class="border-t border-white/10">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 py-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/50">
             <span>© {{ date('Y') }} {{ $s['company_name'] }}@if($s['vat']) · ΑΦΜ {{ $s['vat'] }}@endif @if($s['gemi']) · ΓΕΜΗ {{ $s['gemi'] }}@endif</span>
+            <a href="{{ route('legal.terms') }}" class="hover:text-white">Όροι χρήσης</a>
+            <a href="{{ route('legal.privacy') }}" class="hover:text-white">Προσωπικά δεδομένα</a>
             @foreach ((array) $s['socials'] as $net => $link)
                 @if (is_string($link) && str_starts_with($link, 'https://'))
                     <a href="{{ $link }}" target="_blank" rel="noopener" class="hover:text-white capitalize">{{ $net }}</a>

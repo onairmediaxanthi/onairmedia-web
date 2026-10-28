@@ -112,6 +112,11 @@ return [
     |
     */
 
+    // Ο σύνδεσμος επαλήθευσης email ισχύει 24 ώρες
+    'verification' => [
+        'expire' => 1440,
+    ],
+
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
 ];

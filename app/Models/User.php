@@ -9,11 +9,13 @@ use Filament\Auth\MultiFactor\App\Contracts\HasAppAuthenticationRecovery;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use SensitiveParameter;
 
-class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery
+class User extends Authenticatable implements FilamentUser, HasAppAuthentication, HasAppAuthenticationRecovery, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -55,6 +57,28 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
             'app_authentication_secret' => 'encrypted',
             'app_authentication_recovery_codes' => 'encrypted:array',
         ];
+    }
+
+    public function business(): HasOne
+    {
+        return $this->hasOne(Business::class);
+    }
+
+    public function isCustomer(): bool
+    {
+        return ($this->role ?? UserRole::Customer) === UserRole::Customer;
+    }
+
+    /** Email επαλήθευσης στα ελληνικά */
+    public function sendEmailVerificationNotification(): void
+    {
+        $this->notify(new \App\Notifications\VerifyEmailGreek);
+    }
+
+    /** Email επαναφοράς κωδικού στα ελληνικά (μόνο για τη δημόσια σύνδεση· το admin έχει τη δική του) */
+    public function sendPasswordResetNotification(#[SensitiveParameter] $token): void
+    {
+        $this->notify(new \App\Notifications\ResetPasswordGreek($token));
     }
 
     public function canAccessPanel(Panel $panel): bool

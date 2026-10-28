@@ -1,8 +1,14 @@
 <?php
 
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetController;
+use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PreviewUnlockController;
 use App\Http\Controllers\StationController;
+use App\Http\Middleware\EnsureCustomer;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/preview-unlock', PreviewUnlockController::class)
@@ -11,3 +17,38 @@ Route::post('/preview-unlock', PreviewUnlockController::class)
 
 Route::get('/', HomeController::class)->name('home');
 Route::get('/radio/{station}', [StationController::class, 'show'])->name('stations.show');
+
+// ---- Επισκέπτες ----
+Route::middleware('guest')->group(function () {
+    Route::get('/eggrafi', [RegisterController::class, 'create'])->name('register');
+    Route::post('/eggrafi', [RegisterController::class, 'store'])->middleware('throttle:5,10');
+    Route::get('/syndesi', [LoginController::class, 'create'])->name('login');
+    Route::post('/syndesi', [LoginController::class, 'store'])->middleware('throttle:20,1');
+    Route::get('/kodikos', [PasswordResetController::class, 'request'])->name('password.request');
+    Route::post('/kodikos', [PasswordResetController::class, 'email'])->middleware('throttle:5,10')->name('password.email');
+    Route::get('/kodikos/neos/{token}', [PasswordResetController::class, 'edit'])->name('password.reset');
+    Route::post('/kodikos/neos', [PasswordResetController::class, 'update'])->middleware('throttle:10,10')->name('password.update');
+});
+
+// ---- Συνδεδεμένοι πελάτες ----
+Route::middleware('auth')->group(function () {
+    Route::post('/aposyndesi', [LoginController::class, 'destroy'])->name('logout');
+
+    Route::get('/email/epivevaiosi', [EmailVerificationController::class, 'notice'])->name('verification.notice');
+    Route::get('/email/epivevaiosi/{id}/{hash}', [EmailVerificationController::class, 'verify'])
+        ->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+    Route::post('/email/epivevaiosi', [EmailVerificationController::class, 'send'])
+        ->middleware('throttle:3,10')->name('verification.send');
+
+    Route::middleware(EnsureCustomer::class)->group(function () {
+        Route::get('/to-studio-mou', [AccountController::class, 'show'])->name('account');
+        Route::get('/to-studio-mou/stoixeia', [AccountController::class, 'edit'])->name('account.edit');
+        Route::put('/to-studio-mou/stoixeia', [AccountController::class, 'update'])->name('account.update');
+        Route::put('/to-studio-mou/newsletter', [AccountController::class, 'marketing'])->name('account.marketing');
+        Route::delete('/to-studio-mou', [AccountController::class, 'destroy'])->middleware('throttle:5,10')->name('account.destroy');
+    });
+});
+
+// ---- Νομικά ----
+Route::view('/oroi-xrisis', 'legal.terms')->name('legal.terms');
+Route::view('/prostasia-dedomenon', 'legal.privacy')->name('legal.privacy');

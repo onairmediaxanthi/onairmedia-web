@@ -19,9 +19,18 @@
                 <svg x-show="!$store.theme.dark" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.8A9 9 0 1111.2 3a7 7 0 009.8 9.8z"/></svg>
                 <svg x-show="$store.theme.dark" x-cloak class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
             </button>
-            <a href="{{ route('home') }}#diafimisi" class="hidden sm:inline-flex items-center rounded-full bg-onair px-5 py-2.5 text-sm font-semibold text-white hover:bg-onair-dark">
-                Διαφημιστείτε
-            </a>
+            @auth
+                <a href="{{ auth()->user()->isCustomer() ? route('account') : url('/admin') }}" wire:navigate.hover
+                   class="hidden sm:inline-flex items-center gap-2 rounded-full border border-line px-4 py-2.5 text-sm font-semibold hover:border-onair">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
+                    {{ auth()->user()->isCustomer() ? 'Το Studio μου' : 'Διαχείριση' }}
+                </a>
+            @else
+                <a href="{{ route('login') }}" class="hidden sm:inline-flex px-3 py-2.5 text-sm font-semibold text-slate hover:text-ink">Σύνδεση</a>
+                <a href="{{ route('register') }}" class="hidden sm:inline-flex items-center rounded-full bg-onair px-5 py-2.5 text-sm font-semibold text-white hover:bg-onair-dark">
+                    Διαφημιστείτε
+                </a>
+            @endauth
             <button type="button" class="md:hidden p-2 -mr-2 rounded-md" @click="open = !open" :aria-expanded="open" aria-controls="mobile-nav">
                 <span class="sr-only">Μενού</span>
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path x-show="!open" d="M4 7h16M4 12h16M4 17h16"/><path x-show="open" x-cloak d="M6 6l12 12M18 6L6 18"/></svg>
@@ -34,7 +43,12 @@
             @foreach ($nav as [$label, $href])
                 <a href="{{ $href }}" @click="open = false" class="py-3 text-lg font-medium border-b border-line last:border-0">{{ $label }}</a>
             @endforeach
-            <a href="{{ route('home') }}#diafimisi" @click="open = false" class="mt-3 text-center rounded-full bg-onair px-5 py-3 font-semibold text-white">Διαφημιστείτε</a>
+            @auth
+                <a href="{{ auth()->user()->isCustomer() ? route('account') : url('/admin') }}" class="mt-3 text-center rounded-full border border-line px-5 py-3 font-semibold">{{ auth()->user()->isCustomer() ? 'Το Studio μου' : 'Διαχείριση' }}</a>
+            @else
+                <a href="{{ route('login') }}" class="py-3 text-lg font-medium">Σύνδεση</a>
+                <a href="{{ route('register') }}" class="mt-2 text-center rounded-full bg-onair px-5 py-3 font-semibold text-white">Διαφημιστείτε: δωρεάν εγγραφή</a>
+            @endauth
         </div>
     </nav>
 </header>
