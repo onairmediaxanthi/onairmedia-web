@@ -19,6 +19,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class QuoteResource extends Resource
@@ -27,7 +28,20 @@ class QuoteResource extends Resource
 
     protected static ?string $slug = 'prosfores';
 
-    protected static ?string $recordRouteKeyName = 'id';
+    /**
+     * Οι σύνδεσμοι χρησιμοποιούν τον κωδικό (ulid) της προσφοράς. Παλιά email με αριθμητικό id
+     * ανοίγουν ακόμα, αλλά μόνο με αυστηρή αντιστοίχιση: ποτέ μετατροπή κειμένου σε αριθμό.
+     */
+    public static function resolveRecordRouteBinding(int|string $key, ?\Closure $modifyQuery = null): ?Model
+    {
+        $query = static::getRecordRouteBindingEloquentQuery();
+        if ($modifyQuery) {
+            $query = $modifyQuery($query) ?? $query;
+        }
+        $key = (string) $key;
+
+        return ctype_digit($key) ? $query->whereKey((int) $key)->first() : $query->where('ulid', $key)->first();
+    }
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedDocumentText;
 

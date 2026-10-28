@@ -68,7 +68,7 @@ class CustomerEvents
                 })
                 ->iconColor($type === 'quote_submitted' ? 'success' : ($type === 'quote_deleted' ? 'danger' : 'primary'));
             if ($quote) {
-                $n->actions([Action::make('view')->label('Άνοιγμα')->url(url('/admin/prosfores/'.$quote->getKey()))->markAsRead()]);
+                $n->actions([Action::make('view')->label('Άνοιγμα')->url(\App\Filament\Resources\Quotes\QuoteResource::getUrl('view', ['record' => $quote], panel: 'admin'))->markAsRead()]);
             }
             $n->sendToDatabase($staff);
         } catch (Throwable $e) {

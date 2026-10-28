@@ -64,7 +64,7 @@ class CustomerActivityResource extends Resource
                     }),
                 TextColumn::make('summary')->label('Λεπτομέρειες')->wrap()->searchable(),
             ])
-            ->recordUrl(fn (CustomerActivity $r) => $r->quote_id ? url('/admin/prosfores/'.$r->quote_id)
+            ->recordUrl(fn (CustomerActivity $r) => $r->quote ? \App\Filament\Resources\Quotes\QuoteResource::getUrl('view', ['record' => $r->quote])
                 : ($r->user?->business ? url('/admin/businesses/'.$r->user->business->id.'/edit') : null))
             ->filters([
                 SelectFilter::make('type')->label('Ενέργεια')->options(CustomerActivity::TYPES)->multiple(),

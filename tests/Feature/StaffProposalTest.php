@@ -172,4 +172,22 @@ class StaffProposalTest extends TestCase
         $this->assertGuest('web');
         $this->assertAuthenticatedAs($this->admin, 'admin');
     }
+
+    public function test_view_link_opens_the_right_quote_after_a_deletion(): void
+    {
+        $customer = User::factory()->create(['email_verified_at' => now()]);
+        $this->star->update(['is_bookable' => true]);
+        $spec = [['type' => 'radio', 'station_id' => $this->star->id, 'spots_per_day' => 2]];
+        $old = app(QuoteService::class)->create($customer, 'Παλιά', 'manual', $spec, 5, null);
+        $old->delete();
+        $new = app(QuoteService::class)->create($customer, 'Καινούργια', 'manual', $spec, 9, null);
+
+        $url = \App\Filament\Resources\Quotes\QuoteResource::getUrl('view', ['record' => $new]);
+        $this->assertStringContainsString($new->ulid, $url);
+
+        Livewire::test(ViewQuote::class, ['record' => $new->ulid])->assertSee('Καινούργια')->assertDontSee('Παλιά');
+        // Παλιοί σύνδεσμοι με αριθμό ανοίγουν τη σωστή, και κείμενο που «μοιάζει» με αριθμό δεν ανοίγει άλλη
+        Livewire::test(ViewQuote::class, ['record' => (string) $new->id])->assertSee('Καινούργια');
+        $this->assertNull(\App\Filament\Resources\Quotes\QuoteResource::resolveRecordRouteBinding($old->id.'abc'));
+    }
 }

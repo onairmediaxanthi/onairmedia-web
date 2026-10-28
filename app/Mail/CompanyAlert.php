@@ -26,7 +26,7 @@ class CompanyAlert extends Mailable
         return new Content(markdown: 'mail.company-alert', with: [
             'label' => CustomerActivity::TYPES[$this->type] ?? $this->type,
             'business' => $this->customer?->business,
-            'adminUrl' => $this->quote ? url('/admin/prosfores/'.$this->quote->getKey()) : url('/admin/drastiriotita'),
+            'adminUrl' => $this->quote ? \App\Filament\Resources\Quotes\QuoteResource::getUrl('view', ['record' => $this->quote], panel: 'admin') : url('/admin/drastiriotita'),
         ]);
     }
 }
