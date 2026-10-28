@@ -28,6 +28,8 @@ class Business extends Model
     protected $fillable = [
         'legal_name', 'trade_name', 'business_type', 'business_type_other', 'vat', 'tax_office', 'gemi',
         'address', 'city', 'postal_code', 'mobile', 'phone', 'contact_person', 'website',
+        // Μόνο από τη διαχείριση· οι φόρμες πελατών περνούν μόνο τα δικά τους πεδία
+        'admin_notes',
     ];
 
     protected function casts(): array

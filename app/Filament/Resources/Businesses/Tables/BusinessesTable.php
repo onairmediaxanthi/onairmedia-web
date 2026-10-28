@@ -17,7 +17,7 @@ class BusinessesTable
     {
         return $table
             ->defaultSort('created_at', 'desc')
-            ->modifyQueryUsing(fn (Builder $q) => $q->with('user'))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with('user'))
             ->columns([
                 TextColumn::make('legal_name')->label('Επιχείρηση')->weight('bold')->searchable(['legal_name', 'trade_name'])
                     ->description(fn (Business $r) => $r->trade_name),
@@ -37,13 +37,13 @@ class BusinessesTable
                 SelectFilter::make('business_type')->label('Είδος')->options(Business::TYPES),
                 TernaryFilter::make('marketing')->label('Δέχεται προσφορές')
                     ->queries(
-                        true: fn (Builder $q) => $q->whereNotNull('marketing_consent_at'),
-                        false: fn (Builder $q) => $q->whereNull('marketing_consent_at'),
+                        true: fn (Builder $query) => $query->whereNotNull('marketing_consent_at'),
+                        false: fn (Builder $query) => $query->whereNull('marketing_consent_at'),
                     ),
                 TernaryFilter::make('verified')->label('Επιβεβαιωμένο email')
                     ->queries(
-                        true: fn (Builder $q) => $q->whereHas('user', fn ($u) => $u->whereNotNull('email_verified_at')),
-                        false: fn (Builder $q) => $q->whereHas('user', fn ($u) => $u->whereNull('email_verified_at')),
+                        true: fn (Builder $query) => $query->whereHas('user', fn ($u) => $u->whereNotNull('email_verified_at')),
+                        false: fn (Builder $query) => $query->whereHas('user', fn ($u) => $u->whereNull('email_verified_at')),
                     ),
             ])
             ->recordActions([EditAction::make()]);
