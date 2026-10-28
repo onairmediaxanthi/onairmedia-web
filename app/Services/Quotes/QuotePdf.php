@@ -37,11 +37,13 @@ class QuotePdf
                 return null;
             }
             $bytes = Storage::disk('public')->get($path);
-            if (str_ends_with(strtolower($path), '.png')) {
-                return 'data:image/png;base64,'.base64_encode($bytes);
-            }
             if (! function_exists('imagecreatefromstring') || ! ($img = @imagecreatefromstring($bytes))) {
                 return null;
+            }
+            if (imagesx($img) > 600) {
+                $scaled = imagescale($img, 600);
+                imagedestroy($img);
+                $img = $scaled;
             }
             imagesavealpha($img, true);
             ob_start();
