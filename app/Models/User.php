@@ -18,6 +18,9 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
+    /** Κάθε νέος λογαριασμός είναι πελάτης μέχρι να αλλάξει ρητά */
+    protected $attributes = ['role' => 'customer'];
+
     /**
      * Ο ρόλος ΔΕΝ είναι mass-assignable: αλλάζει μόνο ρητά.
      *

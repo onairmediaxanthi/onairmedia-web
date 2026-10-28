@@ -10,7 +10,7 @@
         * { box-sizing: border-box; }
         body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px;
                font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-               background: radial-gradient(circle at 30% 20%, #3a0d1f 0, #0b0b10 60%); color: #f4f4f6; }
+               background: radial-gradient(circle at 30% 20%, #3a0d2e 0, #0b0b10 60%); color: #f4f4f6; }
         form { width: 100%; max-width: 360px; background: #15151c; border: 1px solid #2a2a35;
                border-radius: 16px; padding: 28px; }
         h1 { font-size: 20px; margin: 0 0 6px; }
@@ -18,10 +18,10 @@
         label { display: block; font-size: 13px; margin-bottom: 6px; }
         input { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #3a3a48;
                 background: #0f0f15; color: inherit; font-size: 16px; }
-        input:focus { outline: 2px solid #e11d48; outline-offset: 1px; }
+        input:focus { outline: 2px solid #c80c92; outline-offset: 1px; }
         button { margin-top: 16px; width: 100%; padding: 12px; border: 0; border-radius: 10px;
-                 background: #e11d48; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
-        .error { color: #fda4af; font-size: 13px; margin-top: 8px; }
+                 background: #c80c92; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; }
+        .error { color: #f9a8d4; font-size: 13px; margin-top: 8px; }
     </style>
 </head>
 <body>

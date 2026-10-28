@@ -1,0 +1,80 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
+
+/**
+ * Έτοιμο πακέτο προβολής ή προσφορά (με λήξη).
+ * Η τιμή φαίνεται μόνο σε συνδεδεμένους, επαληθευμένους επαγγελματίες.
+ */
+class Package extends Model
+{
+    public const MEDIA = [
+        'radio' => 'Ραδιόφωνο',
+        'news' => 'thrakitoday.gr',
+        'led' => 'Οθόνη Πόλης',
+        'creative' => 'Δημιουργικό',
+    ];
+
+    protected $fillable = [
+        'slug', 'name', 'tagline', 'description', 'includes', 'media_mix', 'duration_days',
+        'price', 'compare_at_price', 'badge', 'color', 'image_path', 'is_offer',
+        'available_from', 'available_until', 'is_featured', 'sort', 'is_active',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'includes' => 'array',
+            'price' => 'decimal:2',
+            'compare_at_price' => 'decimal:2',
+            'is_offer' => 'boolean',
+            'is_featured' => 'boolean',
+            'is_active' => 'boolean',
+            'available_from' => 'datetime',
+            'available_until' => 'datetime',
+        ];
+    }
+
+    #[Scope]
+    protected function available(Builder $query): void
+    {
+        $query->where('is_active', true)
+            ->where(fn ($q) => $q->whereNull('available_from')->orWhere('available_from', '<=', now()))
+            ->where(fn ($q) => $q->whereNull('available_until')->orWhere('available_until', '>', now()))
+            ->orderBy('sort');
+    }
+
+    /** @return list<string> */
+    public function mediaList(): array
+    {
+        return array_values(array_filter(explode(',', (string) $this->media_mix)));
+    }
+
+    protected function imageUrl(): Attribute
+    {
+        return Attribute::get(fn () => $this->image_path ? Storage::disk('public')->url($this->image_path) : null);
+    }
+
+    /** Ποσοστό έκπτωσης όταν υπάρχει «παλιά» τιμή */
+    protected function discountPercent(): Attribute
+    {
+        return Attribute::get(function () {
+            if (! $this->price || ! $this->compare_at_price || $this->compare_at_price <= $this->price) {
+                return null;
+            }
+
+            return (int) round((1 - $this->price / $this->compare_at_price) * 100);
+        });
+    }
+
+    public static function formatPrice(float|string|null $amount): ?string
+    {
+        return $amount === null ? null : number_format((float) $amount, 0, ',', '.').' €';
+    }
+}

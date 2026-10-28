@@ -2,13 +2,14 @@
 @import '@fontsource-variable/commissioner';
 
 @source '../views';
+@source '../../app/Models/HomeSection.php';
 
 /* Σκοτεινή λειτουργία: κλάση .dark στο <html> (επιλογή χρήστη ή ρύθμιση συσκευής) */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
  * On Air Media — tokens
- * onair    : η κόκκινη λάμπα «ON AIR» του στούντιο (κύριο χρώμα δράσης)
+ * onair    : το ματζέντα του λογοτύπου On Air Media (κύριο χρώμα δράσης)
  * night    : το βαθύ μπλε της νυχτερινής εκπομπής (δείκτης, player)
  * glow     : η κεχριμπαρένια λάμψη της βελόνας
  * paper    : φόντο περιεχομένου
@@ -17,8 +18,8 @@
 @theme {
     --font-sans: 'Commissioner Variable', system-ui, sans-serif;
 
-    --color-onair: #e8203a;
-    --color-onair-dark: #b8142b;
+    --color-onair: #c80c92;
+    --color-onair-dark: #a00a75;
     --color-night: #121a33;
     --color-night-2: #1b2547;
     --color-night-3: #2a3560;
@@ -38,8 +39,8 @@
     --color-ink: #eef1f8;
     --color-slate: #a3acc2;
     --color-line: #263055;
-    --color-onair: #ff3b52;
-    --color-onair-dark: #e8203a;
+    --color-onair: #e13aaa;
+    --color-onair-dark: #c80c92;
 }
 
 @layer base {
@@ -91,3 +92,7 @@
     .slide-text > * { opacity: 1; transform: none; }
     .eq i { height: 60%; }
 }
+
+/* Λογότυπο χωρίς λευκή εκδοχή: στη σκοτεινή εμφάνιση το μαύρο γίνεται λευκό, το ματζέντα μένει */
+.dark .logo-auto { filter: invert(1) hue-rotate(180deg) saturate(1.3); }
+.logo-auto-always { filter: invert(1) hue-rotate(180deg) saturate(1.3); }

@@ -2,6 +2,7 @@
 
 namespace App\View\Composers;
 
+use App\Models\HomeSection;
 use App\Models\Station;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
@@ -11,6 +12,12 @@ class SiteComposer
 {
     public function compose(View $view): void
     {
+        $view->with('menu', Cache::remember('site:menu', 300, fn () => HomeSection::query()->showing()
+            ->whereNotNull('anchor')->get()
+            ->filter(fn (HomeSection $s) => filled($s->setting('menu_label')))
+            ->map(fn (HomeSection $s) => [$s->setting('menu_label'), route('home').'#'.$s->anchor])
+            ->values()->all()));
+
         $view->with('playerStations', Cache::remember('player:stations', 300, fn () => Station::query()->active()->get()
             ->map(fn (Station $s) => [
                 'slug' => $s->slug,

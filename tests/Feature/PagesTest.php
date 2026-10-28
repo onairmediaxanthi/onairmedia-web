@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Slide;
 use App\Models\Station;
+use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\SlideSeeder;
 use Database\Seeders\StationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -19,7 +20,7 @@ class PagesTest extends TestCase
         parent::setUp();
         config(['app.preview_password' => null]);
         Http::fake(['*' => Http::response('', 200)]);
-        $this->seed([StationSeeder::class, SlideSeeder::class]);
+        $this->seed(DatabaseSeeder::class);
     }
 
     public function test_home_shows_slider_dial_and_stations(): void

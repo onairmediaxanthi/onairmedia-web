@@ -2,19 +2,70 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\UserRole;
+use App\Models\HomeSection;
+use App\Models\Package;
 use App\Models\Slide;
 use App\Models\Station;
 use App\Services\NewsFeed;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 class HomeController extends Controller
 {
-    public function __invoke(NewsFeed $news): View
+    public function __invoke(Request $request, NewsFeed $news): View
     {
-        return view('home', [
-            'slides' => Slide::query()->showing()->get(),
-            'stations' => Station::query()->active()->get(),
-            'news' => $news->latest(7),
-        ]);
+        $sections = HomeSection::query()->showing()->get()
+            ->filter(fn (HomeSection $s) => view()->exists('home.sections.'.$s->type))
+            ->values();
+        $types = $sections->pluck('type')->unique();
+
+        // Φορτώνουμε μόνο ό,τι χρειάζονται οι ενότητες που φαίνονται
+        $data = [
+            'slides' => $types->contains('slider') ? Slide::query()->showing()->get() : collect(),
+            'stations' => $types->intersect(['dial', 'stations'])->isNotEmpty() ? Station::query()->active()->get() : collect(),
+            'news' => $types->contains('news') ? $news->latest(10) : [],
+            'packages' => $this->packagesFor($sections->where('type', 'packages')),
+            'canSeePrices' => $this->canSeePrices($request),
+        ];
+
+        // Ενότητα χωρίς περιεχόμενο (π.χ. καμία ενεργή προσφορά) δεν εμφανίζεται καθόλου
+        $sections = $sections->reject(fn (HomeSection $s) => match ($s->type) {
+            'slider' => $data['slides']->isEmpty(),
+            'dial', 'stations' => $data['stations']->isEmpty(),
+            'news' => $data['news'] === [],
+            'packages' => ($data['packages'][$s->id] ?? collect())->isEmpty(),
+            default => false,
+        })->values();
+
+        return view('home', ['sections' => $sections, ...$data]);
+    }
+
+    /** @return array<int, Collection<int, Package>> */
+    protected function packagesFor(Collection $sections): array
+    {
+        $out = [];
+
+        foreach ($sections as $section) {
+            $q = Package::query()->available();
+            match ($section->setting('source', 'all')) {
+                'featured' => $q->where('is_featured', true),
+                'offers' => $q->where('is_offer', true),
+                'chosen' => $q->whereIn('id', (array) $section->setting('package_ids', [])),
+                default => null,
+            };
+            $out[$section->id] = $q->limit((int) $section->setting('limit', 6))->get();
+        }
+
+        return $out;
+    }
+
+    /** Τιμές βλέπουν μόνο επαληθευμένοι επαγγελματίες (και το προσωπικό) */
+    protected function canSeePrices(Request $request): bool
+    {
+        $user = $request->user();
+
+        return $user !== null && ($user->role?->isStaff() || ($user->role === UserRole::Customer && $user->hasVerifiedEmail()));
     }
 }

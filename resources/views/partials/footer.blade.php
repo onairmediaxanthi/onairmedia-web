@@ -1,8 +1,14 @@
 <footer class="mt-24 bg-night text-white/80">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 py-14 grid gap-10 md:grid-cols-3">
         <div>
-            <p class="font-extrabold text-white text-xl">On Air Media Group</p>
-            <p class="mt-3 max-w-xs text-white/70">Δώδεκα ραδιόφωνα, το thrakitoday.gr και η Οθόνη Πόλης. Η φωνή της Ξάνθης, από το 88.8 ως το 106.</p>
+            <x-site-logo on-dark class="h-12" />
+            <p class="mt-4 max-w-xs text-white/70">{{ \App\Models\Setting::get('footer_text') }}</p>
+            @php($s = \App\Models\Setting::allValues())
+            <ul class="mt-4 space-y-1 text-white/80">
+                @if ($s['phone'])<li><a class="hover:text-white" href="tel:{{ preg_replace('/[^0-9+]/', '', $s['phone']) }}">{{ $s['phone'] }}</a></li>@endif
+                @if ($s['email'])<li><a class="hover:text-white" href="mailto:{{ $s['email'] }}">{{ $s['email'] }}</a></li>@endif
+                @if ($s['address'])<li>{{ $s['address'] }}</li>@endif
+            </ul>
         </div>
         <div>
             <p class="font-semibold text-white">Ακούστε και στο κινητό</p>
@@ -18,6 +24,13 @@
         </div>
     </div>
     <div class="border-t border-white/10">
-        <p class="mx-auto max-w-7xl px-4 sm:px-6 py-6 text-sm text-white/50">© {{ date('Y') }} On Air Media Group</p>
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 py-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/50">
+            <span>© {{ date('Y') }} {{ $s['company_name'] }}@if($s['vat']) · ΑΦΜ {{ $s['vat'] }}@endif @if($s['gemi']) · ΓΕΜΗ {{ $s['gemi'] }}@endif</span>
+            @foreach ((array) $s['socials'] as $net => $link)
+                @if (is_string($link) && str_starts_with($link, 'https://'))
+                    <a href="{{ $link }}" target="_blank" rel="noopener" class="hover:text-white capitalize">{{ $net }}</a>
+                @endif
+            @endforeach
+        </div>
     </div>
 </footer>

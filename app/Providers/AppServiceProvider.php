@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\HomeSection;
 use App\Models\Station;
 use App\View\Composers\SiteComposer;
 use Illuminate\Support\Facades\Cache;
@@ -28,5 +29,7 @@ class AppServiceProvider extends ServiceProvider
         // Αλλαγή σταθμού στη διαχείριση → ο player ενημερώνεται αμέσως
         Station::saved(fn () => Cache::forget('player:stations'));
         Station::deleted(fn () => Cache::forget('player:stations'));
+        HomeSection::saved(fn () => Cache::forget('site:menu'));
+        HomeSection::deleted(fn () => Cache::forget('site:menu'));
     }
 }

@@ -1,16 +1,8 @@
-@php($nav = [
-    ['Σταθμοί', route('home').'#stathmoi'],
-    ['Ειδήσεις', route('home').'#eidiseis'],
-    ['Διαφήμιση', route('home').'#diafimisi'],
-])
+@php($nav = $menu ?? [])
 <header x-data="{ open: false }" class="sticky top-0 z-40 bg-surface/90 backdrop-blur border-b border-line">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 h-16 flex items-center gap-6">
-        <a href="{{ route('home') }}" wire:navigate class="flex items-center gap-2 shrink-0" aria-label="On Air Media Group, αρχική">
-            <span class="relative inline-flex h-3 w-3" aria-hidden="true">
-                <span class="absolute inline-flex h-full w-full rounded-full bg-onair opacity-60 motion-safe:animate-ping"></span>
-                <span class="relative inline-flex h-3 w-3 rounded-full bg-onair"></span>
-            </span>
-            <span class="font-extrabold tracking-tight text-lg leading-none">On Air <span class="font-medium">Media</span></span>
+        <a href="{{ route('home') }}" wire:navigate class="shrink-0" aria-label="Αρχική σελίδα">
+            <x-site-logo class="h-9 sm:h-10" />
         </a>
 
         <nav class="hidden md:flex items-center gap-1 text-[15px] font-medium" aria-label="Κύριο μενού">
