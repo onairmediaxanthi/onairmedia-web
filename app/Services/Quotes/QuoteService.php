@@ -107,6 +107,35 @@ class QuoteService
         return $quote;
     }
 
+    /**
+     * Ο πελάτης αλλάζει τη δική του προσφορά: ίδιος αριθμός, νέες τιμές, νέα λήξη.
+     * Ό,τι είχε βάλει η ομάδα μας (έκπτωση, πακέτο, σταθμοί εκτός online) μένει όπως ήταν ($locked).
+     */
+    public function updateByCustomer(Quote $quote, string $title, array $specs, array $locked, int $days, ?string $startsOn): Quote
+    {
+        $specs = array_merge(QuoteCalculator::customerSpecs($specs), $locked);
+        $staffTouched = $quote->created_by_id !== null || $quote->updated_by_id !== null;
+        $priced = (new QuoteCalculator(staff: $staffTouched && $locked !== []))->price($specs, $days);
+        if (! $priced['lines'] || $priced['subtotal'] <= 0) {
+            throw new InvalidArgumentException('Διαλέξτε τουλάχιστον ένα μέσο.');
+        }
+        $quote->fill([
+            'title' => mb_substr(trim($title) ?: $quote->title, 0, 120),
+            'starts_on' => self::parseStart($startsOn),
+            'days' => max(1, min(QuoteCalculator::MAX_DAYS, $days)),
+            'valid_until' => today()->addDays(self::validDays()),
+        ] + $this->totals($priced));
+        $quote->status = 'saved';
+        $quote->reminders_sent = 0;
+        $quote->last_reminded_at = null;
+        $quote->save();
+        app(\App\Services\Coupons::class)->revalidate($quote);
+
+        CustomerEvents::record('quote_changed', $quote->user, $quote);
+
+        return $quote;
+    }
+
     /** Νέες τιμές από τον τρέχοντα τιμοκατάλογο, νέα ημερομηνία λήξης */
     public function renew(Quote $quote): Quote
     {

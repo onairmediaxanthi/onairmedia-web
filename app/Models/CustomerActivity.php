@@ -27,6 +27,7 @@ class CustomerActivity extends Model
         'staff_quote' => 'Προσφορά από το προσωπικό',
         'quote_sent' => 'Στάλθηκε πρόταση στον πελάτη',
         'quote_edited' => 'Αλλαγές από το προσωπικό',
+        'quote_changed' => 'Άλλαξε την προσφορά του',
         'coupon_issued' => 'Πήρε κουπόνι καλωσορίσματος',
         'coupon_applied' => 'Χρησιμοποίησε κουπόνι',
     ];

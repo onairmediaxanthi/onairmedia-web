@@ -61,6 +61,9 @@
                             <button class="flex w-full justify-center rounded-full bg-onair px-6 py-3.5 font-semibold text-white hover:bg-onair-dark">Ανανέωση με τρέχουσες τιμές</button>
                         </form>
                     @endif
+                    @if (in_array($quote->status, ['saved', 'expired'], true))
+                        <a href="{{ route('quote.builder', ['allagi' => $quote->ulid]) }}" class="flex justify-center rounded-full border-2 border-onair px-6 py-3 font-semibold text-onair hover:bg-onair hover:text-white">Αλλαγές στην προσφορά</a>
+                    @endif
                     <a href="{{ route('quotes.pdf', $quote) }}" class="flex justify-center rounded-full border border-line px-6 py-3 font-semibold hover:border-onair">Λήψη PDF</a>
                     @if ($quote->status !== 'ordered')
                         <form method="POST" action="{{ route('quotes.destroy', $quote) }}" x-data @submit="if (! window.confirm('Να διαγραφεί η προσφορά {{ $quote->number }};')) $event.preventDefault()">

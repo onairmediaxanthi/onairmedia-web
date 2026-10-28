@@ -38,7 +38,7 @@ class QuoteSettings extends Page
     public const KEYS = [
         'quote_valid_days', 'quote_reminder_days', 'quote_reminder_max', 'notify_emails',
         'welcome_coupon_enabled', 'welcome_coupon_type', 'welcome_coupon_value', 'welcome_coupon_days', 'welcome_coupon_min', 'welcome_coupon_prefix',
-        'notify_registered', 'notify_quote_saved', 'notify_quote_submitted', 'notify_quote_deleted', 'notify_quote_pdf', 'notify_wizard_used',
+        'notify_registered', 'notify_quote_saved', 'notify_quote_changed', 'notify_quote_submitted', 'notify_quote_deleted', 'notify_quote_pdf', 'notify_wizard_used',
     ];
 
     /** @var array<string, mixed>|null */
@@ -85,6 +85,7 @@ class QuoteSettings extends Page
                         }),
                     Toggle::make('notify_registered')->label('Νέα εγγραφή'),
                     Toggle::make('notify_quote_saved')->label('Νέα προσφορά'),
+                    Toggle::make('notify_quote_changed')->label('Αλλαγή προσφοράς από πελάτη'),
                     Toggle::make('notify_quote_submitted')->label('Παραγγελία (ταμείο)'),
                     Toggle::make('notify_quote_deleted')->label('Διαγραφή προσφοράς'),
                     Toggle::make('notify_quote_pdf')->label('Λήψη PDF'),

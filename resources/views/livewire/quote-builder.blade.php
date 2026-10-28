@@ -20,7 +20,7 @@
                 @endswitch
             </h1>
         </div>
-        @if ($mode !== 'start')
+        @if ($mode !== 'start' && ! $editing)
             <button type="button" wire:click="choose('start')" class="font-semibold text-slate hover:text-ink">← Αλλαγή τρόπου</button>
         @endif
     </div>
@@ -261,6 +261,15 @@
 
     {{-- ================= Δική σας επιλογή ================= --}}
     @if ($mode === 'manual')
+        @if ($editing)
+            <div class="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-onair/40 bg-onair/5 px-5 py-4">
+                <p>Αλλάζετε την προσφορά <strong class="freq">{{ \App\Models\Quote::where('ulid', $editing)->value('number') }}</strong>. Με την αποθήκευση κρατά τον αριθμό της.</p>
+                <a href="{{ route('quotes.show', $editing) }}" class="font-semibold text-slate hover:text-ink">Ακύρωση</a>
+            </div>
+            @if ($lockedSpecs)
+                <p class="mt-3 text-sm text-slate">Ό,τι είχε προσθέσει η ομάδα μας (π.χ. έκπτωση ή πακέτο) μένει στην προσφορά όπως ήταν.</p>
+            @endif
+        @endif
         @if ($canSee && $manual && $manual['lines'])
             <a href="#synolo" class="lg:hidden sticky top-16 z-30 -mx-4 mt-6 flex items-center justify-between gap-3 bg-night px-4 py-3 text-white shadow-lg">
                 <span class="text-sm text-white/70">Σύνολο με ΦΠΑ</span>
@@ -460,7 +469,7 @@
                     </dl>
                     @foreach ($manual['warnings'] as $w)<p class="mt-3 text-sm text-glow">{{ $w }}</p>@endforeach
                     @if ($canSave)
-                        <button type="button" wire:click="saveManual" wire:loading.attr="disabled" class="mt-6 flex w-full justify-center rounded-full bg-onair px-6 py-3.5 font-semibold text-white hover:bg-onair-dark disabled:opacity-60">Αποθήκευση προσφοράς</button>
+                        <button type="button" wire:click="saveManual" wire:loading.attr="disabled" class="mt-6 flex w-full justify-center rounded-full bg-onair px-6 py-3.5 font-semibold text-white hover:bg-onair-dark disabled:opacity-60">{{ $editing ? 'Αποθήκευση αλλαγών' : 'Αποθήκευση προσφοράς' }}</button>
                         <p class="mt-3 text-center text-sm text-white/60">Χωρίς δέσμευση · PDF · την προχωράτε όποτε θέλετε</p>
                     @else
                         <p class="mt-5 text-sm text-white/70">Ως προσωπικό βλέπετε την τιμή· την αποθήκευση την κάνουν οι πελάτες από τον λογαριασμό τους.</p>

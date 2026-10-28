@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\AdSlot;
 use App\Models\Package;
+use App\Models\Quote;
 use App\Models\Screen;
 use App\Models\Setting;
 use App\Models\Station;
@@ -81,6 +82,14 @@ class QuoteBuilder extends Component
 
     public ?string $error = null;
 
+    /** Αλλαγή υπάρχουσας προσφοράς (ulid) αντί για νέα */
+    #[Locked]
+    public ?string $editing = null;
+
+    /** Γραμμές που δεν αλλάζει ο πελάτης (έκπτωση/πακέτο/σταθμοί που πρόσθεσε η ομάδα μας) */
+    #[Locked]
+    public array $lockedSpecs = [];
+
     public function mount(): void
     {
         $this->startsOn = today()->addDays(3)->format('Y-m-d');
@@ -92,6 +101,11 @@ class QuoteBuilder extends Component
                 $this->radio[$st->id]['on'] = true;
                 $this->mode = 'manual';
             }
+        }
+        if (($ulid = request()->query('allagi')) && ($q = $this->editableQuote((string) $ulid))) {
+            $this->loadQuote($q);
+
+            return;
         }
         if ($pkg = (int) request()->query('paketo')) {
             $this->highlightPackage = $pkg;
@@ -123,6 +137,44 @@ class QuoteBuilder extends Component
         $this->screens = Screen::query()->active()->whereNotNull('price_per_day')->pluck('id')
             ->mapWithKeys(fn ($id) => [$id => ['on' => false, 'days' => null]])->all();
         $this->creative = array_fill_keys(array_keys(QuoteCalculator::CREATIVE), false);
+    }
+
+    protected function editableQuote(string $ulid): ?Quote
+    {
+        $u = Auth::user();
+        $q = $u ? Quote::query()->where('ulid', $ulid)->where('user_id', $u->id)->first() : null;
+
+        return $q && in_array($q->status, ['saved', 'expired'], true) ? $q : null;
+    }
+
+    /** Γεμίζει τη «δική σας επιλογή» από την αποθηκευμένη προσφορά */
+    protected function loadQuote(Quote $q): void
+    {
+        $this->editing = $q->ulid;
+        $this->mode = 'manual';
+        $this->title = $q->title;
+        $this->days = $q->days;
+        $this->startsOn = $q->starts_on && ! $q->starts_on->isPast() ? $q->starts_on->format('Y-m-d') : today()->addDays(3)->format('Y-m-d');
+        $this->lockedSpecs = [];
+        foreach ($q->specs() as $s) {
+            $type = $s['type'] ?? null;
+            if ($type === 'radio' && isset($this->radio[$s['station_id']])) {
+                $this->radio[$s['station_id']] = ['on' => true, 'spots' => $s['spots_per_day'] ?? 0, 'seconds' => $s['seconds'] ?? 30,
+                    'position' => $s['position'] ?? 'standard', 'fixed' => (bool) ($s['fixed_hour'] ?? false),
+                    'ml' => $s['mentions_live'] ?? 0, 'mr' => $s['mentions_recorded'] ?? 0];
+            } elseif ($type === 'banner' && isset($this->banners[$s['slot_id']])) {
+                $this->banners[$s['slot_id']] = ['on' => true, 'days' => ($s['days'] ?? $q->days) != $q->days ? $s['days'] : null];
+            } elseif ($type === 'led' && isset($this->screens[$s['screen_id']])) {
+                $this->screens[$s['screen_id']] = ['on' => true, 'days' => ($s['days'] ?? $q->days) != $q->days ? $s['days'] : null];
+            } elseif ($type === 'article') {
+                $this->articles = (int) $s['count'];
+                $this->articleWriting = (bool) ($s['writing'] ?? false);
+            } elseif ($type === 'creative' && array_key_exists($s['key'], $this->creative)) {
+                $this->creative[$s['key']] = true;
+            } else {
+                $this->lockedSpecs[] = $s; // π.χ. έκπτωση ή πακέτο από την ομάδα μας
+            }
+        }
     }
 
     public function canSeePrices(): bool
@@ -335,7 +387,32 @@ class QuoteBuilder extends Component
             'articles' => 'integer|min:0|max:30',
         ], [], ['radio.*.spots' => 'μεταδόσεις', 'radio.*.seconds' => 'διάρκεια σποτ']);
 
+        if ($this->editing) {
+            return $this->saveChanges();
+        }
+
         return $this->store($this->title ?: 'Η καμπάνια μου', 'manual', $this->manualSpecs());
+    }
+
+    protected function saveChanges()
+    {
+        $this->error = null;
+        $q = $this->canSave() ? $this->editableQuote((string) $this->editing) : null;
+        if (! $q) {
+            $this->error = 'Η προσφορά δεν μπορεί πλέον να αλλάξει.';
+
+            return null;
+        }
+        try {
+            app(QuoteService::class)->updateByCustomer($q, $this->title ?: $q->title, $this->manualSpecs(), $this->lockedSpecs, (int) $this->days, $this->startsOn);
+        } catch (InvalidArgumentException $e) {
+            $this->error = $e->getMessage();
+
+            return null;
+        }
+        session()->flash('status', 'Οι αλλαγές αποθηκεύτηκαν. Η προσφορά κράτησε τον αριθμό της και οι τιμές ισχύουν ξανά για '.QuoteService::validDays().' ημέρες.');
+
+        return $this->redirectRoute('quotes.show', $q);
     }
 
     public function savePackage(int $id)
@@ -387,7 +464,9 @@ class QuoteBuilder extends Component
 
         $manual = null;
         if ($this->mode === 'manual' && $canSee) {
-            $manual = $calc->price($this->manualSpecs(), max(1, min(QuoteCalculator::MAX_DAYS, (int) $this->days)));
+            $calc = $this->editing && $this->lockedSpecs ? new QuoteCalculator(staff: true) : $calc;
+            $specs = $this->editing ? array_merge($this->manualSpecs(), $this->lockedSpecs) : $this->manualSpecs();
+            $manual = $calc->price($specs, max(1, min(QuoteCalculator::MAX_DAYS, (int) $this->days)));
         }
 
         return view('livewire.quote-builder', [

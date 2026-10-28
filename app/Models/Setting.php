@@ -53,6 +53,7 @@ class Setting extends Model
         'notify_emails' => null,
         'notify_registered' => true,
         'notify_quote_saved' => true,
+        'notify_quote_changed' => true,
         'notify_quote_submitted' => true,
         'notify_quote_deleted' => true,
         'notify_quote_pdf' => false,

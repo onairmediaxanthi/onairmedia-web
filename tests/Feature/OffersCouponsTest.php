@@ -228,4 +228,30 @@ class OffersCouponsTest extends TestCase
         $this->assertSame('XMAS-26', Coupon::query()->first()->code);
         Livewire::test(ListCoupons::class)->assertOk()->assertSee('XMAS-26');
     }
+
+    public function test_customer_changes_own_saved_quote_keeping_number_and_staff_discount(): void
+    {
+        $admin = $this->admin();
+        $q = app(QuoteService::class)->createForCustomer($admin, $this->customer, 'Από την ομάδα', [
+            ['type' => 'radio', 'station_id' => $this->star->id, 'spots_per_day' => 4], ['type' => 'discount', 'percent' => 10],
+        ], 10, null, null);
+        $number = $q->number;
+        $this->actingAs($this->customer);
+
+        $this->get(route('quotes.show', $q))->assertSee('Αλλαγές στην προσφορά');
+        Livewire::withQueryParams(['allagi' => $q->ulid])->test(\App\Livewire\QuoteBuilder::class)
+            ->assertSet('mode', 'manual')->assertSet("radio.{$this->star->id}.spots", 4)->assertSee($number)
+            ->set("radio.{$this->star->id}.spots", 6)
+            ->call('saveManual')->assertRedirect(route('quotes.show', $q));
+
+        $q->refresh();
+        $this->assertSame($number, $q->number);
+        $this->assertSame(1, Quote::query()->count());
+        $this->assertSame('270.00', $q->subtotal); // 6 × 10 × 5 = 300 − 10% της ομάδας
+        $this->assertDatabaseHas('customer_activities', ['type' => 'quote_changed', 'quote_id' => $q->id]);
+
+        // Ξένη ή σταλμένη προσφορά δεν ανοίγει για αλλαγές
+        $q->forceFill(['status' => 'submitted'])->save();
+        Livewire::withQueryParams(['allagi' => $q->ulid])->test(\App\Livewire\QuoteBuilder::class)->assertSet('editing', null);
+    }
 }

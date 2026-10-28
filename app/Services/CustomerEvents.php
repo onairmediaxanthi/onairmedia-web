@@ -22,7 +22,7 @@ use Throwable;
 class CustomerEvents
 {
     /** Ενέργειες που εμφανίζονται στο καμπανάκι της διαχείρισης */
-    protected const BELL = ['registered', 'quote_saved', 'quote_submitted', 'quote_deleted'];
+    protected const BELL = ['registered', 'quote_saved', 'quote_changed', 'quote_submitted', 'quote_deleted'];
 
     public static function record(string $type, ?User $user, ?Quote $quote = null, array $meta = []): CustomerActivity
     {
