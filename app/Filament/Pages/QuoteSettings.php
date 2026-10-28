@@ -19,6 +19,10 @@ use Filament\Support\Icons\Heroicon;
 /** Ισχύς προσφορών, υπενθυμίσεις πελατών και ειδοποιήσεις προς την εταιρεία */
 class QuoteSettings extends Page
 {
+    use \App\Filament\Concerns\PageRestrictedToArea;
+
+    protected static string $area = 'settings';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedAdjustmentsHorizontal;
 
     protected static ?string $navigationLabel = 'Ρυθμίσεις προσφορών';
@@ -27,7 +31,7 @@ class QuoteSettings extends Page
 
     protected static ?string $slug = 'rythmiseis-prosforon';
 
-    protected static string|\UnitEnum|null $navigationGroup = 'Πωλήσεις';
+    protected static string|\UnitEnum|null $navigationGroup = 'Ρυθμίσεις';
 
     protected static ?int $navigationSort = 90;
 

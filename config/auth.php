@@ -99,6 +99,14 @@ return [
     */
 
     'passwords' => [
+        // Προσκλήσεις και επαναφορές κωδικού του προσωπικού (διαχείριση): ισχύουν 24 ώρες
+        'admins' => [
+            'provider' => 'users',
+            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'expire' => 1440,
+            'throttle' => 60,
+        ],
+
         'users' => [
             'provider' => 'users',
             'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),

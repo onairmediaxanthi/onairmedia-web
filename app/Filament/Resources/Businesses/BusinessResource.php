@@ -16,6 +16,10 @@ use Filament\Tables\Table;
 
 class BusinessResource extends Resource
 {
+    use \App\Filament\Concerns\RestrictedToArea;
+
+    protected static string $area = 'sales';
+
     protected static ?string $model = Business::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingStorefront;

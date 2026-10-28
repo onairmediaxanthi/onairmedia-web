@@ -28,6 +28,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->authGuard('admin')
+            ->authPasswordBroker('admins')
             ->login()
             ->profile(isSimple: false)
             ->passwordReset()
@@ -45,7 +46,7 @@ class AdminPanelProvider extends PanelProvider
             ->spa()
             ->databaseNotifications()
             ->databaseNotificationsPolling('60s')
-            ->navigationGroups(['Αρχική σελίδα', 'Μέσα', 'Πωλήσεις', 'Τιμοκατάλογος'])
+            ->navigationGroups(['Αρχική σελίδα', 'Μέσα', 'Πωλήσεις', 'Τιμοκατάλογος', 'Ρυθμίσεις'])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
             ->pages([

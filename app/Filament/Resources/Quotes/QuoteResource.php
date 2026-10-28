@@ -25,6 +25,10 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class QuoteResource extends Resource
 {
+    use \App\Filament\Concerns\RestrictedToArea;
+
+    protected static string $area = 'sales';
+
     protected static ?string $model = Quote::class;
 
     protected static ?string $slug = 'prosfores';

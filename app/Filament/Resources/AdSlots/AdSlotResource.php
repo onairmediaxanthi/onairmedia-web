@@ -21,6 +21,10 @@ use Filament\Tables\Table;
 
 class AdSlotResource extends Resource
 {
+    use \App\Filament\Concerns\RestrictedToArea;
+
+    protected static string $area = 'pricing';
+
     protected static ?string $model = AdSlot::class;
 
     protected static ?string $slug = 'timokatalogos/banner';

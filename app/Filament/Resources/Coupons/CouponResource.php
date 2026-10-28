@@ -26,6 +26,10 @@ use Filament\Tables\Table;
 
 class CouponResource extends Resource
 {
+    use \App\Filament\Concerns\RestrictedToArea;
+
+    protected static string $area = 'sales';
+
     protected static ?string $model = Coupon::class;
 
     protected static ?string $slug = 'kouponia';

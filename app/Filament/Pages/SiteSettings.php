@@ -20,6 +20,10 @@ use Filament\Support\Icons\Heroicon;
 
 class SiteSettings extends Page
 {
+    use \App\Filament\Concerns\PageRestrictedToArea;
+
+    protected static string $area = 'site';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCog6Tooth;
 
     protected static ?string $navigationLabel = 'Ρυθμίσεις site';

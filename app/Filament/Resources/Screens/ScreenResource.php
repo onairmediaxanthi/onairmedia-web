@@ -25,6 +25,10 @@ use Illuminate\Support\Str;
 
 class ScreenResource extends Resource
 {
+    use \App\Filament\Concerns\RestrictedToArea;
+
+    protected static string $area = 'pricing';
+
     protected static ?string $model = Screen::class;
 
     protected static ?string $slug = 'timokatalogos/pinakides';

@@ -16,6 +16,10 @@ use Filament\Tables\Table;
 
 class StationResource extends Resource
 {
+    use \App\Filament\Concerns\RestrictedToArea;
+
+    protected static string $area = 'media';
+
     protected static ?string $model = Station::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRadio;

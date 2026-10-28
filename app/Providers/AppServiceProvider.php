@@ -27,6 +27,13 @@ class AppServiceProvider extends ServiceProvider
     {
         View::composer('components.layouts.site', SiteComposer::class);
 
+        // Τελευταία σύνδεση του προσωπικού στη διαχείριση
+        \Illuminate\Support\Facades\Event::listen(\Illuminate\Auth\Events\Login::class, function ($e) {
+            if ($e->guard === 'admin' && $e->user instanceof \App\Models\User) {
+                $e->user->forceFill(['last_login_at' => now()])->saveQuietly();
+            }
+        });
+
         // Αλλαγή σταθμού στη διαχείριση → ο player ενημερώνεται αμέσως
         Station::saved(fn () => Cache::forget('player:stations'));
         Station::deleted(fn () => Cache::forget('player:stations'));

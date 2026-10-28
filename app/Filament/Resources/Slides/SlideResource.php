@@ -16,6 +16,10 @@ use Filament\Tables\Table;
 
 class SlideResource extends Resource
 {
+    use \App\Filament\Concerns\RestrictedToArea;
+
+    protected static string $area = 'site';
+
     protected static ?string $model = Slide::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedPhoto;

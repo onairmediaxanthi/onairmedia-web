@@ -52,6 +52,7 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return [
             'email_verified_at' => 'datetime',
             'last_login_at' => 'datetime',
+            'disabled_at' => 'datetime',
             'password' => 'hashed',
             'role' => UserRole::class,
             'app_authentication_secret' => 'encrypted',
@@ -94,7 +95,13 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $panel->getId() === 'admin' && $this->role?->isStaff();
+        return $panel->getId() === 'admin' && $this->role?->isStaff() && $this->disabled_at === null;
+    }
+
+    /** Πρόσβαση σε περιοχή της διαχείρισης ανάλογα με τον ρόλο */
+    public function canAccessArea(string $area): bool
+    {
+        return $this->disabled_at === null && in_array($area, $this->role?->areas() ?? [], true);
     }
 
     public function getAppAuthenticationSecret(): ?string

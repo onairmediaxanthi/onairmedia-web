@@ -14,6 +14,10 @@ use Filament\Tables\Table;
 /** Τι κάνουν οι πελάτες: εγγραφές, προσφορές, PDF, διαγραφές, υπενθυμίσεις */
 class CustomerActivityResource extends Resource
 {
+    use \App\Filament\Concerns\RestrictedToArea;
+
+    protected static string $area = 'sales';
+
     protected static ?string $model = CustomerActivity::class;
 
     protected static ?string $slug = 'drastiriotita';

@@ -18,6 +18,10 @@ use Filament\Support\Icons\Heroicon;
 /** Τιμοκατάλογος: δημοσιευμένα άρθρα, δημιουργικό και ΦΠΑ */
 class ExtraCharges extends Page
 {
+    use \App\Filament\Concerns\PageRestrictedToArea;
+
+    protected static string $area = 'pricing';
+
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCurrencyEuro;
 
     protected static ?string $navigationLabel = 'Λοιπές χρεώσεις';

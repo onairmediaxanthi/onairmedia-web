@@ -55,7 +55,7 @@ class CustomerEvents
     protected static function bell(string $type, string $summary, ?Quote $quote): void
     {
         try {
-            $staff = User::query()->whereIn('role', [UserRole::Admin->value, UserRole::Sales->value])->get();
+            $staff = User::query()->whereIn('role', [UserRole::Admin->value, UserRole::Sales->value])->whereNull('disabled_at')->get();
             if ($staff->isEmpty()) {
                 return;
             }

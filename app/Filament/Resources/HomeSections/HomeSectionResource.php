@@ -16,6 +16,10 @@ use Filament\Tables\Table;
 
 class HomeSectionResource extends Resource
 {
+    use \App\Filament\Concerns\RestrictedToArea;
+
+    protected static string $area = 'site';
+
     protected static ?string $model = HomeSection::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedSquares2x2;

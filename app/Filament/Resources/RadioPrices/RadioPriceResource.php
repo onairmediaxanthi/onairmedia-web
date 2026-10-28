@@ -25,6 +25,10 @@ use Filament\Tables\Table;
  */
 class RadioPriceResource extends Resource
 {
+    use \App\Filament\Concerns\RestrictedToArea;
+
+    protected static string $area = 'pricing';
+
     protected static ?string $model = Station::class;
 
     protected static ?string $slug = 'timokatalogos/radiofona';
