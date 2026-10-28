@@ -254,4 +254,12 @@ class OffersCouponsTest extends TestCase
         $q->forceFill(['status' => 'submitted'])->save();
         Livewire::withQueryParams(['allagi' => $q->ulid])->test(\App\Livewire\QuoteBuilder::class)->assertSet('editing', null);
     }
+
+    public function test_header_shows_who_is_logged_in_with_logout(): void
+    {
+        $this->get('/')->assertSee('Σύνδεση')->assertDontSee('Αποσύνδεση');
+        $this->actingAs($this->customer)->get('/')->assertSee('Συνδεδεμένος ως')->assertSee('Πελάτης ΟΕ')->assertSee('Αποσύνδεση')->assertSee('Οι προσφορές μου');
+        $this->post(route('logout'))->assertRedirect(route('home'));
+        $this->assertGuest('web');
+    }
 }
