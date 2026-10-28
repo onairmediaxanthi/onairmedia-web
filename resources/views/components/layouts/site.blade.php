@@ -14,7 +14,14 @@
     <meta property="og:url" content="{{ $canonical ?? url()->current() }}">
     @isset($ogImage)<meta property="og:image" content="{{ $ogImage }}">@endisset
     <meta name="theme-color" content="#121a33">
-    @if ($favicon = \App\Models\Setting::url('favicon'))<link rel="icon" href="{{ $favicon }}">@endif
+    @if ($favicon = \App\Models\Setting::url('favicon'))
+        <link rel="icon" href="{{ $favicon }}">
+    @else
+        <link rel="icon" href="/favicon.ico" sizes="any">
+        <link rel="icon" type="image/png" sizes="32x32" href="/icons/onair-32.png">
+    @endif
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/onair-180.png">
+    <link rel="manifest" href="/site.webmanifest">
     <meta name="color-scheme" content="light dark">
     {{-- Πριν τα styles: χωρίς «αναλαμπή» λάθος θέματος --}}
     <script>

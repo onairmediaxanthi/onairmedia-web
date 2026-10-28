@@ -19,8 +19,15 @@
         <div class="pointer-events-none absolute -bottom-24 right-10 h-72 w-72 rounded-full bg-glow/20 blur-3xl" aria-hidden="true"></div>
         <div class="relative grid items-center gap-10 p-8 sm:p-12 lg:grid-cols-[1.15fr_1fr]">
             <div class="{{ $right ? '' : 'lg:order-2' }}">
-                <p class="inline-flex items-center gap-2 rounded-full bg-onair/10 px-3 py-1 text-sm font-bold text-onair"><x-ui-icon name="phone" class="h-4 w-4" /> Δωρεάν εφαρμογή</p>
-                <h2 id="app-{{ $section->id }}" class="mt-4 text-3xl sm:text-4xl font-extrabold tracking-tight">{{ $section->title ?: 'Όλοι οι σταθμοί μας, στην τσέπη σας' }}</h2>
+                <div class="flex items-center gap-4">
+                    <img src="/icons/onair-app.png" alt="Εικονίδιο της εφαρμογής On Air Media Group" width="72" height="72"
+                         class="h-16 w-16 sm:h-[72px] sm:w-[72px] rounded-[22%] shadow-lg ring-1 ring-black/10" loading="lazy">
+                    <div>
+                        <p class="text-lg font-extrabold leading-tight">On Air Media Group</p>
+                        <p class="text-sm text-slate">Δωρεάν · iPhone & Android</p>
+                    </div>
+                </div>
+                <h2 id="app-{{ $section->id }}" class="mt-6 text-3xl sm:text-4xl font-extrabold tracking-tight">{{ $section->title ?: 'Όλοι οι σταθμοί μας, στην τσέπη σας' }}</h2>
                 <p class="mt-3 text-lg text-slate">{{ $section->subtitle ?: 'Κατεβάστε την εφαρμογή On Air Media Group και ακούστε όπου κι αν είστε.' }}</p>
                 <ul class="mt-6 space-y-3">
                     @foreach ($features as $f)
@@ -64,9 +71,14 @@
                         @if ($phone)
                             <img src="{{ $phone }}" alt="Η εφαρμογή On Air Media Group" class="h-full w-full object-cover" loading="lazy">
                         @else
-                            <div class="flex h-full flex-col px-5 pb-6 pt-12 text-white">
-                                <p class="text-xs font-bold uppercase tracking-widest text-white/70">Στον αέρα τώρα</p>
-                                <p class="mt-1 text-xl font-extrabold">On Air Media Group</p>
+                            <div class="flex h-full flex-col px-5 pb-6 pt-11 text-white">
+                                <div class="flex items-center gap-2.5">
+                                    <img src="/icons/onair-app.png" alt="" class="h-10 w-10 rounded-[22%] ring-1 ring-white/15">
+                                    <div class="leading-tight">
+                                        <p class="text-sm font-extrabold">On Air Media Group</p>
+                                        <p class="text-[11px] font-bold uppercase tracking-widest text-white/70">Στον αέρα τώρα</p>
+                                    </div>
+                                </div>
                                 <div class="mt-5 grid grid-cols-3 gap-2.5">
                                     @foreach ($stations as $st)
                                         <span class="grid aspect-square place-items-center overflow-hidden rounded-xl bg-white p-1"><img src="{{ $st->logo_url }}" alt="{{ $st->name }}" class="h-full w-full object-contain" loading="lazy"></span>

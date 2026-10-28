@@ -39,7 +39,7 @@ class AdminPanelProvider extends PanelProvider
             ->brandName('On Air Media — Διαχείριση')
             ->brandLogo(fn () => view('filament.brand'))
             ->brandLogoHeight('2.5rem')
-            ->favicon(fn () => \App\Models\Setting::url('favicon'))
+            ->favicon(fn () => \App\Models\Setting::url('favicon') ?: asset('icons/onair-32.png'))
             ->colors([
                 'primary' => Color::hex('#c80c92'),
             ])

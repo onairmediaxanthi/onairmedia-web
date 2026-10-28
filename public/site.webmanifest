@@ -1,0 +1,13 @@
+{
+  "name": "On Air Media Group",
+  "short_name": "On Air",
+  "lang": "el",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#231f20",
+  "theme_color": "#121a33",
+  "icons": [
+    { "src": "/icons/onair-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/onair-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
