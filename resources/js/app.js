@@ -178,3 +178,46 @@ document.addEventListener('alpine:init', () => {
         },
     }));
 });
+
+// Ενότητες αρχικής που εμφανίζονται ομαλά με την κύλιση
+function reveal() {
+    const items = document.querySelectorAll('[data-reveal]:not(.is-in)');
+    if (!('IntersectionObserver' in window)) {
+        items.forEach((el) => el.classList.add('is-in'));
+        return;
+    }
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+            if (e.isIntersecting) {
+                e.target.classList.add('is-in');
+                io.unobserve(e.target);
+            }
+        });
+    }, { rootMargin: '0px 0px -60px 0px' });
+    items.forEach((el) => io.observe(el));
+}
+document.addEventListener('DOMContentLoaded', reveal);
+document.addEventListener('livewire:navigated', reveal);
+
+// Αριθμοί που «μετράνε» όταν εμφανίζονται (π.χ. 12 → μετρά από 0 ως 12)
+function countUp() {
+    const els = document.querySelectorAll('[data-count]:not([data-counted])');
+    if (!els.length || window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return;
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        io.unobserve(e.target);
+        const el = e.target, raw = el.dataset.count, m = raw.match(/^(\D*)(\d[\d.]*)(\D*)$/);
+        el.dataset.counted = '1';
+        if (!m) return;
+        const target = parseFloat(m[2].replace(/\./g, '')), start = performance.now(), dur = 1200;
+        const tick = (t) => {
+            const p = Math.min(1, (t - start) / dur), v = Math.round(target * (1 - Math.pow(1 - p, 3)));
+            el.textContent = m[1] + v.toLocaleString('el-GR') + m[3];
+            if (p < 1) requestAnimationFrame(tick); else el.textContent = raw;
+        };
+        requestAnimationFrame(tick);
+    }), { threshold: 0.4 });
+    els.forEach((el) => io.observe(el));
+}
+document.addEventListener('DOMContentLoaded', countUp);
+document.addEventListener('livewire:navigated', countUp);

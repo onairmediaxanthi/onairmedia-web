@@ -35,6 +35,8 @@ class HomeController extends Controller
             'dial', 'stations' => $data['stations']->isEmpty(),
             'news' => $data['news'] === [],
             'packages', 'offers' => ($data['packages'][$s->id] ?? collect())->isEmpty(),
+            'stats', 'logos', 'faq' => empty($s->setting('items')),
+            'video' => blank($s->setting('url')),
             default => false,
         })->values();
 

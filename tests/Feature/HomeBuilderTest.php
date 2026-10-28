@@ -59,7 +59,8 @@ class HomeBuilderTest extends TestCase
     {
         HomeSection::where('type', 'dial')->update(['show_mobile' => false, 'show_desktop' => false]);
 
-        $this->get('/')->assertOk()->assertSee('max-sm:hidden lg:hidden" data-section="dial"', false);
+        $html = preg_replace('/\s+/', ' ', $this->get('/')->assertOk()->getContent());
+        $this->assertMatchesRegularExpression('/class="scroll-mt-16 max-sm:hidden lg:hidden[^"]*"[^>]*data-section="dial"/', $html);
     }
 
     public function test_guests_do_not_see_prices(): void

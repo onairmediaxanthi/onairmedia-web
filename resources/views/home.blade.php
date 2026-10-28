@@ -1,6 +1,10 @@
 <x-layouts.site>
     @forelse ($sections as $section)
-        <div @if($section->anchor) id="{{ $section->anchor }}" @endif class="scroll-mt-16 {{ $section->visibilityClasses() }}" data-section="{{ $section->type }}">
+        @php($w = $section->wrapperAttributes())
+        <div @if($section->anchor) id="{{ $section->anchor }}" @endif class="scroll-mt-16 {{ $section->visibilityClasses() }} {{ $w['class'] }}"
+             @if($w['style']) style="{{ $w['style'] }}" @endif data-section="{{ $section->type }}"
+             data-pad="{{ $w['data-pad'] }}" data-width="{{ $w['data-width'] }}" data-align="{{ $w['data-align'] }}" data-title="{{ $w['data-title'] }}"
+             @if($w['animate'] && ! $loop->first) data-reveal @endif>
             @include('home.sections.'.$section->type, ['section' => $section])
         </div>
     @empty

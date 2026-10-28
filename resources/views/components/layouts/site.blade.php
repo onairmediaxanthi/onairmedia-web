@@ -21,6 +21,7 @@
         (function () {
             var t = null;
             try { t = localStorage.getItem('onair:theme'); } catch (e) {}
+            document.documentElement.classList.add('js-reveal');
             var dark = t ? t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
             document.documentElement.classList.toggle('dark', dark);
         })();

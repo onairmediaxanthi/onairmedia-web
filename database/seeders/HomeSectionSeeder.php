@@ -29,6 +29,10 @@ class HomeSectionSeeder extends Seeder
             if (! HomeSection::where('type', 'quote_cta')->exists()) {
                 HomeSection::create(self::quoteCta() + ['sort' => 15, 'is_active' => true]);
             }
+            if (! HomeSection::where('type', 'app')->exists()) {
+                HomeSection::create(['type' => 'app', 'anchor' => 'efarmogi', 'admin_label' => 'Η εφαρμογή μας', 'sort' => 75, 'is_active' => true,
+                    'settings' => ['qr' => true, 'layout' => 'image-right']]);
+            }
             if (! HomeSection::where('type', 'offers')->exists()) {
                 HomeSection::create(self::offers() + ['sort' => 17, 'is_active' => false]);
                 // «Προσφορά» και «Προσφορές» δίπλα-δίπλα στο μενού μπερδεύουν: το κουμπί «Βγάλτε προσφορά» υπάρχει ήδη πάνω δεξιά

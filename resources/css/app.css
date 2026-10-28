@@ -96,3 +96,42 @@
 /* Λογότυπο χωρίς λευκή εκδοχή: στη σκοτεινή εμφάνιση το μαύρο γίνεται λευκό, το ματζέντα μένει */
 .dark .logo-auto { filter: invert(1) hue-rotate(180deg) saturate(1.3); }
 .logo-auto-always { filter: invert(1) hue-rotate(180deg) saturate(1.3); }
+
+/* ---------- Εμφάνιση ενοτήτων αρχικής (ρυθμίσεις από τη διαχείριση) ---------- */
+/* Σκούρο φόντο: τα χρώματα κειμένου/γραμμών γίνονται ανοιχτά μόνο μέσα στην ενότητα */
+.sec-tone-light {
+    --color-ink: #ffffff;
+    --color-slate: rgb(255 255 255 / .78);
+    --color-line: rgb(255 255 255 / .18);
+    --color-surface: rgb(255 255 255 / .07);
+    --color-paper: rgb(255 255 255 / .1);
+    --sec-accent: #ffb627;
+    color: #fff;
+}
+.sec-tone-dark {
+    --color-ink: #141a2e;
+    --color-slate: #4b5468;
+    --color-line: rgb(18 26 51 / .14);
+    --color-surface: rgb(255 255 255 / .85);
+    --color-paper: rgb(255 255 255 / .6);
+    color: #141a2e;
+}
+[data-pad="none"] > section { padding-top: 0 !important; padding-bottom: 0 !important; }
+[data-pad="compact"] > section { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+[data-pad="large"] > section { padding-top: 7rem !important; padding-bottom: 7rem !important; }
+[data-width="narrow"] > section { max-width: 56rem !important; }
+[data-width="full"] > section { max-width: none !important; }
+[data-align="center"] > section { text-align: center; }
+[data-align="center"] > section :is(.max-w-2xl, .max-w-3xl, .max-w-xl) { margin-inline: auto; }
+[data-align="center"] > section :is(.justify-between) { justify-content: center; }
+[data-title="sm"] > section h2 { font-size: 1.6rem !important; }
+[data-title="lg"] > section h2 { font-size: clamp(2.2rem, 5vw, 3.4rem) !important; line-height: 1.08; }
+[data-title="xl"] > section h2 { font-size: clamp(2.6rem, 7vw, 4.6rem) !important; line-height: 1.02; }
+
+/* Εμφάνιση με κύλιση (μόνο όταν τρέχει JS και ο χρήστης δεν ζήτησε λιγότερη κίνηση) */
+@media (prefers-reduced-motion: no-preference) {
+    .js-reveal [data-reveal] { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
+    .js-reveal [data-reveal].is-in { opacity: 1; transform: none; }
+}
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { [class*="animate-[marquee"] { animation: none !important; } }
