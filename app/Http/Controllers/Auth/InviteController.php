@@ -57,6 +57,7 @@ class InviteController extends Controller
         Auth::guard('web')->login($user);
         $request->session()->regenerate();
         CustomerEvents::record('activated', $user);
+        app(\App\Services\Coupons::class)->issueWelcome($user);
 
         $quote = $request->query('q') ? Quote::query()->where('ulid', $request->query('q'))->where('user_id', $user->id)->first() : null;
 

@@ -41,9 +41,9 @@
                     @foreach ($b['lines'] as $l)<div style="font-size:12px;color:#666;margin-top:2px">{{ $l['detail'] ?: $l['label'] }}</div>@endforeach
                 </td><td align="right" style="padding:10px 0;border-bottom:1px solid #efeff3;white-space:nowrap;vertical-align:top"><strong>{{ $m($b['total']) }}</strong></td></tr>
             @endforeach
-            @if ($d = \App\Services\Quotes\QuotePresenter::discount($quote))
+            @foreach (\App\Services\Quotes\QuotePresenter::discounts($quote) as $d)
                 <tr><td style="padding:12px 0 2px;color:#c80c92;font-weight:bold">{{ $d['label'] }}</td><td align="right" style="padding:12px 0 2px;color:#c80c92;font-weight:bold">{{ $m($d['amount']) }}</td></tr>
-            @endif
+            @endforeach
             <tr><td style="padding:12px 0 2px;color:#666">Χωρίς ΦΠΑ</td><td align="right" style="padding:12px 0 2px;color:#666">{{ $quote->money('subtotal') }}</td></tr>
             <tr><td style="padding:2px 0;color:#666">ΦΠΑ {{ rtrim(rtrim((string) $quote->vat_rate, '0'), '.') }}%</td><td align="right" style="padding:2px 0;color:#666">{{ $quote->money('vat') }}</td></tr>
             <tr><td style="padding:8px 0;font-size:18px;font-weight:bold">Τελικό ποσό</td><td align="right" style="padding:8px 0;font-size:20px;font-weight:bold;color:#c80c92">{{ $quote->money('total') }}</td></tr>

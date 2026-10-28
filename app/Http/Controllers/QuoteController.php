@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Quote;
+use App\Services\Coupons;
 use App\Services\CustomerEvents;
+use App\Services\Quotes\QuoteCalculator;
 use App\Services\Quotes\QuotePdf;
 use App\Services\Quotes\QuoteService;
 use Illuminate\Http\RedirectResponse;
@@ -84,10 +86,40 @@ class QuoteController extends Controller
             'accept' => ['accepted'],
         ], ['accept.accepted' => 'Χρειάζεται να αποδεχτείτε τους όρους.']);
 
-        $this->service->submit($quote, $data['notes'] ?? null);
+        try {
+            $this->service->submit($quote, $data['notes'] ?? null);
+        } catch (InvalidArgumentException $e) {
+            app(Coupons::class)->remove($quote);
+
+            return redirect()->route('quotes.checkout', $quote)->with('error', 'Το κουπόνι αφαιρέθηκε: '.$e->getMessage());
+        }
 
         return redirect()->route('quotes.show', $quote)
             ->with('status', 'Λάβαμε την παραγγελία σας. Θα επικοινωνήσουμε μαζί σας εντός μίας εργάσιμης ημέρας για επιβεβαίωση και πληρωμή.');
+    }
+
+    public function applyCoupon(Request $request, Quote $quote): RedirectResponse
+    {
+        $this->own($request, $quote);
+        abort_unless($quote->isEditable(), 403);
+        $data = $request->validate(['code' => ['required', 'string', 'max:40']], ['code.required' => 'Γράψτε τον κωδικό του κουπονιού.']);
+
+        try {
+            $coupon = app(Coupons::class)->apply($quote, $data['code'], $request->user());
+        } catch (InvalidArgumentException $e) {
+            return back()->withErrors(['code' => $e->getMessage()])->withInput();
+        }
+
+        return back()->with('status', 'Το κουπόνι '.$coupon->code.' εφαρμόστηκε: '.QuoteCalculator::money(-collect($quote->items)->firstWhere('type', 'coupon')['amount']).' έκπτωση.');
+    }
+
+    public function removeCoupon(Request $request, Quote $quote): RedirectResponse
+    {
+        $this->own($request, $quote);
+        abort_unless($quote->isEditable(), 403);
+        app(Coupons::class)->remove($quote);
+
+        return back()->with('status', 'Το κουπόνι αφαιρέθηκε.');
     }
 
     public function destroy(Request $request, Quote $quote): RedirectResponse

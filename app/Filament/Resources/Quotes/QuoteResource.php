@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Quotes;
 
 use App\Filament\Resources\Quotes\Pages\CreateQuote;
+use App\Filament\Resources\Quotes\Pages\EditQuote;
 use App\Filament\Resources\Quotes\Pages\ListQuotes;
 use App\Filament\Resources\Quotes\Pages\ViewQuote;
 use App\Models\Quote;
@@ -98,6 +99,8 @@ class QuoteResource extends Resource
                 TextEntry::make('days')->label('Ημέρες'),
                 TextEntry::make('valid_until')->label('Ισχύει έως')->date('d/m/Y'),
                 TextEntry::make('createdBy.name')->label('Ετοίμασε')->placeholder('Ο ίδιος ο πελάτης'),
+                TextEntry::make('updatedBy.name')->label('Τελευταίες αλλαγές')->placeholder('—')
+                    ->formatStateUsing(fn ($state, Quote $r) => $state.' · '.$r->updated_at->format('d/m/Y H:i')),
                 TextEntry::make('sent_at')->label('Στάλθηκε στον πελάτη')->dateTime('d/m/Y H:i')->placeholder('Όχι ακόμα')
                     ->formatStateUsing(fn ($state, Quote $r) => $state?->format('d/m/Y H:i').($r->sent_count > 1 ? ' ('.$r->sent_count.' φορές)' : '')),
                 TextEntry::make('submitted_at')->label('Παραγγελία')->dateTime('d/m/Y H:i')->placeholder('—'),
@@ -138,7 +141,10 @@ class QuoteResource extends Resource
                 TrashedFilter::make()->label('Διαγραμμένες')
                     ->placeholder('Χωρίς τις διαγραμμένες')->trueLabel('Μαζί με τις διαγραμμένες')->falseLabel('Μόνο διαγραμμένες'),
             ])
-            ->recordActions([ViewAction::make()]);
+            ->recordActions([
+                ViewAction::make(),
+                \Filament\Actions\EditAction::make()->label('Αλλαγές')->hidden(fn (Quote $r) => $r->trashed()),
+            ]);
     }
 
     public static function getPages(): array
@@ -147,6 +153,7 @@ class QuoteResource extends Resource
             'index' => ListQuotes::route('/'),
             'create' => CreateQuote::route('/create'),
             'view' => ViewQuote::route('/{record}'),
+            'edit' => EditQuote::route('/{record}/edit'),
         ];
     }
 }

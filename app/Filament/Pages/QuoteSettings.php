@@ -33,6 +33,7 @@ class QuoteSettings extends Page
 
     public const KEYS = [
         'quote_valid_days', 'quote_reminder_days', 'quote_reminder_max', 'notify_emails',
+        'welcome_coupon_enabled', 'welcome_coupon_type', 'welcome_coupon_value', 'welcome_coupon_days', 'welcome_coupon_min', 'welcome_coupon_prefix',
         'notify_registered', 'notify_quote_saved', 'notify_quote_submitted', 'notify_quote_deleted', 'notify_quote_pdf', 'notify_wizard_used',
     ];
 
@@ -55,6 +56,16 @@ class QuoteSettings extends Page
                 TextInput::make('quote_reminder_max')->label('Το πολύ')->numeric()->integer()->minValue(0)->maxValue(10)->suffix('υπενθυμίσεις')->required()
                     ->helperText('Ανά προσφορά. Ο πελάτης μπορεί να τις σταματήσει από το email.'),
             ]),
+            Section::make('Κουπόνι καλωσορίσματος')->columns(3)
+                ->description('Κάθε νέος πελάτης παίρνει με email προσωπικό κωδικό μίας χρήσης, μόλις επιβεβαιώσει το email του (ή ενεργοποιήσει λογαριασμό που ανοίξατε εσείς). Ένας ανά λογαριασμό, άρα ένας ανά ΑΦΜ.')
+                ->schema([
+                    Toggle::make('welcome_coupon_enabled')->label('Ενεργό')->inline(false)->live()->columnSpanFull(),
+                    \Filament\Forms\Components\Select::make('welcome_coupon_type')->label('Είδος')->options(\App\Models\Coupon::TYPES)->native(false)->required(),
+                    TextInput::make('welcome_coupon_value')->label('Αξία')->numeric()->minValue(0)->maxValue(100000)->required(),
+                    TextInput::make('welcome_coupon_days')->label('Ισχύει για')->numeric()->integer()->minValue(1)->maxValue(365)->suffix('ημέρες')->required(),
+                    TextInput::make('welcome_coupon_min')->label('Ελάχιστη καμπάνια')->numeric()->minValue(0)->suffix('€')->helperText('Χωρίς ΦΠΑ. Κενό = χωρίς όριο.'),
+                    TextInput::make('welcome_coupon_prefix')->label('Πρόθεμα κωδικού')->maxLength(12)->alphaNum()->helperText('π.χ. KALOS → KALOS-7FK2QM'),
+                ]),
             Section::make('Ειδοποιήσεις προς εσάς')
                 ->description('Όλες οι ενέργειες φαίνονται πάντα στη «Δραστηριότητα πελατών» και οι σημαντικές στο καμπανάκι πάνω δεξιά. Εδώ διαλέγετε ποιες έρχονται και με email.')
                 ->columns(3)->schema([

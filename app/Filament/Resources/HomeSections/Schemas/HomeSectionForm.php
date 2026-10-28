@@ -76,7 +76,7 @@ class HomeSectionForm
             ]),
 
             Section::make('Ρυθμίσεις πακέτων')->columns(3)->columnSpanFull()->visible($is('packages'))->schema([
-                Select::make('settings.source')->label('Ποια πακέτα')->default('all')->required()
+                Select::make('settings.source')->label('Ποια πακέτα')->default('all')->required()->live()
                     ->options(['all' => 'Όλα τα ενεργά', 'featured' => 'Μόνο τα προβεβλημένα', 'offers' => 'Μόνο προσφορές', 'chosen' => 'Συγκεκριμένα']),
                 Select::make('settings.package_ids')->label('Επιλογή πακέτων')->multiple()
                     ->options(fn () => Package::query()->orderBy('sort')->pluck('name', 'id'))
@@ -84,6 +84,18 @@ class HomeSectionForm
                 Select::make('settings.limit')->label('Πόσα το πολύ')->default(6)
                     ->options([3 => 3, 4 => 4, 6 => 6, 8 => 8, 12 => 12]),
             ]),
+
+            Section::make('Ρυθμίσεις πάνελ προσφορών')->columns(3)->columnSpanFull()->visible($is('offers'))
+                ->description('Τα πάνελ γίνονται slider όταν οι προσφορές είναι πάνω από 3. Η ενότητα κρύβεται μόνη της όταν δεν υπάρχει ενεργή προσφορά.')
+                ->schema([
+                    Select::make('settings.source')->label('Τι δείχνει')->default('offers')->required()
+                        ->options(['offers' => 'Μόνο προσφορές (με λήξη)', 'featured' => 'Μόνο προβεβλημένα', 'all' => 'Όλα τα ενεργά πακέτα', 'chosen' => 'Συγκεκριμένα']),
+                    Select::make('settings.package_ids')->label('Επιλογή')->multiple()
+                        ->options(fn () => Package::query()->orderBy('sort')->pluck('name', 'id'))
+                        ->visible(fn (Get $get) => $get('settings.source') === 'chosen'),
+                    Select::make('settings.limit')->label('Πόσες το πολύ')->default(12)->options([3 => 3, 6 => 6, 9 => 9, 12 => 12, 20 => 20]),
+                    Toggle::make('settings.autoplay')->label('Αυτόματη κύλιση')->default(true)->inline(false),
+                ]),
 
             Section::make('Ρυθμίσεις ειδήσεων')->columnSpanFull()->visible($is('news'))->schema([
                 Select::make('settings.count')->label('Πόσες ειδήσεις')->default(7)

@@ -65,6 +65,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/to-studio-mou/prosfores/{quote}/tameio', [QuoteController::class, 'checkout'])->name('quotes.checkout');
         Route::post('/to-studio-mou/prosfores/{quote}/tameio', [QuoteController::class, 'submit'])->middleware('throttle:5,1')->name('quotes.submit');
         Route::delete('/to-studio-mou/prosfores/{quote}', [QuoteController::class, 'destroy'])->name('quotes.destroy');
+        Route::post('/to-studio-mou/prosfores/{quote}/kouponi', [QuoteController::class, 'applyCoupon'])->middleware('throttle:10,1')->name('quotes.coupon');
+        Route::delete('/to-studio-mou/prosfores/{quote}/kouponi', [QuoteController::class, 'removeCoupon'])->name('quotes.coupon.remove');
     });
 });
 

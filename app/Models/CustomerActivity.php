@@ -26,6 +26,9 @@ class CustomerActivity extends Model
         'activated' => 'Ενεργοποίησε τον λογαριασμό',
         'staff_quote' => 'Προσφορά από το προσωπικό',
         'quote_sent' => 'Στάλθηκε πρόταση στον πελάτη',
+        'quote_edited' => 'Αλλαγές από το προσωπικό',
+        'coupon_issued' => 'Πήρε κουπόνι καλωσορίσματος',
+        'coupon_applied' => 'Χρησιμοποίησε κουπόνι',
     ];
 
     protected $fillable = ['user_id', 'quote_id', 'type', 'summary', 'meta'];

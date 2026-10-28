@@ -40,6 +40,14 @@
             </div>
 
             <aside class="space-y-6">
+                @foreach ($coupons as $c)
+                    <div class="rounded-2xl border-2 border-dashed border-onair bg-onair/5 p-6">
+                        <p class="text-sm font-semibold text-onair">{{ $c->name }}</p>
+                        <p class="mt-1 text-2xl font-extrabold">{{ $c->valueLabel() }} έκπτωση</p>
+                        <p class="mt-3 select-all rounded-xl bg-surface px-4 py-2.5 text-center text-lg font-bold tracking-widest freq">{{ $c->code }}</p>
+                        <p class="mt-2 text-sm text-slate">Γράψτε τον στο ταμείο.@if($c->ends_at) Ισχύει έως {{ $c->ends_at->format('d/m/Y') }}.@endif</p>
+                    </div>
+                @endforeach
                 <div class="rounded-2xl border border-line bg-surface p-6">
                     <div class="flex items-center justify-between gap-3">
                         <h2 class="text-lg font-bold">Στοιχεία επιχείρησης</h2>

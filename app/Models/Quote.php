@@ -76,6 +76,16 @@ class Quote extends Model
         return $this->belongsTo(User::class, 'created_by_id');
     }
 
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
+    }
+
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by_id');
+    }
+
     public function activities(): HasMany
     {
         return $this->hasMany(CustomerActivity::class);

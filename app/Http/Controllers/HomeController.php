@@ -25,7 +25,7 @@ class HomeController extends Controller
             'slides' => $types->contains('slider') ? Slide::query()->showing()->get() : collect(),
             'stations' => $types->intersect(['dial', 'stations'])->isNotEmpty() ? Station::query()->active()->get() : collect(),
             'news' => $types->contains('news') ? $news->latest(10) : [],
-            'packages' => $this->packagesFor($sections->where('type', 'packages')),
+            'packages' => $this->packagesFor($sections->whereIn('type', ['packages', 'offers'])),
             'canSeePrices' => $this->canSeePrices($request),
         ];
 
@@ -34,7 +34,7 @@ class HomeController extends Controller
             'slider' => $data['slides']->isEmpty(),
             'dial', 'stations' => $data['stations']->isEmpty(),
             'news' => $data['news'] === [],
-            'packages' => ($data['packages'][$s->id] ?? collect())->isEmpty(),
+            'packages', 'offers' => ($data['packages'][$s->id] ?? collect())->isEmpty(),
             default => false,
         })->values();
 
@@ -48,13 +48,13 @@ class HomeController extends Controller
 
         foreach ($sections as $section) {
             $q = Package::query()->available();
-            match ($section->setting('source', 'all')) {
+            match ($section->setting('source', $section->type === 'offers' ? 'offers' : 'all')) {
                 'featured' => $q->where('is_featured', true),
                 'offers' => $q->where('is_offer', true),
                 'chosen' => $q->whereIn('id', (array) $section->setting('package_ids', [])),
                 default => null,
             };
-            $out[$section->id] = $q->limit((int) $section->setting('limit', 6))->get();
+            $out[$section->id] = $q->limit((int) $section->setting('limit', $section->type === 'offers' ? 12 : 6))->get();
         }
 
         return $out;

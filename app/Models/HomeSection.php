@@ -18,6 +18,7 @@ class HomeSection extends Model
         'dial' => 'Δείκτης FM (Στον αέρα τώρα)',
         'stations' => 'Κάρτες σταθμών',
         'packages' => 'Πακέτα & προσφορές',
+        'offers' => 'Πάνελ προσφορών (slider)',
         'news' => 'Ειδήσεις thrakitoday.gr',
         'media' => 'Τα μέσα μας (ραδιόφωνο, εφημερίδα, οθόνη)',
         'banner' => 'Banner με εικόνα και κουμπί',

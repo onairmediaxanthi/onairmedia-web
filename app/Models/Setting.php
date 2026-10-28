@@ -57,6 +57,13 @@ class Setting extends Model
         'notify_quote_deleted' => true,
         'notify_quote_pdf' => false,
         'notify_wizard_used' => false,
+        // Κουπόνι καλωσορίσματος
+        'welcome_coupon_enabled' => false,
+        'welcome_coupon_type' => 'percent',
+        'welcome_coupon_value' => 10,
+        'welcome_coupon_days' => 30,
+        'welcome_coupon_min' => null,
+        'welcome_coupon_prefix' => 'KALOS',
         'footer_text' => 'Δώδεκα ραδιόφωνα, το thrakitoday.gr και η Οθόνη Πόλης. Η φωνή της Ξάνθης, από το 88.8 ως το 106.',
     ];
 

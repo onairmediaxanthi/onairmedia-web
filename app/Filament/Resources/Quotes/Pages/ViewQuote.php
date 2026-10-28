@@ -62,6 +62,8 @@ class ViewQuote extends ViewRecord
                     CustomerEvents::record('quote_sent', $record->user, $record, ['by' => Filament::auth()->user()?->name]);
                     Notification::make()->success()->title('Η πρόταση στάλθηκε στο '.$record->user->email)->send();
                 }),
+            \Filament\Actions\EditAction::make()->label('Αλλαγές')->icon('heroicon-o-adjustments-horizontal')->color('gray')
+                ->hidden(fn (Quote $record) => $record->trashed()),
             Action::make('pdf')->label('PDF')->icon('heroicon-o-arrow-down-tray')->color('gray')
                 ->action(fn (Quote $record) => response()->streamDownload(fn () => print (QuotePdf::render($record)), QuotePdf::filename($record))),
             Action::make('update')->label('Κατάσταση')->icon('heroicon-o-pencil-square')->color('gray')

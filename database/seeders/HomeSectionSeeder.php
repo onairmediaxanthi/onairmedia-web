@@ -12,7 +12,14 @@ class HomeSectionSeeder extends Seeder
     {
         return ['type' => 'quote_cta', 'anchor' => 'prosfora', 'title' => 'Η διαφήμισή σας, σε δύο λεπτά.',
             'subtitle' => 'Πείτε μας τον στόχο, το ποσό και ποιους θέλετε να φτάσετε. Σας προτείνουμε τον καλύτερο συνδυασμό ραδιοφώνου, thrakitoday.gr και πινακίδας LED.',
-            'settings' => ['menu_label' => 'Προσφορά', 'primary_label' => 'Βγάλτε προσφορά σε 2 λεπτά', 'secondary_label' => 'Δωρεάν εγγραφή επιχείρησης', 'show_steps' => true]];
+            'settings' => ['primary_label' => 'Βγάλτε προσφορά σε 2 λεπτά', 'secondary_label' => 'Δωρεάν εγγραφή επιχείρησης', 'show_steps' => true]];
+    }
+
+    public static function offers(): array
+    {
+        return ['type' => 'offers', 'anchor' => 'prosfores', 'admin_label' => 'Πάνελ προσφορών', 'title' => 'Προσφορές της εποχής',
+            'subtitle' => 'Έτοιμοι συνδυασμοί με έκπτωση, για περιορισμένο διάστημα.',
+            'settings' => ['menu_label' => 'Προσφορές', 'source' => 'offers', 'limit' => 12, 'autoplay' => true]];
     }
 
     public function run(): void
@@ -21,6 +28,16 @@ class HomeSectionSeeder extends Seeder
         if (HomeSection::exists()) {
             if (! HomeSection::where('type', 'quote_cta')->exists()) {
                 HomeSection::create(self::quoteCta() + ['sort' => 15, 'is_active' => true]);
+            }
+            if (! HomeSection::where('type', 'offers')->exists()) {
+                HomeSection::create(self::offers() + ['sort' => 17, 'is_active' => false]);
+                // «Προσφορά» και «Προσφορές» δίπλα-δίπλα στο μενού μπερδεύουν: το κουμπί «Βγάλτε προσφορά» υπάρχει ήδη πάνω δεξιά
+                HomeSection::where('type', 'quote_cta')->get()->each(function (HomeSection $s) {
+                    if ($s->setting('menu_label') === 'Προσφορά') {
+                        $s->settings = array_merge((array) $s->settings, ['menu_label' => null]);
+                        $s->save();
+                    }
+                });
             }
 
             return;

@@ -21,6 +21,7 @@ class EmailVerificationController extends Controller
     {
         $request->fulfill();
         \App\Services\CustomerEvents::record('verified', $request->user());
+        app(\App\Services\Coupons::class)->issueWelcome($request->user());
 
         return redirect()->intended(route('account'))->with('status', 'Το email σας επιβεβαιώθηκε. Τώρα βλέπετε τιμές και μπορείτε να κλείσετε καμπάνια.');
     }

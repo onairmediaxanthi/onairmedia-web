@@ -18,7 +18,7 @@ class QuotePdf
             'business' => $quote->user?->business,
             'company' => Setting::allValues(),
             'logo' => QuotePresenter::companyLogo('data'),
-        ])->setPaper('a4')->setOption(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false])->output();
+        ])->setPaper('a4')->setOption(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false, 'isFontSubsettingEnabled' => true])->output();
     }
 
     public static function filename(Quote $quote): string

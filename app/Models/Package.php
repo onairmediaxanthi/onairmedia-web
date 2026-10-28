@@ -23,7 +23,7 @@ class Package extends Model
 
     protected $fillable = [
         'slug', 'name', 'tagline', 'description', 'includes', 'media_mix', 'duration_days',
-        'price', 'compare_at_price', 'badge', 'color', 'image_path', 'is_offer',
+        'price', 'pricing', 'discount_percent', 'specs', 'compare_at_price', 'badge', 'color', 'image_path', 'is_offer',
         'available_from', 'available_until', 'is_featured', 'sort', 'is_active',
     ];
 
@@ -31,6 +31,8 @@ class Package extends Model
     {
         return [
             'includes' => 'array',
+            'specs' => 'array',
+            'discount_percent' => 'decimal:2',
             'price' => 'decimal:2',
             'compare_at_price' => 'decimal:2',
             'is_offer' => 'boolean',
@@ -48,6 +50,20 @@ class Package extends Model
             ->where(fn ($q) => $q->whereNull('available_from')->orWhere('available_from', '<=', now()))
             ->where(fn ($q) => $q->whereNull('available_until')->orWhere('available_until', '>', now()))
             ->orderBy('sort');
+    }
+
+    /** Πόσες ημέρες μένουν μέχρι τη λήξη της προσφοράς */
+    public function daysLeft(): ?int
+    {
+        return $this->available_until ? max(0, (int) ceil(now()->diffInHours($this->available_until, false) / 24)) : null;
+    }
+
+    /** Οι σταθμοί του πακέτου (για λογότυπα στα πάνελ) */
+    public function stations(): \Illuminate\Support\Collection
+    {
+        $ids = collect((array) $this->specs)->where('type', 'radio')->pluck('station_id')->filter()->all();
+
+        return $ids ? Station::query()->whereIn('id', $ids)->orderBy('sort')->get() : collect();
     }
 
     /** @return list<string> */

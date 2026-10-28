@@ -6,7 +6,7 @@
     $by = $quote->createdBy;
     $customer = $business?->displayName() ?? $quote->user?->name;
     $vatLabel = rtrim(rtrim((string) $quote->vat_rate, '0'), '.');
-    $discount = \App\Services\Quotes\QuotePresenter::discount($quote);
+    $discounts = \App\Services\Quotes\QuotePresenter::discounts($quote);
     $media = array_values(array_filter($blocks, fn ($b) => $b['kind'] !== 'other'));
     $extras = array_values(array_filter($blocks, fn ($b) => $b['kind'] === 'other'));
 @endphp
@@ -16,13 +16,15 @@
 <meta charset="utf-8">
 <title>{{ $quote->number }}</title>
 <style>
-    @page { margin: 24mm 15mm 18mm 15mm; }
+    @page { margin: 12mm 15mm 18mm 15mm; }
     * { font-family: 'DejaVu Sans', sans-serif; }
     body { font-size: 9pt; color: #121a33; line-height: 1.45; }
-    header { position: fixed; top: -17mm; left: 0; right: 0; height: 12mm; }
-    header img { height: 10mm; }
-    header .brand { font-size: 14pt; font-weight: bold; color: #c80c92; }
-    header .right { position: absolute; right: 0; top: 2mm; text-align: right; font-size: 7.5pt; color: #777; }
+    table.top { width: 100%; border-collapse: collapse; margin-bottom: 5mm; }
+    table.top td { vertical-align: middle; }
+    table.top img { height: 21mm; }
+    table.top .brand { font-size: 22pt; font-weight: bold; color: #c80c92; }
+    table.top .right { text-align: right; font-size: 8pt; color: #666; }
+    table.top .right strong { display: block; font-size: 11pt; color: #121a33; }
     footer { position: fixed; bottom: -12mm; left: 0; right: 0; font-size: 7pt; color: #888; border-top: 1px solid #e3e3ea; padding-top: 2mm; }
     footer .r { position: absolute; right: 0; top: 2mm; }
 
@@ -72,12 +74,12 @@
 </style>
 </head>
 <body>
-<header>
-    @if ($logo)<img src="{{ $logo }}" alt="">@else<span class="brand">{{ $company['company_name'] }}</span>@endif
-    <div class="right">{{ $quote->number }}<br>{{ $quote->created_at->format('d/m/Y') }}</div>
-</header>
+<table class="top"><tr>
+    <td>@if ($logo)<img src="{{ $logo }}" alt="{{ $company['company_name'] }}">@else<span class="brand">{{ $company['company_name'] }}</span>@endif</td>
+    <td class="right"><strong>{{ $quote->number }}</strong>{{ $quote->created_at->format('d/m/Y') }}</td>
+</tr></table>
 <footer>
-    {{ $company['company_name'] }}@if($company['vat']) · ΑΦΜ {{ $company['vat'] }}@endif @if($company['address']) · {{ $company['address'] }}@endif
+    <strong style="color:#c80c92">{{ $company['company_name'] }}</strong> · {{ $quote->number }}@if($company['vat']) · ΑΦΜ {{ $company['vat'] }}@endif
     <span class="r">{{ collect([$company['phone'], $company['email']])->filter()->implode(' · ') }}</span>
 </footer>
 
@@ -151,9 +153,11 @@
 
 <div style="page-break-inside: avoid">
 <table class="totals">
-    @if ($discount)
-        <tr><td>Σύνολο</td><td class="v">{{ $m((float) $quote->subtotal - $discount['amount']) }}</td></tr>
-        <tr><td style="color:#c80c92; font-weight:bold">{{ $discount['label'] }}</td><td class="v" style="color:#c80c92; font-weight:bold">{{ $m($discount['amount']) }}</td></tr>
+    @if ($discounts)
+        <tr><td>Σύνολο</td><td class="v">{{ $m((float) $quote->subtotal - array_sum(array_column($discounts, 'amount'))) }}</td></tr>
+        @foreach ($discounts as $d)
+            <tr><td style="color:#c80c92; font-weight:bold">{{ $d['label'] }}</td><td class="v" style="color:#c80c92; font-weight:bold">{{ $m($d['amount']) }}</td></tr>
+        @endforeach
     @endif
     <tr><td>Σύνολο χωρίς ΦΠΑ</td><td class="v">{{ $quote->money('subtotal') }}</td></tr>
     <tr><td>ΦΠΑ {{ $vatLabel }}%</td><td class="v">{{ $quote->money('vat') }}</td></tr>

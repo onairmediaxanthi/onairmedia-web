@@ -41,7 +41,7 @@ class QuotePresenter
 
         $blocks = [];
         foreach ($lines as $l) {
-            if ($l['type'] === 'discount') {
+            if (in_array($l['type'], ['discount', 'coupon'], true)) {
                 continue; // η έκπτωση φαίνεται στα σύνολα, όχι ως «μέσο»
             }
             $ref = $l['ref'] ?? null;
@@ -89,6 +89,13 @@ class QuotePresenter
         return ['title' => match ($line['type']) {
             'creative' => 'Δημιουργικό', 'package' => 'Πακέτο', 'discount' => 'Έκπτωση', default => $line['group'] ?? 'Λοιπά',
         }] + $base;
+    }
+
+    /** Εκπτώσεις (του προσωπικού και κουπόνι) για τα σύνολα @return list<array{label:string, amount:float}> */
+    public static function discounts(Quote $quote): array
+    {
+        return collect((array) $quote->items)->whereIn('type', ['discount', 'coupon'])
+            ->map(fn ($d) => ['label' => $d['label'], 'amount' => (float) $d['amount']])->values()->all();
     }
 
     /** @return array{label:string, amount:float}|null */

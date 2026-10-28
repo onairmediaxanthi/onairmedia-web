@@ -4,12 +4,41 @@
         <h1 class="mt-3 text-3xl sm:text-4xl font-extrabold tracking-tight">Ταμείο</h1>
         <p class="mt-2 text-slate">{{ $quote->number }} · {{ $quote->title }}</p>
 
-        <form method="POST" action="{{ route('quotes.submit', $quote) }}" class="mt-8 space-y-6 rounded-3xl border border-line bg-surface p-6 sm:p-8">
+        @if (session('status'))<p class="mt-6 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3" role="status">{{ session('status') }}</p>@endif
+        @if (session('error'))<p class="mt-6 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3" role="alert">{{ session('error') }}</p>@endif
+
+        @php($couponLine = collect($quote->items)->firstWhere('type', 'coupon'))
+        <div class="mt-8 rounded-3xl border border-line bg-surface p-6 sm:p-8">
+            <dl class="space-y-1.5">
+                <div class="flex justify-between text-slate"><dt>Σύνολο χωρίς ΦΠΑ</dt><dd class="freq">{{ \App\Services\Quotes\QuoteCalculator::money((float) $quote->subtotal - (float) ($couponLine['amount'] ?? 0)) }}</dd></div>
+                @if ($couponLine)
+                    <div class="flex items-center justify-between gap-3 font-semibold text-onair">
+                        <dt>{{ $couponLine['label'] }}</dt>
+                        <dd class="flex items-center gap-3"><span class="freq">{{ \App\Services\Quotes\QuoteCalculator::money($couponLine['amount']) }}</span>
+                            <form method="POST" action="{{ route('quotes.coupon.remove', $quote) }}">@csrf @method('DELETE')<button class="text-sm font-normal text-slate underline hover:text-ink">αφαίρεση</button></form>
+                        </dd>
+                    </div>
+                @endif
+                <div class="flex justify-between text-slate"><dt>ΦΠΑ {{ rtrim(rtrim((string) $quote->vat_rate, '0'), '.') }}%</dt><dd class="freq">{{ $quote->money('vat') }}</dd></div>
+                <div class="flex items-baseline justify-between gap-4 border-t border-line pt-3"><dt class="text-lg font-semibold">Τελικό ποσό με ΦΠΑ</dt><dd class="text-3xl font-extrabold freq">{{ $quote->money('total') }}</dd></div>
+            </dl>
+
+            @unless ($couponLine)
+                <form method="POST" action="{{ route('quotes.coupon', $quote) }}" class="mt-6 flex flex-wrap items-end gap-3">
+                    @csrf
+                    <div class="flex-1 min-w-48">
+                        <label for="code" class="block text-sm font-semibold">Έχετε κουπόνι έκπτωσης;</label>
+                        <input id="code" name="code" value="{{ old('code') }}" maxlength="40" autocomplete="off" placeholder="π.χ. KALOS-7FK2QM"
+                               class="mt-1.5 block w-full rounded-xl border bg-surface px-4 py-3 text-[16px] uppercase tracking-wider outline-none focus:border-onair focus:ring-2 focus:ring-onair/25 @error('code') border-red-500 @else border-line @enderror">
+                    </div>
+                    <button class="rounded-full border-2 border-onair px-6 py-3 font-semibold text-onair hover:bg-onair hover:text-white">Εφαρμογή</button>
+                    @error('code')<p class="basis-full text-sm text-red-600 dark:text-red-400">{{ $message }}</p>@enderror
+                </form>
+            @endunless
+        </div>
+
+        <form method="POST" action="{{ route('quotes.submit', $quote) }}" class="mt-6 space-y-6 rounded-3xl border border-line bg-surface p-6 sm:p-8">
             @csrf
-            <div class="flex items-baseline justify-between gap-4 border-b border-line pb-5">
-                <span class="text-lg font-semibold">Τελικό ποσό με ΦΠΑ</span>
-                <span class="text-3xl font-extrabold freq">{{ $quote->money('total') }}</span>
-            </div>
 
             <div>
                 <label for="notes" class="block text-sm font-semibold">Σημειώσεις για την ομάδα μας <span class="font-normal text-slate">(προαιρετικό)</span></label>
