@@ -66,12 +66,17 @@ class CustomerActivityResource extends Resource
                         'quote_submitted' => 'success', 'quote_deleted', 'reminders_off' => 'danger',
                         'registered', 'verified' => 'info', 'reminder_sent' => 'gray', default => 'primary',
                     }),
+                TextColumn::make('user.business.legal_name')->label('Πελάτης')->placeholder('—')->searchable()
+                    ->url(fn (CustomerActivity $r) => $r->user?->business ? \App\Filament\Resources\Businesses\BusinessResource::getUrl('edit', ['record' => $r->user->business]) : null),
                 TextColumn::make('summary')->label('Λεπτομέρειες')->wrap()->searchable(),
             ])
             ->recordUrl(fn (CustomerActivity $r) => $r->quote ? \App\Filament\Resources\Quotes\QuoteResource::getUrl('view', ['record' => $r->quote])
                 : ($r->user?->business ? url('/admin/businesses/'.$r->user->business->id.'/edit') : null))
             ->filters([
                 SelectFilter::make('type')->label('Ενέργεια')->options(CustomerActivity::TYPES)->multiple(),
+                SelectFilter::make('customer')->label('Πελάτης')->searchable()
+                    ->options(fn () => \App\Models\Business::query()->orderBy('legal_name')->pluck('legal_name', 'user_id')->all())
+                    ->query(fn ($query, array $data) => filled($data['value'] ?? null) ? $query->where('user_id', $data['value']) : $query),
             ]);
     }
 

@@ -67,6 +67,17 @@ class Business extends Model
             : 'Εγγραφή από το site';
     }
 
+    /** Ό,τι έκανε ο πελάτης (μέσω του λογαριασμού του) */
+    public function activities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CustomerActivity::class, 'user_id', 'user_id');
+    }
+
+    public function quotes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Quote::class, 'user_id', 'user_id');
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

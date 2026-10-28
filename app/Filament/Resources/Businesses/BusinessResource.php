@@ -47,7 +47,8 @@ class BusinessResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\QuotesRelationManager::class,
+            RelationManagers\ActivitiesRelationManager::class,
         ];
     }
 

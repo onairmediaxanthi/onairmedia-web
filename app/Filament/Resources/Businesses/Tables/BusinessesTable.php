@@ -17,7 +17,8 @@ class BusinessesTable
     {
         return $table
             ->defaultSort('created_at', 'desc')
-            ->modifyQueryUsing(fn (Builder $query) => $query->with(['user', 'createdBy']))
+            ->modifyQueryUsing(fn (Builder $query) => $query->with(['user', 'createdBy'])->withCount('quotes')
+                ->withMax('activities as last_activity_at', 'created_at'))
             ->columns([
                 TextColumn::make('legal_name')->label('Επιχείρηση')->weight('bold')->searchable(['legal_name', 'trade_name'])
                     ->description(fn (Business $r) => $r->trade_name),
@@ -35,6 +36,9 @@ class BusinessesTable
                     ->state(fn (Business $r) => $r->user?->email_verified_at !== null),
                 IconColumn::make('marketing_consent_at')->label('Προσφορές')->boolean()
                     ->state(fn (Business $r) => $r->marketing_consent_at !== null),
+                TextColumn::make('quotes_count')->label('Προσφορές')->sortable()->alignCenter(),
+                TextColumn::make('last_activity_at')->label('Τελευταία κίνηση')->sortable()->placeholder('—')
+                    ->formatStateUsing(fn ($state) => $state ? \Illuminate\Support\Carbon::parse($state)->locale('el')->diffForHumans() : null),
                 TextColumn::make('created_at')->label('Δημιουργία')->dateTime('d/m/Y H:i')->sortable(),
             ])
             ->filters([

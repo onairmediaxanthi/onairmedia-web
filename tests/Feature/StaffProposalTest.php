@@ -190,4 +190,19 @@ class StaffProposalTest extends TestCase
         Livewire::test(ViewQuote::class, ['record' => (string) $new->id])->assertSee('Καινούργια');
         $this->assertNull(\App\Filament\Resources\Quotes\QuoteResource::resolveRecordRouteBinding($old->id.'abc'));
     }
+
+    public function test_customer_card_shows_own_activity_and_quotes(): void
+    {
+        $b = $this->staffCustomer();
+        $other = User::factory()->create();
+        \App\Services\CustomerEvents::record('wizard_used', $other);
+        $q = app(QuoteService::class)->createForCustomer($this->admin, $b->user, 'Πρόταση Χ', [['type' => 'radio', 'station_id' => $this->star->id, 'spots_per_day' => 2]], 7, null, null);
+
+        Livewire::test(\App\Filament\Resources\Businesses\RelationManagers\ActivitiesRelationManager::class, ['ownerRecord' => $b, 'pageClass' => \App\Filament\Resources\Businesses\Pages\EditBusiness::class])
+            ->assertOk()->assertCanSeeTableRecords($b->activities()->get())
+            ->assertCanNotSeeTableRecords(\App\Models\CustomerActivity::query()->where('user_id', $other->id)->get());
+        Livewire::test(\App\Filament\Resources\Businesses\RelationManagers\QuotesRelationManager::class, ['ownerRecord' => $b, 'pageClass' => \App\Filament\Resources\Businesses\Pages\EditBusiness::class])
+            ->assertOk()->assertCanSeeTableRecords([$q]);
+        Livewire::test(ListBusinesses::class)->assertOk()->assertSee('Τελευταία κίνηση');
+    }
 }
