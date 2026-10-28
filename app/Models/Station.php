@@ -14,6 +14,8 @@ class Station extends Model
         'slug', 'name', 'frequency', 'slogan', 'description', 'genre', 'coverage',
         'stream_url', 'now_playing_mount', 'logo_path', 'cover_path', 'color',
         'website', 'socials', 'seo_title', 'seo_description', 'sort', 'is_active',
+        'audience', 'spot_seconds', 'price_spot', 'price_mention_live', 'price_mention_recorded',
+        'pct_first_position', 'pct_middle_spot', 'pct_sandwich', 'pct_fixed_hour', 'max_spots_per_hour', 'is_bookable',
     ];
 
     protected function casts(): array
@@ -21,6 +23,15 @@ class Station extends Model
         return [
             'frequency' => 'decimal:1',
             'socials' => 'array',
+            'audience' => 'array',
+            'price_spot' => 'decimal:2',
+            'price_mention_live' => 'decimal:2',
+            'price_mention_recorded' => 'decimal:2',
+            'pct_first_position' => 'decimal:2',
+            'pct_middle_spot' => 'decimal:2',
+            'pct_sandwich' => 'decimal:2',
+            'pct_fixed_hour' => 'decimal:2',
+            'is_bookable' => 'boolean',
             'is_active' => 'boolean',
             'sort' => 'integer',
         ];

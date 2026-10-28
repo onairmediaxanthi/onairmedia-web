@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
             SlideSeeder::class,
             HomeSectionSeeder::class,
             PackageSeeder::class,
+            AdSlotSeeder::class,
+            ScreenSeeder::class,
         ]);
     }
 }

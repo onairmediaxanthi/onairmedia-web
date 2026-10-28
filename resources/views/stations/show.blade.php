@@ -62,9 +62,37 @@
                 <p class="mt-4 text-slate max-w-prose">{{ $station->name }} στους {{ $station->frequency_label }}: {{ mb_strtolower($station->genre ?? 'μουσική') }} για όλη την Ξάνθη, όλο το εικοσιτετράωρο.</p>
             @endif
 
+            @if ($audience)
+                <section class="mt-12" aria-labelledby="koino-title">
+                    <h2 id="koino-title" class="text-2xl font-bold">Ποιοι ακούνε</h2>
+                    <dl class="mt-4 space-y-4">
+                        @foreach ($audience as $group)
+                            <div>
+                                <dt class="text-sm text-slate">{{ $group['label'] }}</dt>
+                                <dd class="mt-2 flex flex-wrap gap-2">
+                                    @foreach ($group['items'] as $item)
+                                        <span class="rounded-full border border-line bg-surface px-3 py-1 text-sm font-medium">{{ $item }}</span>
+                                    @endforeach
+                                </dd>
+                            </div>
+                        @endforeach
+                    </dl>
+                </section>
+            @endif
+
             <div id="diafimisi-stathmou" class="mt-12 rounded-2xl border border-line bg-surface p-7">
                 <h2 class="text-2xl font-bold">Διαφημιστείτε στον {{ $station->name }}</h2>
-                <p class="mt-2 text-slate max-w-prose">Διαλέξτε ζώνη ωρών και διάρκεια, ή συνδυάστε τον σταθμό με τους υπόλοιπους. Οι τιμές θα εμφανίζονται εδώ στους εγγεγραμμένους επαγγελματίες.</p>
+                <p class="mt-2 text-slate max-w-prose">Διαλέξτε ζώνη ωρών και διάρκεια, ή συνδυάστε τον σταθμό με τους υπόλοιπους.</p>
+                @if ($canSeePrices && $station->price_spot !== null)
+                    <dl class="mt-5 grid gap-3 sm:grid-cols-3">
+                        <div class="rounded-xl bg-paper p-4"><dt class="text-sm text-slate">Μετάδοση σποτ έως {{ $station->spot_seconds }}″</dt><dd class="mt-1 text-xl font-bold">{{ number_format((float) $station->price_spot, 2, ',', '.') }} €</dd></div>
+                        @if ($station->price_mention_live !== null)<div class="rounded-xl bg-paper p-4"><dt class="text-sm text-slate">Αναφορά από τον παραγωγό</dt><dd class="mt-1 text-xl font-bold">{{ number_format((float) $station->price_mention_live, 2, ',', '.') }} €</dd></div>@endif
+                        @if ($station->price_mention_recorded !== null)<div class="rounded-xl bg-paper p-4"><dt class="text-sm text-slate">Έτοιμη εκφώνηση</dt><dd class="mt-1 text-xl font-bold">{{ number_format((float) $station->price_mention_recorded, 2, ',', '.') }} €</dd></div>@endif
+                    </dl>
+                    <p class="mt-3 text-sm text-slate">Τιμές ανά μετάδοση, χωρίς ΦΠΑ 24%.@if((float) $station->pct_first_position > 0) Πάντα πρώτη θέση: +{{ rtrim(rtrim(number_format((float) $station->pct_first_position, 2, ',', ''), '0'), ',') }}%.@endif @if((float) $station->pct_sandwich > 0) Sandwich: +{{ rtrim(rtrim(number_format((float) $station->pct_sandwich, 2, ',', ''), '0'), ',') }}%.@endif</p>
+                @elseif (! $canSeePrices)
+                    <p class="mt-4"><a href="{{ route('register') }}" class="inline-flex rounded-full bg-onair px-5 py-2.5 text-sm font-semibold text-white hover:bg-onair-dark">Δωρεάν εγγραφή για να δείτε τιμές</a></p>
+                @endif
             </div>
         </article>
 

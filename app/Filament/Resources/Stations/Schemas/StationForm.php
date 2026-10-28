@@ -2,7 +2,10 @@
 
 namespace App\Filament\Resources\Stations\Schemas;
 
+use App\Support\Audience;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\ColorPicker;
+use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\RichEditor;
@@ -60,6 +63,16 @@ class StationForm
                         ->placeholder('/star888xanthi')
                         ->helperText('Το τελευταίο κομμάτι του stream link με «/» μπροστά. Κενό = δεν εμφανίζεται τραγούδι.'),
                 ]),
+
+                Tab::make('Κοινό')->icon('heroicon-o-user-group')->schema(array_merge(
+                    [Radio::make('audience.gender')->label('Φύλο ακροατών')->options(Audience::GENDER)->inline()],
+                    array_map(
+                        fn (string $key, array $g) => CheckboxList::make("audience.$key")->label($g['label'])
+                            ->helperText($g['help'])->options($g['options'])->bulkToggleable()
+                            ->columns($key === 'class' ? 1 : ($key === 'profiles' ? 3 : 6))->gridDirection('row'),
+                        array_keys(Audience::GROUPS), Audience::GROUPS,
+                    ),
+                )),
 
                 Tab::make('Social & SEO')->icon('heroicon-o-magnifying-glass')->schema([
                     TextInput::make('website')->label('Ιστοσελίδα σταθμού')->url(),

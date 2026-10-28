@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\UserRole;
 use App\Models\HomeSection;
 use App\Models\Package;
 use App\Models\Slide;
@@ -64,8 +63,6 @@ class HomeController extends Controller
     /** Τιμές βλέπουν μόνο επαληθευμένοι επαγγελματίες (και το προσωπικό) */
     protected function canSeePrices(Request $request): bool
     {
-        $user = $request->user();
-
-        return $user !== null && ($user->role?->isStaff() || ($user->role === UserRole::Customer && $user->hasVerifiedEmail()));
+        return (bool) $request->user()?->canSeePrices();
     }
 }

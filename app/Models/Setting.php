@@ -36,6 +36,14 @@ class Setting extends Model
         'vat' => null,
         'gemi' => null,
         'socials' => [],
+        // Τιμοκατάλογος: λοιπές χρεώσεις (χωρίς ΦΠΑ)
+        'vat_rate' => 24,
+        'price_sponsored_article' => null,
+        'price_article_writing' => null,
+        'price_spot_production' => null,
+        'price_spot_production_voices' => null,
+        'price_led_graphic' => null,
+        'price_banner_design' => null,
         'footer_text' => 'Δώδεκα ραδιόφωνα, το thrakitoday.gr και η Οθόνη Πόλης. Η φωνή της Ξάνθης, από το 88.8 ως το 106.',
     ];
 

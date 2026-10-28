@@ -69,6 +69,12 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return ($this->role ?? UserRole::Customer) === UserRole::Customer;
     }
 
+    /** Τιμές βλέπουν μόνο επαληθευμένοι επαγγελματίες (και το προσωπικό) */
+    public function canSeePrices(): bool
+    {
+        return (bool) $this->role?->isStaff() || ($this->isCustomer() && $this->hasVerifiedEmail());
+    }
+
     /** Email επαλήθευσης στα ελληνικά */
     public function sendEmailVerificationNotification(): void
     {
