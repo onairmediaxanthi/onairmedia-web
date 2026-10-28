@@ -54,6 +54,8 @@ mv "$HT.new" "$HT"
 ln -sfn "$APP_DIR/storage/app/public" "$WEB_DIR/storage"
 
 # 4. Βάση και cache
+# Νέα πακέτα composer: ξαναχτίζουμε τη λίστα τους (το bootstrap/cache δεν έρχεται με το build)
+"$PHP" artisan package:discover --ansi >/dev/null
 if grep -qE '^DB_PASSWORD=.+' .env; then
   "$PHP" artisan migrate --force
   "$PHP" artisan optimize
