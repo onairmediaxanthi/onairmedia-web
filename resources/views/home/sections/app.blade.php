@@ -19,13 +19,13 @@
         <div class="pointer-events-none absolute -bottom-24 right-10 h-72 w-72 rounded-full bg-glow/20 blur-3xl" aria-hidden="true"></div>
         <div class="relative grid items-center gap-10 p-8 sm:p-12 lg:grid-cols-[1.15fr_1fr]">
             <div class="{{ $right ? '' : 'lg:order-2' }}">
-                <div class="flex items-center gap-4">
-                    <img src="/icons/onair-app.png" alt="Εικονίδιο της εφαρμογής On Air Media Group" width="72" height="72"
-                         class="h-16 w-16 sm:h-[72px] sm:w-[72px] rounded-[22%] shadow-lg ring-1 ring-black/10" loading="lazy">
-                    <div>
-                        <p class="text-lg font-extrabold leading-tight">On Air Media Group</p>
-                        <p class="text-sm text-slate">Δωρεάν · iPhone & Android</p>
-                    </div>
+                <div class="flex flex-wrap items-center gap-x-5 gap-y-3">
+                    @if (str_contains($section->wrapperAttributes()['class'], 'sec-tone-light'))
+                        <x-site-logo on-dark class="h-14 sm:h-16 w-auto" />
+                    @else
+                        <x-site-logo class="h-14 sm:h-16 w-auto" />
+                    @endif
+                    <p class="rounded-full bg-onair/10 px-3 py-1 text-sm font-bold text-onair">Δωρεάν εφαρμογή · iPhone & Android</p>
                 </div>
                 <h2 id="app-{{ $section->id }}" class="mt-6 text-3xl sm:text-4xl font-extrabold tracking-tight">{{ $section->title ?: 'Όλοι οι σταθμοί μας, στην τσέπη σας' }}</h2>
                 <p class="mt-3 text-lg text-slate">{{ $section->subtitle ?: 'Κατεβάστε την εφαρμογή On Air Media Group και ακούστε όπου κι αν είστε.' }}</p>
