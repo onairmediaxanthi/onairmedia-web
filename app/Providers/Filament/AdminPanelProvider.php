@@ -35,8 +35,11 @@ class AdminPanelProvider extends PanelProvider
                 isRequired: true,
             )
             ->brandName('On Air Media — Διαχείριση')
+            ->brandLogo(fn () => view('filament.brand'))
+            ->brandLogoHeight('2.5rem')
+            ->favicon(fn () => \App\Models\Setting::url('favicon'))
             ->colors([
-                'primary' => Color::Rose,
+                'primary' => Color::hex('#c80c92'),
             ])
             ->spa()
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
