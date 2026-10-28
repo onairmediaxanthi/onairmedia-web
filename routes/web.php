@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountController;
 use App\Http\Controllers\Auth\EmailVerificationController;
+use App\Http\Controllers\Auth\InviteController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -19,6 +20,10 @@ Route::post('/preview-unlock', PreviewUnlockController::class)
 Route::get('/', HomeController::class)->name('home');
 Route::get('/radio/{station}', [StationController::class, 'show'])->name('stations.show');
 Route::view('/prosfora', 'quotes.builder')->name('quote.builder');
+
+// Πρόσκληση πελάτη που άνοιξε το προσωπικό (υπογεγραμμένο, λήγει)
+Route::get('/energopoiisi/{user}', [InviteController::class, 'show'])->middleware(['signed', 'throttle:20,1'])->name('invite.accept');
+Route::post('/energopoiisi/{user}', [InviteController::class, 'store'])->middleware(['signed', 'throttle:10,1']);
 
 // Από το email υπενθύμισης, χωρίς σύνδεση (υπογεγραμμένο link)
 Route::match(['get', 'post'], '/prosfores/{quote}/xoris-ypenthymiseis', [QuoteController::class, 'remindersOff'])

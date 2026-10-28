@@ -13,6 +13,13 @@
         @if (session('status'))<p class="mt-6 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3" role="status">{{ session('status') }}</p>@endif
         @if (session('error'))<p class="mt-6 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3" role="alert">{{ session('error') }}</p>@endif
 
+        @if ($quote->intro || $quote->created_by_id)
+            <div class="mt-8 rounded-2xl border border-onair/30 bg-onair/5 p-6">
+                @if ($quote->intro)<p class="whitespace-pre-line text-[16px] leading-relaxed">{{ $quote->intro }}</p>@endif
+                @if ($quote->createdBy)<p class="mt-3 text-sm text-slate">Ετοιμάστηκε για εσάς από {{ $quote->createdBy->name }} · {{ \App\Models\Setting::get('company_name') }}</p>@endif
+            </div>
+        @endif
+
         <div class="mt-8 grid gap-6 lg:grid-cols-[1fr_320px] items-start">
             <div class="rounded-2xl border border-line bg-surface p-6">
                 @foreach ($quote->groupedItems() as $group => $lines)

@@ -20,10 +20,10 @@
                 <svg x-show="$store.theme.dark" x-cloak class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
             </button>
             @auth
-                <a href="{{ auth()->user()->isCustomer() ? route('account') : url('/admin') }}" wire:navigate.hover
+                <a href="{{ route('account') }}" wire:navigate.hover
                    class="hidden sm:inline-flex items-center gap-2 rounded-full border border-line px-4 py-2.5 text-sm font-semibold hover:border-onair">
                     <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0116 0"/></svg>
-                    {{ auth()->user()->isCustomer() ? 'Το Studio μου' : 'Διαχείριση' }}
+                    Το Studio μου
                 </a>
             @else
                 <a href="{{ route('login') }}" class="hidden sm:inline-flex px-3 py-2.5 text-sm font-semibold text-slate hover:text-ink">Σύνδεση</a>
@@ -44,7 +44,7 @@
                 <a href="{{ $href }}" @click="open = false" class="py-3 text-lg font-medium border-b border-line last:border-0">{{ $label }}</a>
             @endforeach
             @auth
-                <a href="{{ auth()->user()->isCustomer() ? route('account') : url('/admin') }}" class="mt-3 text-center rounded-full border border-line px-5 py-3 font-semibold">{{ auth()->user()->isCustomer() ? 'Το Studio μου' : 'Διαχείριση' }}</a>
+                <a href="{{ route('account') }}" class="mt-3 text-center rounded-full border border-line px-5 py-3 font-semibold">Το Studio μου</a>
             @else
                 <a href="{{ route('login') }}" class="py-3 text-lg font-medium">Σύνδεση</a>
                 <a href="{{ route('register') }}" class="mt-2 text-center rounded-full border border-line px-5 py-3 font-semibold">Δωρεάν εγγραφή επιχείρησης</a>

@@ -1,8 +1,7 @@
 @php
     $user = auth()->user();
-    $isCustomer = $user?->isCustomer();
-    $secondaryUrl = $user ? ($isCustomer ? route('account') : url('/admin')) : route('register');
-    $secondary = $user ? ($isCustomer ? 'Οι προσφορές μου' : 'Διαχείριση') : ($section->setting('secondary_label') ?: 'Δωρεάν εγγραφή επιχείρησης');
+    $secondaryUrl = $user ? route('account') : route('register');
+    $secondary = $user ? 'Οι προσφορές μου' : ($section->setting('secondary_label') ?: 'Δωρεάν εγγραφή επιχείρησης');
 @endphp
 <section class="mx-auto max-w-7xl px-4 sm:px-6 py-10" aria-labelledby="qc-{{ $section->id }}">
     <div class="relative isolate overflow-hidden rounded-3xl bg-onair px-6 py-10 text-white sm:px-12 sm:py-14">

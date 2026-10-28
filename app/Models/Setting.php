@@ -29,6 +29,8 @@ class Setting extends Model
         'logo_light' => 'brand/onairmedia-letters.webp',
         'logo_dark' => null,
         'favicon' => null,
+        'logo_thrakitoday' => null,
+        'logo_led' => null,
         'company_name' => 'On Air Media Group',
         'phone' => null,
         'email' => null,

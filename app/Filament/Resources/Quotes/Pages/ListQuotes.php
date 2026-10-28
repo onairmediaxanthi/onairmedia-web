@@ -8,4 +8,9 @@ use Filament\Resources\Pages\ListRecords;
 class ListQuotes extends ListRecords
 {
     protected static string $resource = QuoteResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [\Filament\Actions\CreateAction::make()->label('Νέα προσφορά')];
+    }
 }

@@ -42,6 +42,11 @@ class Recommender
 
     public function __construct(protected QuoteCalculator $calc = new QuoteCalculator) {}
 
+    public static function forStaff(): self
+    {
+        return new self(new QuoteCalculator(staff: true));
+    }
+
     /**
      * @param  array{budget: float|int, days: int, goal: string, ages?: list<string>, profiles?: list<string>, gender?: ?string, media?: list<string>, material?: string, seconds?: int}  $a
      * @return array{proposals: list<array<string, mixed>>, min_budget: ?float}
@@ -95,7 +100,7 @@ class Recommender
         $seconds = max(10, min(60, (int) ($a['seconds'] ?? 30)));
 
         return Station::query()->active()->get()
-            ->filter(fn (Station $s) => QuoteCalculator::stationSellable($s))
+            ->filter(fn (Station $s) => QuoteCalculator::stationSellable($s, $this->calc->staff))
             ->map(function (Station $s) use ($ages, $profiles, $gender, $seconds) {
                 $aud = (array) $s->audience;
                 $score = 1

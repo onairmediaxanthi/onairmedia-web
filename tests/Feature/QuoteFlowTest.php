@@ -302,7 +302,7 @@ class QuoteFlowTest extends TestCase
     {
         $quote = app(QuoteService::class)->create($this->customer(), 'Για admin', 'manual',
             [['type' => 'radio', 'station_id' => $this->star->id, 'spots_per_day' => 2]], 5, null);
-        $this->actingAs($this->admin());
+        $this->actingAs($this->admin(), 'admin');
 
         Livewire::test(ListQuotes::class)->assertOk()->assertCanSeeTableRecords([$quote]);
         Livewire::test(ViewQuote::class, ['record' => $quote->id])->assertOk()->assertSee('Για admin')

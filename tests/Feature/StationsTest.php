@@ -83,7 +83,7 @@ class StationsTest extends TestCase
     public function test_admin_can_list_and_edit_stations(): void
     {
         $this->seed(StationSeeder::class);
-        $this->actingAs($this->admin());
+        $this->actingAs($this->admin(), 'admin');
 
         Livewire::test(ListStations::class)->assertOk()->assertSee('Star 88.8');
 
@@ -98,8 +98,11 @@ class StationsTest extends TestCase
 
     public function test_customer_cannot_open_station_admin(): void
     {
-        $this->actingAs(User::factory()->create());
+        $customer = User::factory()->create();
 
-        $this->get('/admin/stations')->assertForbidden();
+        // Συνδεδεμένος στο site ≠ συνδεδεμένος στη διαχείριση
+        $this->actingAs($customer)->get('/admin/stations')->assertRedirect('/admin/login');
+        // Ακόμα κι αν κάποιος πελάτης περάσει στη σύνδεση της διαχείρισης, δεν έχει πρόσβαση
+        $this->actingAs($customer, 'admin')->get('/admin/stations')->assertForbidden();
     }
 }

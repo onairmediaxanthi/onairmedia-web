@@ -27,6 +27,9 @@ class QuoteService
     /** Αποθηκεύει νέα προσφορά με τιμές που υπολογίζονται εδώ */
     public function create(User $user, string $title, string $source, array $specs, int $days, ?string $startsOn, array $answers = []): Quote
     {
+        // Ο πελάτης δεν μπορεί να βάλει μόνος του έκπτωση, όπως κι αν φτάσει το αίτημα
+        $specs = QuoteCalculator::customerSpecs($specs);
+
         if ($user->quotes()->where('status', 'saved')->count() >= self::MAX_OPEN_QUOTES) {
             throw new InvalidArgumentException('Έχετε ήδη '.self::MAX_OPEN_QUOTES.' ανοιχτές προσφορές. Σβήστε κάποιες παλιές για να αποθηκεύσετε νέα.');
         }
@@ -52,10 +55,36 @@ class QuoteService
         return $quote;
     }
 
+    /** Προσφορά που ετοιμάζει το προσωπικό για λογαριασμό πελάτη */
+    public function createForCustomer(User $staff, User $customer, string $title, array $specs, int $days, ?string $startsOn, ?string $intro, array $answers = []): Quote
+    {
+        $priced = (new QuoteCalculator(staff: true))->price($specs, $days);
+        if (! $priced['lines'] || $priced['subtotal'] <= 0) {
+            throw new InvalidArgumentException('Η προσφορά δεν έχει καμία γραμμή με τιμή.');
+        }
+
+        $quote = new Quote([
+            'title' => mb_substr(trim($title) ?: 'Πρόταση προβολής', 0, 120),
+            'intro' => $intro ? mb_substr(trim($intro), 0, 3000) : null,
+            'source' => 'staff',
+            'answers' => $answers ?: null,
+            'starts_on' => self::parseStart($startsOn),
+            'days' => max(1, min(QuoteCalculator::MAX_DAYS, $days)),
+            'valid_until' => today()->addDays(self::validDays()),
+        ] + $this->totals($priced));
+        $quote->user()->associate($customer);
+        $quote->created_by_id = $staff->id;
+        $quote->save();
+
+        CustomerEvents::record('staff_quote', $customer, $quote->refresh(), ['by' => $staff->name]);
+
+        return $quote;
+    }
+
     /** Νέες τιμές από τον τρέχοντα τιμοκατάλογο, νέα ημερομηνία λήξης */
     public function renew(Quote $quote): Quote
     {
-        $priced = $this->calc->price($quote->specs(), $quote->days);
+        $priced = (new QuoteCalculator(staff: $quote->created_by_id !== null))->price($quote->specs(), $quote->days);
         if (! $priced['lines']) {
             throw new InvalidArgumentException('Τα μέσα αυτής της προσφοράς δεν είναι πια διαθέσιμα. Φτιάξτε μια νέα.');
         }

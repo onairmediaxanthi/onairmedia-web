@@ -40,7 +40,7 @@ class CustomersAdminTest extends TestCase
         $admin->role = UserRole::Admin;
         $admin->app_authentication_secret = 'JBSWY3DPEHPK3PXP';
         $admin->save();
-        $this->actingAs($admin);
+        $this->actingAs($admin, 'admin');
     }
 
     public function test_list_renders_with_customers_and_filters_work(): void

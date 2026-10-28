@@ -14,6 +14,7 @@ use App\Services\Quotes\Recommender;
 use App\Support\Audience;
 use Illuminate\Support\Facades\Auth;
 use InvalidArgumentException;
+use Livewire\Attributes\Locked;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -54,8 +55,11 @@ class QuoteBuilder extends Component
 
     public $seconds = 30;
 
+    /** Υπολογίζονται μόνο στον server· ο browser δεν μπορεί να τα αλλάξει */
+    #[Locked]
     public array $proposals = [];
 
+    #[Locked]
     public ?float $minBudget = null;
 
     // ---- Δική σας επιλογή ----

@@ -38,7 +38,33 @@ class Business extends Model
             'vat_verified_at' => 'datetime',
             'terms_accepted_at' => 'datetime',
             'marketing_consent_at' => 'datetime',
+            'invited_at' => 'datetime',
         ];
+    }
+
+    public const SOURCES = ['self' => 'Εγγραφή από το site', 'staff' => 'Από τη διαχείριση'];
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_id');
+    }
+
+    public function isStaffCreated(): bool
+    {
+        return $this->source === 'staff';
+    }
+
+    /** Ο λογαριασμός ενεργοποιείται όταν επιβεβαιωθεί το email (εγγραφή ή πρόσκληση) */
+    public function isActivated(): bool
+    {
+        return $this->user?->email_verified_at !== null;
+    }
+
+    public function sourceLabel(): string
+    {
+        return $this->isStaffCreated()
+            ? 'Από τη διαχείριση'.($this->createdBy ? ' · '.$this->createdBy->name : '')
+            : 'Εγγραφή από το site';
     }
 
     public function user(): BelongsTo

@@ -94,7 +94,7 @@ class HomeBuilderTest extends TestCase
 
     public function test_admin_pages_render_and_settings_save(): void
     {
-        $this->actingAs($this->admin());
+        $this->actingAs($this->admin(), 'admin');
 
         Livewire::test(ListHomeSections::class)->assertOk()->assertSee('Δείκτης FM');
         Livewire::test(ListPackages::class)->assertOk()->assertSee('Σήμα Πόλης');

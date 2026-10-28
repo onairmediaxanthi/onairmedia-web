@@ -74,7 +74,7 @@ final class Audience
         $out = [];
         foreach (self::GROUPS as $key => $group) {
             $items = array_values(array_filter(array_map(
-                fn ($v) => isset($group['options'][$v]) ? strtok($group['options'][$v], '·') : null,
+                fn ($v) => isset($group['options'][$v]) ? explode('·', $group['options'][$v], 2)[0] : null,
                 (array) ($audience[$key] ?? []),
             )));
             if ($items) {

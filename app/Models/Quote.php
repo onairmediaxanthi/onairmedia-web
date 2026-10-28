@@ -24,10 +24,10 @@ class Quote extends Model
         'expired' => 'Έληξε',
     ];
 
-    public const SOURCES = ['wizard' => 'Οδηγός', 'manual' => 'Δική του επιλογή', 'package' => 'Έτοιμο πακέτο'];
+    public const SOURCES = ['wizard' => 'Οδηγός', 'manual' => 'Δική του επιλογή', 'package' => 'Έτοιμο πακέτο', 'staff' => 'Από το προσωπικό'];
 
     protected $fillable = [
-        'title', 'source', 'answers', 'items', 'starts_on', 'days', 'subtotal', 'vat_rate', 'vat', 'total',
+        'title', 'intro', 'source', 'answers', 'items', 'starts_on', 'days', 'subtotal', 'vat_rate', 'vat', 'total',
         'valid_until', 'customer_notes', 'admin_notes',
     ];
 
@@ -43,6 +43,7 @@ class Quote extends Model
             'vat' => 'decimal:2',
             'total' => 'decimal:2',
             'submitted_at' => 'datetime',
+            'sent_at' => 'datetime',
             'last_reminded_at' => 'datetime',
             'reminders_off' => 'boolean',
         ];
@@ -68,6 +69,11 @@ class Quote extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_id');
     }
 
     public function activities(): HasMany

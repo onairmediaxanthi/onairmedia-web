@@ -40,6 +40,8 @@ class QuoteCalculator
 
     public const MAX_SPOTS_PER_DAY = 24;
 
+    public const MAX_DISCOUNT = 50;
+
     /** @var array<int, Station> */
     protected array $stations = [];
 
@@ -49,7 +51,8 @@ class QuoteCalculator
     /** @var array<int, Screen> */
     protected array $screens = [];
 
-    public function __construct()
+    /** $staff: το προσωπικό τιμολογεί και σταθμούς που δεν είναι ακόμα «Online» (αρκεί να έχουν τιμή) */
+    public function __construct(public bool $staff = false)
     {
         $this->stations = Station::query()->where('is_active', true)->get()->keyBy('id')->all();
         $this->slots = AdSlot::query()->where('is_active', true)->get()->keyBy('id')->all();
@@ -62,9 +65,9 @@ class QuoteCalculator
     }
 
     /** Μπορεί ο σταθμός να μπει σε online προσφορά; */
-    public static function stationSellable(?Station $s): bool
+    public static function stationSellable(?Station $s, bool $staff = false): bool
     {
-        return $s !== null && $s->is_active && $s->is_bookable && $s->price_spot !== null && (float) $s->price_spot > 0;
+        return $s !== null && $s->is_active && ($staff || $s->is_bookable) && $s->price_spot !== null && (float) $s->price_spot > 0;
     }
 
     /** «Star 88.8» αντί για «Star 88.8 88.8 FM» όταν το όνομα έχει ήδη τη συχνότητα */
@@ -107,7 +110,7 @@ class QuoteCalculator
             switch ($type) {
                 case 'radio':
                     $st = $this->stations[(int) ($spec['station_id'] ?? 0)] ?? null;
-                    if (! self::stationSellable($st)) {
+                    if (! self::stationSellable($st, $this->staff)) {
                         $warnings[] = 'Ένας σταθμός δεν είναι διαθέσιμος online αυτή τη στιγμή και αφαιρέθηκε.';
                         break;
                     }
@@ -128,7 +131,7 @@ class QuoteCalculator
                         if ($fixed) {
                             $detail .= ' · επιλεγμένες ώρες';
                         }
-                        $stLines[] = $this->line('radio', self::stationLabel($st), $detail, $unit, $spots * $lineDays, null, 'Ραδιόφωνο');
+                        $stLines[] = $this->line('radio', self::stationLabel($st), $detail, $unit, $spots * $lineDays, null, 'Ραδιόφωνο', [], 'station:'.$st->id);
                     }
 
                     foreach (['live' => 'Αναφορά από τον παραγωγό', 'recorded' => 'Έτοιμη εκφώνηση'] as $kind => $label) {
@@ -136,7 +139,7 @@ class QuoteCalculator
                         $price = $st->{'price_mention_'.$kind};
                         $clean['mentions_'.$kind] = $price === null ? 0 : $n;
                         if ($n > 0 && $price !== null) {
-                            $stLines[] = $this->line('mention', $label.' · '.$st->name, $n.'/ημέρα × '.$lineDays.' ημέρες', (float) $price, $n * $lineDays, null, 'Ραδιόφωνο');
+                            $stLines[] = $this->line('mention', $label.' · '.$st->name, $n.'/ημέρα × '.$lineDays.' ημέρες', (float) $price, $n * $lineDays, null, 'Ραδιόφωνο', [], 'station:'.$st->id);
                         }
                     }
 
@@ -158,7 +161,7 @@ class QuoteCalculator
                         $warnings[] = 'Η θέση «'.$slot->name.'» κλείνεται για τουλάχιστον '.$slot->min_days.' ημέρες.';
                     }
                     $lines[] = $this->line('banner', 'thrakitoday.gr · '.$slot->name, trim($slot->dimensions.' · '.$d.' ημέρες', ' ·'),
-                        (float) $slot->price_per_day, $d, ['type' => 'banner', 'slot_id' => $slot->id, 'days' => $d], 'thrakitoday.gr');
+                        (float) $slot->price_per_day, $d, ['type' => 'banner', 'slot_id' => $slot->id, 'days' => $d], 'thrakitoday.gr', [], 'news');
                     break;
 
                 case 'led':
@@ -170,7 +173,7 @@ class QuoteCalculator
                     $d = max($lineDays, (int) $screen->min_days);
                     $detail = $d.' ημέρες · προβολή '.$screen->slot_seconds.'″'.($screen->loops_per_hour ? ' · '.$screen->loops_per_hour.' φορές/ώρα' : '');
                     $lines[] = $this->line('led', $screen->name, $detail, (float) $screen->price_per_day, $d,
-                        ['type' => 'led', 'screen_id' => $screen->id, 'days' => $d], 'Πινακίδα LED');
+                        ['type' => 'led', 'screen_id' => $screen->id, 'days' => $d], 'Πινακίδα LED', [], 'screen:'.$screen->id);
                     break;
 
                 case 'article':
@@ -184,7 +187,7 @@ class QuoteCalculator
                     }
                     $writing = (bool) ($spec['writing'] ?? false) && Setting::get('price_article_writing') !== null;
                     $lines[] = $this->line('article', 'Χορηγούμενο άρθρο στο thrakitoday.gr', $n === 1 ? '1 δημοσίευση' : $n.' δημοσιεύσεις',
-                        (float) $price, $n, ['type' => 'article', 'count' => $n, 'writing' => $writing], 'thrakitoday.gr');
+                        (float) $price, $n, ['type' => 'article', 'count' => $n, 'writing' => $writing], 'thrakitoday.gr', [], 'news');
                     if ($writing) {
                         $lines[] = $this->line('creative', 'Συγγραφή άρθρου από την ομάδα μας', null, (float) Setting::get('price_article_writing'), $n, null, 'Δημιουργικό');
                     }
@@ -211,6 +214,19 @@ class QuoteCalculator
             }
         }
 
+        // Έκπτωση: μπαίνει μόνο από το προσωπικό, πάντα στο τέλος, πάνω στο σύνολο των υπόλοιπων γραμμών
+        $discount = collect($specs)->firstWhere('type', 'discount');
+        $pct = $discount ? max(0, min(self::MAX_DISCOUNT, (float) ($discount['percent'] ?? 0))) : 0;
+        if ($pct > 0 && $lines) {
+            $base = round(array_sum(array_column($lines, 'amount')), 2);
+            $label = 'Έκπτωση '.rtrim(rtrim(number_format($pct, 2, ',', ''), '0'), ',').'%';
+            $lines[] = [
+                'ref' => null, 'type' => 'discount', 'group' => 'Έκπτωση', 'label' => $label, 'detail' => null,
+                'unit_price' => -round($base * $pct / 100, 2), 'quantity' => 1, 'amount' => -round($base * $pct / 100, 2),
+                'spec' => ['type' => 'discount', 'percent' => $pct], 'includes' => [],
+            ];
+        }
+
         $subtotal = round(array_sum(array_column($lines, 'amount')), 2);
         $rate = self::vatRate();
         $vat = round($subtotal * $rate / 100, 2);
@@ -226,9 +242,10 @@ class QuoteCalculator
     }
 
     /** @param list<string> $includes */
-    protected function line(string $type, string $label, ?string $detail, float $unit, int $qty, ?array $spec, string $group, array $includes = []): array
+    protected function line(string $type, string $label, ?string $detail, float $unit, int $qty, ?array $spec, string $group, array $includes = [], ?string $ref = null): array
     {
         return [
+            'ref' => $ref,
             'type' => $type,
             'group' => $group,
             'label' => $label,
@@ -239,6 +256,12 @@ class QuoteCalculator
             'spec' => $spec,
             'includes' => array_values(array_filter((array) $includes, 'is_string')),
         ];
+    }
+
+    /** Αφαιρεί ό,τι επιτρέπεται μόνο στο προσωπικό (έκπτωση) */
+    public static function customerSpecs(array $specs): array
+    {
+        return array_values(array_filter($specs, fn ($s) => is_array($s) && ($s['type'] ?? null) !== 'discount'));
     }
 
     /** Τα specs μιας τιμολογημένης λίστας (για ανανέωση με νέες τιμές) */

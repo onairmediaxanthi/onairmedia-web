@@ -43,7 +43,7 @@ class PriceListTest extends TestCase
 
     public function test_price_list_pages_render(): void
     {
-        $this->actingAs($this->admin());
+        $this->actingAs($this->admin(), 'admin');
 
         Livewire::test(ListRadioPrices::class)->assertOk()->assertCanSeeTableRecords(Station::all());
         Livewire::test(ManageAdSlots::class)->assertOk()->assertCanSeeTableRecords(AdSlot::all());
@@ -53,7 +53,7 @@ class PriceListTest extends TestCase
 
     public function test_radio_prices_save_and_validate(): void
     {
-        $this->actingAs($this->admin());
+        $this->actingAs($this->admin(), 'admin');
         $station = Station::query()->first();
 
         Livewire::test(EditRadioPrice::class, ['record' => $station->getRouteKey()])
@@ -71,7 +71,7 @@ class PriceListTest extends TestCase
 
     public function test_banner_price_inline_edit(): void
     {
-        $this->actingAs($this->admin());
+        $this->actingAs($this->admin(), 'admin');
         $slot = AdSlot::query()->where('code', 'sidebar-top')->first();
 
         Livewire::test(ManageAdSlots::class)->call('updateTableColumnState', 'price_per_day', (string) $slot->getKey(), '12.5');
@@ -81,7 +81,7 @@ class PriceListTest extends TestCase
 
     public function test_extra_charges_save_to_settings(): void
     {
-        $this->actingAs($this->admin());
+        $this->actingAs($this->admin(), 'admin');
 
         Livewire::test(ExtraCharges::class)
             ->fillForm(['price_sponsored_article' => 40, 'vat_rate' => 24])
@@ -92,7 +92,7 @@ class PriceListTest extends TestCase
 
     public function test_audience_saves_from_station_card_and_shows_on_page(): void
     {
-        $this->actingAs($this->admin());
+        $this->actingAs($this->admin(), 'admin');
         $station = Station::query()->first();
 
         Livewire::test(EditStation::class, ['record' => $station->getRouteKey()])

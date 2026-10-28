@@ -42,6 +42,12 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Η διαχείριση έχει δική της σύνδεση, ανεξάρτητη από τον λογαριασμό πελάτη στο site
+        'admin' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
     ],
 
     /*

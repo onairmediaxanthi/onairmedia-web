@@ -30,12 +30,6 @@ class BusinessResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'legal_name';
 
-    /** Οι πελάτες δημιουργούνται μόνο με εγγραφή από το site */
-    public static function canCreate(): bool
-    {
-        return false;
-    }
-
     public static function form(Schema $schema): Schema
     {
         return BusinessForm::configure($schema);
@@ -57,6 +51,7 @@ class BusinessResource extends Resource
     {
         return [
             'index' => ListBusinesses::route('/'),
+            'create' => CreateBusiness::route('/create'),
             'edit' => EditBusiness::route('/{record}/edit'),
         ];
     }

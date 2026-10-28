@@ -5,55 +5,24 @@ namespace App\Services\Quotes;
 use App\Models\Quote;
 use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Storage;
-use Throwable;
 
-/** PDF προσφοράς (A4, ελληνικά με DejaVu Sans) */
+/** PDF πρότασης (A4, ελληνικά με DejaVu Sans, λογότυπα μέσων) */
 class QuotePdf
 {
     public static function render(Quote $quote): string
     {
-        $quote->loadMissing('user.business');
+        $quote->loadMissing(['user.business', 'createdBy']);
 
         return Pdf::loadView('pdf.quote', [
             'quote' => $quote,
             'business' => $quote->user?->business,
             'company' => Setting::allValues(),
-            'logo' => self::logoDataUri(),
+            'logo' => QuotePresenter::companyLogo('data'),
         ])->setPaper('a4')->setOption(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false])->output();
     }
 
     public static function filename(Quote $quote): string
     {
         return 'prosfora-'.preg_replace('/[^0-9-]/', '', (string) $quote->number).'.pdf';
-    }
-
-    /** Το λογότυπο ως PNG (το dompdf δεν διαβάζει πάντα webp) */
-    protected static function logoDataUri(): ?string
-    {
-        try {
-            $path = Setting::get('logo_light');
-            if (! $path || ! Storage::disk('public')->exists($path)) {
-                return null;
-            }
-            $bytes = Storage::disk('public')->get($path);
-            if (! function_exists('imagecreatefromstring') || ! ($img = @imagecreatefromstring($bytes))) {
-                return null;
-            }
-            if (imagesx($img) > 600) {
-                $scaled = imagescale($img, 600);
-                imagedestroy($img);
-                $img = $scaled;
-            }
-            imagesavealpha($img, true);
-            ob_start();
-            imagepng($img);
-            $png = ob_get_clean();
-            imagedestroy($img);
-
-            return 'data:image/png;base64,'.base64_encode($png);
-        } catch (Throwable) {
-            return null;
-        }
     }
 }

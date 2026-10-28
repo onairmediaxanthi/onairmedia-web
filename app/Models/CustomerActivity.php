@@ -21,6 +21,11 @@ class CustomerActivity extends Model
         'reminder_sent' => 'Στάλθηκε υπενθύμιση',
         'reminders_off' => 'Σταμάτησε τις υπενθυμίσεις',
         'wizard_used' => 'Είδε προτάσεις στον οδηγό',
+        'staff_created' => 'Νέος πελάτης από τη διαχείριση',
+        'invited' => 'Στάλθηκε πρόσκληση λογαριασμού',
+        'activated' => 'Ενεργοποίησε τον λογαριασμό',
+        'staff_quote' => 'Προσφορά από το προσωπικό',
+        'quote_sent' => 'Στάλθηκε πρόταση στον πελάτη',
     ];
 
     protected $fillable = ['user_id', 'quote_id', 'type', 'summary', 'meta'];

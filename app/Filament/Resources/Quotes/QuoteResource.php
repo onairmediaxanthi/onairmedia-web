@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Quotes;
 
+use App\Filament\Resources\Quotes\Pages\CreateQuote;
 use App\Filament\Resources\Quotes\Pages\ListQuotes;
 use App\Filament\Resources\Quotes\Pages\ViewQuote;
 use App\Models\Quote;
@@ -42,11 +43,6 @@ class QuoteResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'number';
 
-    public static function canCreate(): bool
-    {
-        return false;
-    }
-
     public static function getNavigationBadge(): ?string
     {
         $n = Quote::query()->where('status', 'submitted')->count();
@@ -61,12 +57,15 @@ class QuoteResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with('user.business')->withoutGlobalScopes([SoftDeletingScope::class]);
+        return parent::getEloquentQuery()->with(['user.business', 'createdBy'])->withoutGlobalScopes([SoftDeletingScope::class]);
     }
 
     public static function infolist(Schema $schema): Schema
     {
         return $schema->columns(3)->components([
+            Section::make('Μήνυμα πρότασης')->columnSpan(2)->visible(fn (Quote $r) => filled($r->intro))->schema([
+                TextEntry::make('intro')->hiddenLabel()->formatStateUsing(fn ($state) => new \Illuminate\Support\HtmlString(nl2br(e($state)))),
+            ]),
             Section::make('Γραμμές')->columnSpan(2)->schema([
                 ViewEntry::make('items')->hiddenLabel()->view('filament.quote-items'),
             ]),
@@ -84,7 +83,10 @@ class QuoteResource extends Resource
                 TextEntry::make('starts_on')->label('Έναρξη')->date('d/m/Y')->placeholder('Χωρίς ημερομηνία'),
                 TextEntry::make('days')->label('Ημέρες'),
                 TextEntry::make('valid_until')->label('Ισχύει έως')->date('d/m/Y'),
-                TextEntry::make('submitted_at')->label('Στάλθηκε')->dateTime('d/m/Y H:i')->placeholder('—'),
+                TextEntry::make('createdBy.name')->label('Ετοίμασε')->placeholder('Ο ίδιος ο πελάτης'),
+                TextEntry::make('sent_at')->label('Στάλθηκε στον πελάτη')->dateTime('d/m/Y H:i')->placeholder('Όχι ακόμα')
+                    ->formatStateUsing(fn ($state, Quote $r) => $state?->format('d/m/Y H:i').($r->sent_count > 1 ? ' ('.$r->sent_count.' φορές)' : '')),
+                TextEntry::make('submitted_at')->label('Παραγγελία')->dateTime('d/m/Y H:i')->placeholder('—'),
                 TextEntry::make('reminders_sent')->label('Υπενθυμίσεις')
                     ->formatStateUsing(fn ($state, Quote $r) => $state.($r->reminders_off ? ' · τις σταμάτησε' : '')),
                 TextEntry::make('customer_notes')->label('Σημειώσεις πελάτη')->placeholder('—'),
@@ -108,7 +110,10 @@ class QuoteResource extends Resource
                 TextColumn::make('status')->label('Κατάσταση')->badge()
                     ->formatStateUsing(fn ($state, Quote $record) => $record->trashed() ? 'Διαγράφηκε' : $record->statusLabel())
                     ->color(fn ($state, Quote $record) => $record->trashed() ? 'danger' : ($record->isExpired() ? 'gray' : match ($state) { 'submitted' => 'warning', 'ordered' => 'success', default => 'info' })),
-                TextColumn::make('source')->label('Πηγή')->formatStateUsing(fn ($state) => Quote::SOURCES[$state] ?? $state)->toggleable(),
+                TextColumn::make('source')->label('Πηγή')->formatStateUsing(fn ($state) => Quote::SOURCES[$state] ?? $state)->toggleable()
+                    ->badge()->color(fn ($state) => $state === 'staff' ? 'warning' : 'gray')
+                    ->description(fn (Quote $r) => $r->createdBy?->name),
+                TextColumn::make('sent_at')->label('Στάλθηκε')->dateTime('d/m H:i')->placeholder('—')->toggleable(),
                 TextColumn::make('created_at')->label('Δημιουργία')->dateTime('d/m/Y H:i')->sortable(),
                 TextColumn::make('valid_until')->label('Λήξη')->date('d/m/Y')->sortable()->toggleable(),
                 TextColumn::make('reminders_sent')->label('Υπενθ.')->toggleable(isToggledHiddenByDefault: true),
@@ -126,6 +131,7 @@ class QuoteResource extends Resource
     {
         return [
             'index' => ListQuotes::route('/'),
+            'create' => CreateQuote::route('/create'),
             'view' => ViewQuote::route('/{record}'),
         ];
     }

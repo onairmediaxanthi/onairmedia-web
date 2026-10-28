@@ -58,6 +58,16 @@ class SiteSettings extends Page
                     ->acceptedFileTypes(['image/png', 'image/svg+xml'])
                     ->helperText('Τετράγωνο PNG, 512×512.'),
             ]),
+            Section::make('Λογότυπα μέσων')->columns(2)
+                ->description('Εμφανίζονται στις προτάσεις (PDF και email). Τα λογότυπα των σταθμών μπαίνουν από την καρτέλα κάθε σταθμού.')
+                ->schema([
+                    FileUpload::make('logo_thrakitoday')->label('Λογότυπο thrakitoday.gr')
+                        ->disk('public')->directory('brand')->visibility('public')->image()->maxSize(2048)
+                        ->acceptedFileTypes(['image/webp', 'image/png', 'image/jpeg']),
+                    FileUpload::make('logo_led')->label('Λογότυπο ή φωτογραφία πινακίδας LED')
+                        ->disk('public')->directory('brand')->visibility('public')->image()->maxSize(4096)
+                        ->acceptedFileTypes(['image/webp', 'image/png', 'image/jpeg']),
+                ]),
             Section::make('Στοιχεία εταιρείας')->columns(2)->schema([
                 TextInput::make('company_name')->label('Επωνυμία')->required()->maxLength(120),
                 TextInput::make('phone')->label('Τηλέφωνο')->tel()->maxLength(30),
