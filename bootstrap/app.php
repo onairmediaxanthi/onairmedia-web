@@ -13,6 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        // Διαγραφή με ένα κλικ (RFC 8058): οι πάροχοι email στέλνουν POST χωρίς CSRF token
+        $middleware->validateCsrfTokens(except: ['aposyndromi/*']);
         $middleware->web(append: [\App\Http\Middleware\PreviewLock::class, \App\Http\Middleware\KeepStaffOffSite::class]);
         // Ο server του cPanel είναι πίσω από proxy (LiteSpeed/Cloudflare)
         $middleware->trustProxies(at: '*');

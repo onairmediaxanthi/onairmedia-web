@@ -38,7 +38,7 @@ class QuoteSettings extends Page
     public const KEYS = [
         'quote_valid_days', 'quote_reminder_days', 'quote_reminder_max', 'notify_emails',
         'welcome_coupon_enabled', 'welcome_coupon_type', 'welcome_coupon_value', 'welcome_coupon_days', 'welcome_coupon_min', 'welcome_coupon_prefix',
-        'notify_registered', 'notify_quote_saved', 'notify_quote_changed', 'notify_quote_submitted', 'notify_quote_deleted', 'notify_quote_pdf', 'notify_wizard_used',
+        'campaign_per_minute', 'notify_registered', 'notify_quote_saved', 'notify_quote_changed', 'notify_quote_submitted', 'notify_quote_deleted', 'notify_quote_pdf', 'notify_wizard_used',
     ];
 
     /** @var array<string, mixed>|null */
@@ -70,6 +70,10 @@ class QuoteSettings extends Page
                     TextInput::make('welcome_coupon_min')->label('Ελάχιστη καμπάνια')->numeric()->minValue(0)->suffix('€')->helperText('Χωρίς ΦΠΑ. Κενό = χωρίς όριο.'),
                     TextInput::make('welcome_coupon_prefix')->label('Πρόθεμα κωδικού')->maxLength(12)->alphaNum()->helperText('π.χ. KALOS → KALOS-7FK2QM'),
                 ]),
+            Section::make('Μαζικές αποστολές')->schema([
+                TextInput::make('campaign_per_minute')->label('Email ανά λεπτό')->numeric()->integer()->minValue(1)->maxValue(200)->required()
+                    ->helperText('Οι πάροχοι φιλοξενίας έχουν όριο ανά ώρα (συχνά 300–500). Με 20/λεπτό στέλνονται ~1.200 την ώρα· ρωτήστε τον πάροχο αν χρειάζεται λιγότερο.'),
+            ]),
             Section::make('Ειδοποιήσεις προς εσάς')
                 ->description('Όλες οι ενέργειες φαίνονται πάντα στη «Δραστηριότητα πελατών» και οι σημαντικές στο καμπανάκι πάνω δεξιά. Εδώ διαλέγετε ποιες έρχονται και με email.')
                 ->columns(3)->schema([

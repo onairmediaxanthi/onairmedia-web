@@ -34,6 +34,7 @@ class RegisterController extends Controller
             $business->terms_accepted_at = now();
             $business->terms_version = Business::TERMS_VERSION;
             $business->marketing_consent_at = ! empty($data['marketing']) ? now() : null;
+            $business->marketing_consent_source = ! empty($data['marketing']) ? 'register' : null;
             $business->signup_ip = $request->ip();
             $user->business()->save($business);
 

@@ -46,7 +46,7 @@ class AccountController extends Controller
     public function marketing(Request $request): RedirectResponse
     {
         $on = $request->boolean('marketing');
-        $request->user()->business->forceFill(['marketing_consent_at' => $on ? now() : null])->save();
+        $request->user()->business->setMarketingConsent($on, 'account');
 
         return back()->with('status', $on
             ? 'Θα λαμβάνετε τις προσφορές μας στο email σας.'

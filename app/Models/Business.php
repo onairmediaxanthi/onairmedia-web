@@ -38,6 +38,7 @@ class Business extends Model
             'vat_verified_at' => 'datetime',
             'terms_accepted_at' => 'datetime',
             'marketing_consent_at' => 'datetime',
+            'marketing_withdrawn_at' => 'datetime',
             'invited_at' => 'datetime',
         ];
     }
@@ -76,6 +77,18 @@ class Business extends Model
     public function quotes(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Quote::class, 'user_id', 'user_id');
+    }
+
+    /** Συγκατάθεση για προσφορές, με καταγραφή από πού δόθηκε ή ανακλήθηκε */
+    public function setMarketingConsent(bool $on, string $source): void
+    {
+        if ($on && ! $this->marketing_consent_at) {
+            $this->forceFill(['marketing_consent_at' => now(), 'marketing_consent_source' => $source, 'marketing_withdrawn_at' => null])->save();
+            \App\Services\CustomerEvents::record('marketing_on', $this->user, null, ['source' => $source]);
+        } elseif (! $on && $this->marketing_consent_at) {
+            $this->forceFill(['marketing_consent_at' => null, 'marketing_withdrawn_at' => now(), 'marketing_consent_source' => $source])->save();
+            \App\Services\CustomerEvents::record('marketing_off', $this->user, null, ['source' => $source]);
+        }
     }
 
     public function user(): BelongsTo

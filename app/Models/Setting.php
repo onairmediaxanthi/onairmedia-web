@@ -58,6 +58,7 @@ class Setting extends Model
         'notify_quote_deleted' => true,
         'notify_quote_pdf' => false,
         'notify_wizard_used' => false,
+        'campaign_per_minute' => 20,
         // Κουπόνι καλωσορίσματος
         'welcome_coupon_enabled' => false,
         'welcome_coupon_type' => 'percent',

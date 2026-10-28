@@ -10,6 +10,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PreviewUnlockController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\StationController;
+use App\Http\Controllers\UnsubscribeController;
 use App\Http\Middleware\EnsureCustomer;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +25,10 @@ Route::view('/prosfora', 'quotes.builder')->name('quote.builder');
 // Πρόσκληση πελάτη που άνοιξε το προσωπικό (υπογεγραμμένο, λήγει)
 Route::get('/energopoiisi/{user}', [InviteController::class, 'show'])->middleware(['signed', 'throttle:20,1'])->name('invite.accept');
 Route::post('/energopoiisi/{user}', [InviteController::class, 'store'])->middleware(['signed', 'throttle:10,1']);
+
+// Διαγραφή από τις μαζικές αποστολές (χωρίς σύνδεση, και POST ενός κλικ από Gmail/Yahoo)
+Route::get('/aposyndromi/{token}', [UnsubscribeController::class, 'show'])->middleware('throttle:30,1')->name('campaign.unsubscribe');
+Route::post('/aposyndromi/{token}', [UnsubscribeController::class, 'store'])->middleware('throttle:30,1');
 
 // Από το email υπενθύμισης, χωρίς σύνδεση (υπογεγραμμένο link)
 Route::match(['get', 'post'], '/prosfores/{quote}/xoris-ypenthymiseis', [QuoteController::class, 'remindersOff'])

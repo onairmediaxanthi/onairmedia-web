@@ -20,7 +20,7 @@ class PreviewLock
 
         if (blank($password)
             || $request->session()->get(self::SESSION_KEY) === true
-            || $request->is('preview-unlock', 'up', 'webhooks/*')) {
+            || $request->is('preview-unlock', 'up', 'webhooks/*', 'aposyndromi/*')) {
             return $next($request);
         }
 

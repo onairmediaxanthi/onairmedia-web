@@ -35,6 +35,12 @@ class BusinessForm
                     ->state(fn (Business $record) => $record->isActivated() ? 'Ενεργός' : ($record->invited_at ? 'Πρόσκληση '.$record->invited_at->format('d/m/Y') : 'Δεν έχει ενεργοποιηθεί'))
                     ->color(fn (Business $record) => $record->isActivated() ? 'success' : 'gray'),
                 TextEntry::make('terms_accepted_at')->label('Αποδοχή όρων')->dateTime('d/m/Y H:i')->placeholder('Όχι ακόμα'),
+                TextEntry::make('marketing')->label('Προσφορές με email')->badge()->columnSpan(2)
+                    ->state(fn (Business $record) => $record->marketing_consent_at
+                        ? 'Δέχεται από '.$record->marketing_consent_at->format('d/m/Y').' ('.(['register' => 'στην εγγραφή', 'account' => 'από το Studio του', 'invite' => 'στην ενεργοποίηση'][$record->marketing_consent_source] ?? 'συγκατάθεση').')'
+                        : ($record->marketing_withdrawn_at ? 'Σταμάτησε στις '.$record->marketing_withdrawn_at->format('d/m/Y') : 'Δεν έχει δώσει συγκατάθεση'))
+                    ->color(fn (Business $record) => $record->marketing_consent_at ? 'success' : 'gray')
+                    ->helperText('Η συγκατάθεση δίνεται μόνο από τον ίδιο τον πελάτη.'),
             ]),
             Section::make('Επιχείρηση')->columns(2)->columnSpanFull()->schema([
                 TextInput::make('legal_name')->label('Επωνυμία')->required()->maxLength(150),

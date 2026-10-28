@@ -52,6 +52,7 @@ class InviteController extends Controller
         $b->terms_accepted_at = now();
         $b->terms_version = Business::TERMS_VERSION;
         $b->marketing_consent_at = ! empty($data['marketing']) ? now() : null;
+        $b->marketing_consent_source = ! empty($data['marketing']) ? 'invite' : null;
         $b->save();
 
         Auth::guard('web')->login($user);

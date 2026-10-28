@@ -9,3 +9,6 @@ Artisan::command('inspire', function () {
 
 // Υπενθυμίσεις προσφορών κάθε πρωί (χρειάζεται cron: * * * * * php artisan schedule:run)
 \Illuminate\Support\Facades\Schedule::command('quotes:remind')->dailyAt('10:00')->withoutOverlapping()->onOneServer();
+
+// Μαζικές αποστολές προσφορών, σε δόσεις κάθε λεπτό
+\Illuminate\Support\Facades\Schedule::command('campaigns:send')->everyMinute()->withoutOverlapping(10);
