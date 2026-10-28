@@ -1,7 +1,8 @@
-name: Deploy
+name: Build
 
-# Κάθε push στο main ανεβαίνει στο new.onairmedia.gr (staging).
-# Η μετάβαση στο onairmedia.gr θα γίνει αργότερα με ξεχωριστό στόχο.
+# Κάθε push στο main: τεστ → έτοιμη έκδοση (vendor + assets) στο branch `build`.
+# Ο server την κατεβάζει μόνος του κάθε λεπτό (deploy/pull.sh μέσω cron).
+# Δεν χρειάζεται εισερχόμενο SSH ούτε κωδικοί του server στο GitHub.
 
 on:
   push:
@@ -9,15 +10,11 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: deploy-staging
+  group: build
   cancel-in-progress: false
 
-env:
-  SSH_HOST: s657.srvx.ws
-  SSH_USER: onairmedia
-  SSH_PORT: 22
-  APP_DIR: /home/onairmedia/apps/onairmedia-web
-  WEB_DIR: /home/onairmedia/new.onairmedia.gr
+permissions:
+  contents: write
 
 jobs:
   test:
@@ -36,15 +33,14 @@ jobs:
           php artisan key:generate
           php artisan test
 
-  deploy:
+  build:
     needs: test
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
-      - name: PHP 8.4
-        uses: shivammathur/setup-php@v2
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
           extensions: bcmath, intl, mbstring, pdo_mysql, zip, gd, exif, sodium
@@ -53,8 +49,7 @@ jobs:
       - name: Composer (production)
         run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
 
-      - name: Node
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
 
@@ -63,27 +58,19 @@ jobs:
           if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
           npm run build
 
-      - name: SSH key
+      - name: Publish to build branch
         run: |
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_deploy
-          chmod 600 ~/.ssh/id_deploy
-          ssh-keyscan -p "$SSH_PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-
-      - name: Upload application
-        run: |
-          SSH="ssh -i ~/.ssh/id_deploy -p $SSH_PORT"
-          $SSH "$SSH_USER@$SSH_HOST" "mkdir -p '$APP_DIR'"
-          rsync -az --delete -e "$SSH" \
-            --exclude='.git/' --exclude='.github/' --exclude='node_modules/' \
-            --exclude='tests/' --exclude='.env' --exclude='storage/' \
-            ./ "$SSH_USER@$SSH_HOST:$APP_DIR/"
-
-      - name: Release on server
-        run: |
-          ssh -i ~/.ssh/id_deploy -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" \
-            "APP_DIR='$APP_DIR' WEB_DIR='$WEB_DIR' bash '$APP_DIR/deploy/release.sh'"
-
-      - name: Clean up key
-        if: always()
-        run: rm -f ~/.ssh/id_deploy
+          SRC_SHA="$(git rev-parse --short HEAD)"
+          OUT="$RUNNER_TEMP/release"
+          mkdir -p "$OUT"
+          rsync -a --exclude='.git/' --exclude='node_modules/' --exclude='tests/' --exclude='.env' ./ "$OUT/"
+          cd "$OUT"
+          git init -q -b build
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # vendor/ και public/build/ είναι στο .gitignore του κώδικα — εδώ τα θέλουμε
+          git add -A
+          git add -f vendor public/build public/js public/css public/fonts 2>/dev/null || true
+          git commit -q -m "Release ${SRC_SHA}"
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" build
+          echo "Έτοιμη έκδοση ${SRC_SHA} στο branch build" >> "$GITHUB_STEP_SUMMARY"
