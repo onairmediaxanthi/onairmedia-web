@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\HomeSection;
+use App\Models\Package;
 use App\Models\Station;
 use App\View\Composers\SiteComposer;
 use Illuminate\Support\Facades\Cache;
@@ -31,5 +32,7 @@ class AppServiceProvider extends ServiceProvider
         Station::deleted(fn () => Cache::forget('player:stations'));
         HomeSection::saved(fn () => Cache::forget('site:menu'));
         HomeSection::deleted(fn () => Cache::forget('site:menu'));
+        Package::saved(fn () => Cache::forget('site:menu'));
+        Package::deleted(fn () => Cache::forget('site:menu'));
     }
 }

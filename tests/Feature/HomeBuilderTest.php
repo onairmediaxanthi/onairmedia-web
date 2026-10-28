@@ -115,4 +115,11 @@ class HomeBuilderTest extends TestCase
         $this->assertSame('25410 12345', Setting::get('phone'));
         $this->get('/')->assertSee('25410 12345');
     }
+
+    public function test_menu_hides_packages_when_none_available(): void
+    {
+        Package::query()->update(['is_active' => false]);
+
+        $this->get('/')->assertOk()->assertDontSee('>Πακέτα<', false)->assertSee('>Σταθμοί<', false);
+    }
 }

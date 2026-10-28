@@ -3,6 +3,7 @@
 namespace App\View\Composers;
 
 use App\Models\HomeSection;
+use App\Models\Package;
 use App\Models\Station;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
@@ -15,6 +16,8 @@ class SiteComposer
         $view->with('menu', Cache::remember('site:menu', 300, fn () => HomeSection::query()->showing()
             ->whereNotNull('anchor')->get()
             ->filter(fn (HomeSection $s) => filled($s->setting('menu_label')))
+            // Χωρίς ενεργά πακέτα, η ενότητα δεν φαίνεται: ούτε και στο μενού
+            ->reject(fn (HomeSection $s) => $s->type === 'packages' && ! Package::query()->available()->exists())
             ->map(fn (HomeSection $s) => [$s->setting('menu_label'), route('home').'#'.$s->anchor])
             ->values()->all()));
 
