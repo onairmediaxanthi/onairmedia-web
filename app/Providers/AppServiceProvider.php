@@ -2,6 +2,10 @@
 
 namespace App\Providers;
 
+use App\Models\Station;
+use App\View\Composers\SiteComposer;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +23,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        View::composer('components.layouts.site', SiteComposer::class);
+
+        // Αλλαγή σταθμού στη διαχείριση → ο player ενημερώνεται αμέσως
+        Station::saved(fn () => Cache::forget('player:stations'));
+        Station::deleted(fn () => Cache::forget('player:stations'));
     }
 }

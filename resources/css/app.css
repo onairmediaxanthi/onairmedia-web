@@ -1,11 +1,77 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/commissioner';
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
+@source '../views';
 
+/*
+ * On Air Media — tokens
+ * onair    : η κόκκινη λάμπα «ON AIR» του στούντιο (κύριο χρώμα δράσης)
+ * night    : το βαθύ μπλε της νυχτερινής εκπομπής (δείκτης, player)
+ * glow     : η κεχριμπαρένια λάμψη της βελόνας
+ * paper    : φόντο περιεχομένου
+ * slate    : δευτερεύον κείμενο
+ */
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Commissioner Variable', system-ui, sans-serif;
+
+    --color-onair: #e8203a;
+    --color-onair-dark: #b8142b;
+    --color-night: #121a33;
+    --color-night-2: #1b2547;
+    --color-night-3: #2a3560;
+    --color-glow: #ffb627;
+    --color-paper: #f6f7fa;
+    --color-ink: #141a2e;
+    --color-slate: #5b6478;
+    --color-line: #dde1ea;
+}
+
+@layer base {
+    [x-cloak] { display: none !important; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    body { @apply bg-paper text-ink font-sans antialiased; font-feature-settings: 'tnum' 0; }
+    :focus-visible { outline: 3px solid var(--color-glow); outline-offset: 2px; border-radius: 4px; }
+    ::selection { background: var(--color-onair); color: #fff; }
+}
+
+/* Αριθμοί συχνότητας: σταθερό πλάτος ψηφίων */
+.freq { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+
+/* ---------- Slider ---------- */
+.slide-img { transform-origin: 60% 40%; }
+.slide[data-active='true'] .fx-zoom { animation: kenburns 9s ease-out both; }
+.slide[data-active='true'] .fx-pan { animation: pan 9s linear both; }
+@keyframes kenburns { from { transform: scale(1.12); } to { transform: scale(1); } }
+@keyframes pan { from { transform: scale(1.1) translateX(-3%); } to { transform: scale(1.1) translateX(3%); } }
+
+.slide-text > * { opacity: 0; transform: translateY(14px); }
+.slide[data-active='true'] .slide-text > * {
+    animation: rise .7s cubic-bezier(.2,.7,.2,1) forwards;
+}
+.slide[data-active='true'] .slide-text > :nth-child(2) { animation-delay: .12s; }
+.slide[data-active='true'] .slide-text > :nth-child(3) { animation-delay: .24s; }
+@keyframes rise { to { opacity: 1; transform: none; } }
+
+.progress-fill { transform-origin: left; transform: scaleX(0); }
+.progress[data-active='true'] .progress-fill { animation: fill var(--slide-ms, 7000ms) linear forwards; }
+.progress[data-done='true'] .progress-fill { transform: scaleX(1); }
+.paused .progress-fill { animation-play-state: paused !important; }
+@keyframes fill { to { transform: scaleX(1); } }
+
+/* ---------- Δείκτης FM ---------- */
+.needle {
+    transition: left .9s cubic-bezier(.5,.05,.2,1);
+    box-shadow: 0 0 12px 2px rgb(255 182 39 / .7);
+}
+
+/* ---------- Ισοσταθμιστής (παίζει τώρα) ---------- */
+.eq { display: inline-flex; gap: 2px; align-items: flex-end; height: 14px; }
+.eq i { width: 3px; background: currentColor; border-radius: 1px; animation: eq 1s ease-in-out infinite; }
+.eq i:nth-child(2) { animation-delay: .2s; } .eq i:nth-child(3) { animation-delay: .4s; } .eq i:nth-child(4) { animation-delay: .1s; }
+@keyframes eq { 0%, 100% { height: 25%; } 50% { height: 100%; } }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+    .slide-text > * { opacity: 1; transform: none; }
+    .eq i { height: 60%; }
 }
