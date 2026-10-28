@@ -62,6 +62,14 @@ class HomeSectionForm
                         ->options(['short' => 'Χαμηλό', 'tall' => 'Ψηλό', 'full' => 'Όλη η οθόνη']),
                 ]),
 
+            Section::make('Κουμπιά')->columns(2)->columnSpanFull()->visible($is('quote_cta'))
+                ->description('Το πρώτο κουμπί ανοίγει το Studio Καμπάνιας. Το δεύτερο, την εγγραφή (ή «Οι προσφορές μου» για όσους είναι ήδη πελάτες).')
+                ->schema([
+                    TextInput::make('settings.primary_label')->label('Κύριο κουμπί')->maxLength(40)->placeholder('Βγάλτε προσφορά σε 2 λεπτά'),
+                    TextInput::make('settings.secondary_label')->label('Δεύτερο κουμπί')->maxLength(40)->placeholder('Δωρεάν εγγραφή επιχείρησης'),
+                    Toggle::make('settings.show_steps')->label('Δείξε τα 3 βήματα')->default(true)->inline(false),
+                ]),
+
             Section::make('Ρυθμίσεις σταθμών')->columnSpanFull()->visible($is('stations'))->schema([
                 ToggleButtons::make('settings.layout')->label('Εμφάνιση')->inline()->default('cards')
                     ->options(['cards' => 'Κάρτες με «τι παίζει»', 'compact' => 'Συμπαγής λίστα λογοτύπων']),

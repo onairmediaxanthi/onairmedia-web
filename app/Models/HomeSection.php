@@ -14,6 +14,7 @@ class HomeSection extends Model
 {
     public const TYPES = [
         'slider' => 'Slider προσφορών',
+        'quote_cta' => 'Κουμπί «Βγάλτε προσφορά» / εγγραφή',
         'dial' => 'Δείκτης FM (Στον αέρα τώρα)',
         'stations' => 'Κάρτες σταθμών',
         'packages' => 'Πακέτα & προσφορές',

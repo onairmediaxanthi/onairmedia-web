@@ -21,10 +21,21 @@
 
         <div class="mt-10 grid gap-6 lg:grid-cols-[1fr_340px]">
             <div class="space-y-6">
+                <div class="rounded-3xl bg-night p-7 text-white">
+                    <h2 class="text-2xl font-extrabold">Studio Καμπάνιας</h2>
+                    <p class="mt-2 max-w-prose text-white/75">Απαντήστε σε τέσσερις ερωτήσεις και σας προτείνουμε συνδυασμούς μέσα στο ποσό σας, ή διαλέξτε μόνοι σας σταθμούς, banner και πινακίδα.</p>
+                    <a href="{{ route('quote.builder') }}" class="mt-5 inline-flex rounded-full bg-onair px-6 py-3 font-semibold text-white hover:bg-onair-dark">Νέα προσφορά</a>
+                </div>
                 <div class="rounded-2xl border border-line bg-surface p-6">
-                    <h2 class="text-xl font-bold">Οι καμπάνιες μου</h2>
-                    <p class="mt-2 text-slate">Δεν έχετε ακόμα καμπάνια. Σύντομα θα τη φτιάχνετε εδώ, στο Studio Καμπάνιας: σταθμοί, ώρες, ημερομηνίες και τιμή με μια ματιά.</p>
-                    <a href="{{ route('home') }}#paketa" class="mt-4 inline-flex font-semibold text-onair hover:underline">Δείτε τα έτοιμα πακέτα</a>
+                    <div class="flex items-center justify-between gap-3">
+                        <h2 class="text-xl font-bold">Οι προσφορές μου</h2>
+                        @if ($quoteCount > 5)<a href="{{ route('quotes.index') }}" class="text-[15px] font-semibold text-onair hover:underline">Όλες ({{ $quoteCount }})</a>@endif
+                    </div>
+                    @if ($quotes->isEmpty())
+                        <p class="mt-2 text-slate">Δεν έχετε ακόμα προσφορά. Ό,τι φτιάξετε στο Studio Καμπάνιας μένει εδώ: το κατεβάζετε σε PDF, το αλλάζετε ή το προχωράτε όποτε θέλετε.</p>
+                    @else
+                        <div class="mt-2">@include('quotes._list')</div>
+                    @endif
                 </div>
             </div>
 

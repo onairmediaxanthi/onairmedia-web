@@ -20,8 +20,9 @@ class EmailVerificationController extends Controller
     public function verify(EmailVerificationRequest $request): RedirectResponse
     {
         $request->fulfill();
+        \App\Services\CustomerEvents::record('verified', $request->user());
 
-        return redirect()->route('account')->with('status', 'Το email σας επιβεβαιώθηκε. Τώρα βλέπετε τιμές και μπορείτε να κλείσετε καμπάνια.');
+        return redirect()->intended(route('account'))->with('status', 'Το email σας επιβεβαιώθηκε. Τώρα βλέπετε τιμές και μπορείτε να κλείσετε καμπάνια.');
     }
 
     public function send(Request $request): RedirectResponse

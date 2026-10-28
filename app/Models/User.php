@@ -64,6 +64,11 @@ class User extends Authenticatable implements FilamentUser, HasAppAuthentication
         return $this->hasOne(Business::class);
     }
 
+    public function quotes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Quote::class);
+    }
+
     public function isCustomer(): bool
     {
         return ($this->role ?? UserRole::Customer) === UserRole::Customer;

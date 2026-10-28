@@ -42,6 +42,8 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::hex('#c80c92'),
             ])
             ->spa()
+            ->databaseNotifications()
+            ->databaseNotificationsPolling('60s')
             ->navigationGroups(['Αρχική σελίδα', 'Μέσα', 'Πωλήσεις', 'Τιμοκατάλογος'])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')

@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PreviewUnlockController;
+use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\StationController;
 use App\Http\Middleware\EnsureCustomer;
 use Illuminate\Support\Facades\Route;
@@ -17,6 +18,11 @@ Route::post('/preview-unlock', PreviewUnlockController::class)
 
 Route::get('/', HomeController::class)->name('home');
 Route::get('/radio/{station}', [StationController::class, 'show'])->name('stations.show');
+Route::view('/prosfora', 'quotes.builder')->name('quote.builder');
+
+// Από το email υπενθύμισης, χωρίς σύνδεση (υπογεγραμμένο link)
+Route::match(['get', 'post'], '/prosfores/{quote}/xoris-ypenthymiseis', [QuoteController::class, 'remindersOff'])
+    ->middleware(['signed', 'throttle:10,1'])->name('quotes.reminders-off');
 
 // ---- Επισκέπτες ----
 Route::middleware('guest')->group(function () {
@@ -46,6 +52,14 @@ Route::middleware('auth')->group(function () {
         Route::put('/to-studio-mou/stoixeia', [AccountController::class, 'update'])->name('account.update');
         Route::put('/to-studio-mou/newsletter', [AccountController::class, 'marketing'])->name('account.marketing');
         Route::delete('/to-studio-mou', [AccountController::class, 'destroy'])->middleware('throttle:5,10')->name('account.destroy');
+
+        Route::get('/to-studio-mou/prosfores', [QuoteController::class, 'index'])->name('quotes.index');
+        Route::get('/to-studio-mou/prosfores/{quote}', [QuoteController::class, 'show'])->name('quotes.show');
+        Route::get('/to-studio-mou/prosfores/{quote}/pdf', [QuoteController::class, 'pdf'])->middleware('throttle:20,1')->name('quotes.pdf');
+        Route::post('/to-studio-mou/prosfores/{quote}/ananeosi', [QuoteController::class, 'renew'])->middleware('throttle:10,1')->name('quotes.renew');
+        Route::get('/to-studio-mou/prosfores/{quote}/tameio', [QuoteController::class, 'checkout'])->name('quotes.checkout');
+        Route::post('/to-studio-mou/prosfores/{quote}/tameio', [QuoteController::class, 'submit'])->middleware('throttle:5,1')->name('quotes.submit');
+        Route::delete('/to-studio-mou/prosfores/{quote}', [QuoteController::class, 'destroy'])->name('quotes.destroy');
     });
 });
 

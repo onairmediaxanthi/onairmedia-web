@@ -42,6 +42,7 @@ class RegisterController extends Controller
 
         event(new Registered($user)); // στέλνει το email επαλήθευσης
         Auth::login($user);
+        \App\Services\CustomerEvents::record('registered', $user->load('business'));
         $request->session()->regenerate();
 
         return redirect()->route('verification.notice');

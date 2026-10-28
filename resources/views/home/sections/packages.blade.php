@@ -64,6 +64,7 @@
                                 <span class="text-sm text-slate">+ ΦΠΑ</span>
                             </p>
                             @if ($p->duration_days)<p class="text-sm text-slate">για {{ $p->duration_days }} ημέρες</p>@endif
+                            <a href="{{ route('quote.builder', ['tropos' => 'packages', 'paketo' => $p->id]) }}" class="mt-4 flex justify-center rounded-full bg-onair px-5 py-3 font-semibold text-white hover:bg-onair-dark">Το θέλω</a>
                         @else
                             <a href="{{ $registerUrl }}" class="flex items-center justify-between gap-3 rounded-xl border border-dashed border-line px-4 py-3 hover:border-onair">
                                 <span>

@@ -27,10 +27,10 @@
                 </a>
             @else
                 <a href="{{ route('login') }}" class="hidden sm:inline-flex px-3 py-2.5 text-sm font-semibold text-slate hover:text-ink">Σύνδεση</a>
-                <a href="{{ route('register') }}" class="hidden sm:inline-flex items-center rounded-full bg-onair px-5 py-2.5 text-sm font-semibold text-white hover:bg-onair-dark">
-                    Διαφημιστείτε
-                </a>
             @endauth
+            <a href="{{ route('quote.builder') }}" class="inline-flex items-center rounded-full bg-onair px-4 sm:px-5 py-2.5 text-sm font-semibold text-white hover:bg-onair-dark">
+                <span class="sm:hidden">Προσφορά</span><span class="max-sm:hidden">Βγάλτε προσφορά</span>
+            </a>
             <button type="button" class="md:hidden p-2 -mr-2 rounded-md" @click="open = !open" :aria-expanded="open" aria-controls="mobile-nav">
                 <span class="sr-only">Μενού</span>
                 <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path x-show="!open" d="M4 7h16M4 12h16M4 17h16"/><path x-show="open" x-cloak d="M6 6l12 12M18 6L6 18"/></svg>
@@ -47,7 +47,7 @@
                 <a href="{{ auth()->user()->isCustomer() ? route('account') : url('/admin') }}" class="mt-3 text-center rounded-full border border-line px-5 py-3 font-semibold">{{ auth()->user()->isCustomer() ? 'Το Studio μου' : 'Διαχείριση' }}</a>
             @else
                 <a href="{{ route('login') }}" class="py-3 text-lg font-medium">Σύνδεση</a>
-                <a href="{{ route('register') }}" class="mt-2 text-center rounded-full bg-onair px-5 py-3 font-semibold text-white">Διαφημιστείτε: δωρεάν εγγραφή</a>
+                <a href="{{ route('register') }}" class="mt-2 text-center rounded-full border border-line px-5 py-3 font-semibold">Δωρεάν εγγραφή επιχείρησης</a>
             @endauth
         </div>
     </nav>

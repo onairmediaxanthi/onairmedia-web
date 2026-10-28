@@ -44,6 +44,17 @@ class Setting extends Model
         'price_spot_production_voices' => null,
         'price_led_graphic' => null,
         'price_banner_design' => null,
+        // Προσφορές & ειδοποιήσεις
+        'quote_valid_days' => 15,
+        'quote_reminder_days' => 3,
+        'quote_reminder_max' => 3,
+        'notify_emails' => null,
+        'notify_registered' => true,
+        'notify_quote_saved' => true,
+        'notify_quote_submitted' => true,
+        'notify_quote_deleted' => true,
+        'notify_quote_pdf' => false,
+        'notify_wizard_used' => false,
         'footer_text' => 'Δώδεκα ραδιόφωνα, το thrakitoday.gr και η Οθόνη Πόλης. Η φωνή της Ξάνθης, από το 88.8 ως το 106.',
     ];
 

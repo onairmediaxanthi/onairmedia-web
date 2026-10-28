@@ -35,7 +35,7 @@ class SiteSettings extends Page
 
     public function mount(): void
     {
-        $this->form->fill(array_diff_key(array_intersect_key(Setting::allValues(), Setting::DEFAULTS), array_flip(ExtraCharges::KEYS)));
+        $this->form->fill(array_diff_key(array_intersect_key(Setting::allValues(), Setting::DEFAULTS), array_flip([...ExtraCharges::KEYS, ...QuoteSettings::KEYS])));
     }
 
     public function form(Schema $schema): Schema

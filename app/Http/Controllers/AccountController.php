@@ -14,7 +14,12 @@ class AccountController extends Controller
 {
     public function show(Request $request): View
     {
-        return view('account.show', ['user' => $request->user(), 'business' => $request->user()->business]);
+        return view('account.show', [
+            'user' => $request->user(),
+            'business' => $request->user()->business,
+            'quotes' => $request->user()->quotes()->latest()->limit(5)->get(),
+            'quoteCount' => $request->user()->quotes()->count(),
+        ]);
     }
 
     public function edit(Request $request): View

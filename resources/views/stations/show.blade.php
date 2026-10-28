@@ -91,8 +91,9 @@
                     </dl>
                     <p class="mt-3 text-sm text-slate">Τιμές ανά μετάδοση, χωρίς ΦΠΑ 24%.@if((float) $station->pct_first_position > 0) Πάντα πρώτη θέση: +{{ rtrim(rtrim(number_format((float) $station->pct_first_position, 2, ',', ''), '0'), ',') }}%.@endif @if((float) $station->pct_sandwich > 0) Sandwich: +{{ rtrim(rtrim(number_format((float) $station->pct_sandwich, 2, ',', ''), '0'), ',') }}%.@endif</p>
                 @elseif (! $canSeePrices)
-                    <p class="mt-4"><a href="{{ route('register') }}" class="inline-flex rounded-full bg-onair px-5 py-2.5 text-sm font-semibold text-white hover:bg-onair-dark">Δωρεάν εγγραφή για να δείτε τιμές</a></p>
+                    <p class="mt-4"><a href="{{ route('register') }}" class="font-semibold text-onair hover:underline">Δωρεάν εγγραφή για να δείτε τιμές</a></p>
                 @endif
+                <a href="{{ route('quote.builder', ['tropos' => 'manual', 'stathmos' => $station->slug]) }}" class="mt-5 inline-flex rounded-full bg-onair px-6 py-3 font-semibold text-white hover:bg-onair-dark">Φτιάξτε προσφορά με τον {{ $station->name }}</a>
             </div>
         </article>
 
