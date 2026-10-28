@@ -5,7 +5,7 @@ set -euo pipefail
 
 APP_DIR=/home/onairmedia/apps/onairmedia-web
 WEB_DIR=/home/onairmedia/new.onairmedia.gr
-KEY=/home/onairmedia/.ssh/github_deploy
+KEY=/home/onairmedia/.ssh/github_pull
 
 # Ποτέ δύο εγκαταστάσεις ταυτόχρονα
 exec 9>"$APP_DIR/../.deploy.lock"

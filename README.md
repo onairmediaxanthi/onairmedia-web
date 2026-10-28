@@ -5,7 +5,7 @@ Laravel 12 · Filament 4 · PHP 8.4
 ## Δημοσίευση
 Κάθε push στο `main` περνά τα τεστ και το GitHub φτιάχνει έτοιμη έκδοση στο branch `build` (`.github/workflows/deploy.yml`).
 Ο server την κατεβάζει μόνος του κάθε λεπτό (`deploy/pull.sh` από cron) και την εγκαθιστά (`deploy/release.sh`).
-Ο server δεν δέχεται εισερχόμενο SSH· τραβά από το GitHub με read-only deploy key (`~/.ssh/github_deploy`).
+Ο server δεν δέχεται εισερχόμενο SSH· τραβά από το GitHub με read-only deploy key (`~/.ssh/github_pull`, ed25519).
 Ιστορικό εγκαταστάσεων: `~/apps/onairmedia-web/storage/logs/deploy.log`
 
 - Κώδικας στον server: `~/apps/onairmedia-web` (εκτός δημόσιου φακέλου)
