@@ -16,6 +16,24 @@ const storage = {
 document.addEventListener('alpine:init', () => {
     const Alpine = window.Alpine;
 
+    /* Θέμα: ακολουθεί τη συσκευή μέχρι ο χρήστης να διαλέξει */
+    Alpine.store('theme', {
+        dark: document.documentElement.classList.contains('dark'),
+        init() {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+                if (!storage.get('onair:theme')) this.apply(e.matches);
+            });
+        },
+        apply(dark) {
+            this.dark = dark;
+            document.documentElement.classList.toggle('dark', dark);
+        },
+        toggle() {
+            this.apply(!this.dark);
+            storage.set('onair:theme', this.dark ? 'dark' : 'light');
+        },
+    });
+
     Alpine.store('radio', {
         stations: [],
         current: null,

@@ -62,7 +62,7 @@
                 <p class="mt-4 text-slate max-w-prose">{{ $station->name }} στους {{ $station->frequency_label }}: {{ mb_strtolower($station->genre ?? 'μουσική') }} για όλη την Ξάνθη, όλο το εικοσιτετράωρο.</p>
             @endif
 
-            <div id="diafimisi-stathmou" class="mt-12 rounded-2xl border border-line bg-white p-7">
+            <div id="diafimisi-stathmou" class="mt-12 rounded-2xl border border-line bg-surface p-7">
                 <h2 class="text-2xl font-bold">Διαφημιστείτε στον {{ $station->name }}</h2>
                 <p class="mt-2 text-slate max-w-prose">Διαλέξτε ζώνη ωρών και διάρκεια, ή συνδυάστε τον σταθμό με τους υπόλοιπους. Οι τιμές θα εμφανίζονται εδώ στους εγγεγραμμένους επαγγελματίες.</p>
             </div>
@@ -70,7 +70,7 @@
 
         <aside aria-labelledby="facts-title">
             <h2 id="facts-title" class="sr-only">Στοιχεία</h2>
-            <dl class="rounded-2xl border border-line bg-white divide-y divide-line">
+            <dl class="rounded-2xl border border-line bg-surface divide-y divide-line">
                 <div class="p-5"><dt class="text-sm text-slate">Συχνότητα</dt><dd class="mt-1 font-semibold freq">{{ $station->frequency_label }}</dd></div>
                 @if ($station->genre)<div class="p-5"><dt class="text-sm text-slate">Μουσική</dt><dd class="mt-1 font-semibold">{{ $station->genre }}</dd></div>@endif
                 @if ($station->coverage)<div class="p-5"><dt class="text-sm text-slate">Περιοχή</dt><dd class="mt-1 font-semibold">{{ $station->coverage }}</dd></div>@endif
@@ -81,7 +81,7 @@
             <ul class="mt-3 grid grid-cols-2 gap-2">
                 @foreach ($others as $o)
                     <li>
-                        <a href="{{ route('stations.show', $o) }}" wire:navigate class="flex items-center gap-2 rounded-lg p-2 hover:bg-white border border-transparent hover:border-line">
+                        <a href="{{ route('stations.show', $o) }}" wire:navigate class="flex items-center gap-2 rounded-lg p-2 hover:bg-surface border border-transparent hover:border-line">
                             <span class="h-2.5 w-2.5 rounded-full shrink-0" style="background: {{ $o->color }}" aria-hidden="true"></span>
                             <span class="text-sm truncate">{{ $o->name }}</span>
                         </a>

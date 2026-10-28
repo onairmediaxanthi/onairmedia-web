@@ -14,6 +14,16 @@
     <meta property="og:url" content="{{ $canonical ?? url()->current() }}">
     @isset($ogImage)<meta property="og:image" content="{{ $ogImage }}">@endisset
     <meta name="theme-color" content="#121a33">
+    <meta name="color-scheme" content="light dark">
+    {{-- Πριν τα styles: χωρίς «αναλαμπή» λάθος θέματος --}}
+    <script>
+        (function () {
+            var t = null;
+            try { t = localStorage.getItem('onair:theme'); } catch (e) {}
+            var dark = t ? t === 'dark' : window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.classList.toggle('dark', dark);
+        })();
+    </script>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
     @stack('head')

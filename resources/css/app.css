@@ -3,6 +3,9 @@
 
 @source '../views';
 
+/* Σκοτεινή λειτουργία: κλάση .dark στο <html> (επιλογή χρήστη ή ρύθμιση συσκευής) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
  * On Air Media — tokens
  * onair    : η κόκκινη λάμπα «ON AIR» του στούντιο (κύριο χρώμα δράσης)
@@ -21,9 +24,22 @@
     --color-night-3: #2a3560;
     --color-glow: #ffb627;
     --color-paper: #f6f7fa;
+    --color-surface: #ffffff;
     --color-ink: #141a2e;
     --color-slate: #5b6478;
     --color-line: #dde1ea;
+}
+
+/* Τα ίδια ονόματα, άλλες τιμές: όλη η σελίδα αλλάζει χωρίς διπλές κλάσεις */
+.dark {
+    color-scheme: dark;
+    --color-paper: #0c1224;
+    --color-surface: #151d36;
+    --color-ink: #eef1f8;
+    --color-slate: #a3acc2;
+    --color-line: #263055;
+    --color-onair: #ff3b52;
+    --color-onair-dark: #e8203a;
 }
 
 @layer base {

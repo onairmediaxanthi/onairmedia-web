@@ -127,11 +127,11 @@
     <section class="mx-auto max-w-7xl px-4 sm:px-6 py-16" aria-label="Όλοι οι σταθμοί">
         <ul x-data class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             @foreach ($stations as $s)
-                <li class="relative flex flex-col rounded-2xl bg-white border border-line overflow-hidden">
+                <li class="relative flex flex-col rounded-2xl bg-surface border border-line overflow-hidden">
                     <span class="h-1.5" style="background: {{ $s->color }}" aria-hidden="true"></span>
                     <div class="p-5 flex-1 flex flex-col">
                         <div class="flex items-start gap-4">
-                            <div class="h-16 w-16 shrink-0 grid place-items-center rounded-xl bg-paper">
+                            <div class="h-16 w-16 shrink-0 grid place-items-center rounded-xl bg-white">
                                 @if ($s->logo_url)<img src="{{ $s->logo_url }}" alt="" class="max-h-12 max-w-12 object-contain" loading="lazy">@endif
                             </div>
                             <div class="min-w-0">
@@ -163,7 +163,7 @@
 
     {{-- ===== Ειδήσεις ===== --}}
     @if ($lead)
-        <section id="eidiseis" class="border-t border-line bg-white scroll-mt-16" aria-labelledby="news-title">
+        <section id="eidiseis" class="border-t border-line bg-surface scroll-mt-16" aria-labelledby="news-title">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 py-16">
                 <div class="flex flex-wrap items-end justify-between gap-4">
                     <h2 id="news-title" class="text-3xl sm:text-4xl font-extrabold tracking-tight">Η Θράκη σήμερα</h2>
@@ -209,15 +209,15 @@
             <p class="mt-3 text-lg text-slate">Τρία μέσα, ένα κοινό: όλη η Ξάνθη. Συνδυάστε τα όπως ταιριάζει στην επιχείρησή σας.</p>
         </div>
         <div class="mt-10 grid gap-px overflow-hidden rounded-2xl border border-line bg-line md:grid-cols-3">
-            <div class="bg-white p-7">
+            <div class="bg-surface p-7">
                 <h3 class="text-xl font-bold">Ραδιόφωνο</h3>
                 <p class="mt-2 text-slate">Σποτ σε 12 σταθμούς, από τα λαϊκά ως το rock. Τυχαίες ώρες της ζώνης ή ακριβώς τις ώρες που θέλετε.</p>
             </div>
-            <div class="bg-white p-7">
+            <div class="bg-surface p-7">
                 <h3 class="text-xl font-bold">thrakitoday.gr</h3>
                 <p class="mt-2 text-slate">Banner δίπλα στις ειδήσεις και χορηγούμενα άρθρα για την επιχείρησή σας.</p>
             </div>
-            <div class="bg-white p-7">
+            <div class="bg-surface p-7">
                 <h3 class="text-xl font-bold">Οθόνη Πόλης</h3>
                 <p class="mt-2 text-slate">Η ψηφιακή πινακίδα LED στην πόλη, με την προβολή σας όλη μέρα.</p>
             </div>
