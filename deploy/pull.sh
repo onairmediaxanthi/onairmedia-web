@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Τρέχει από cron κάθε λεπτό στον server.
+# Τρέχει από cron κάθε 2 λεπτά στον server (remote μέσω ssh.github.com:443).
 # Αν υπάρχει νέα έκδοση στο branch `build`, την εγκαθιστά.
 set -euo pipefail
 
