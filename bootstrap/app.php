@@ -13,7 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
-        $middleware->web(append: [\App\Http\Middleware\PreviewLock::class]);
+        $middleware->web(append: [\App\Http\Middleware\PreviewLock::class, \App\Http\Middleware\KeepStaffOffSite::class]);
         // Ο server του cPanel είναι πίσω από proxy (LiteSpeed/Cloudflare)
         $middleware->trustProxies(at: '*');
         $middleware->redirectUsersTo(fn () => route('account'));

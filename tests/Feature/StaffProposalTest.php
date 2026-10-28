@@ -165,4 +165,11 @@ class StaffProposalTest extends TestCase
         $this->assertSame('50.00', $q->subtotal);
         $this->assertFalse(collect($q->items)->contains('type', 'discount'));
     }
+
+    public function test_old_staff_session_is_logged_out_of_the_site(): void
+    {
+        $this->actingAs($this->admin, 'web')->get('/')->assertOk()->assertDontSee('Το Studio μου');
+        $this->assertGuest('web');
+        $this->assertAuthenticatedAs($this->admin, 'admin');
+    }
 }
