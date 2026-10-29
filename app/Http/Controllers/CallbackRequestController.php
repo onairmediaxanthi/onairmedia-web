@@ -126,6 +126,6 @@ class CallbackRequestController extends Controller
         }
         $age = now()->timestamp - $t;
 
-        return $age >= 3 && $age <= 86400; // τουλάχιστον 3″ για να συμπληρωθεί, όχι παλιότερο από μία μέρα
+        return $age >= 3 && $age <= 7 * 86400; // τουλάχιστον 3″ για να συμπληρωθεί, όχι παλιότερο από μια εβδομάδα
     }
 }

@@ -5,28 +5,56 @@
         open: false, sending: false, done: false, errors: {}, widget: null,
         form: { first_name: '', last_name: '', mobile: '', vat: '', consent: false, company_url: '' },
         show() {
-            this.open = true; this.done = false; this.errors = {};
-            this.$nextTick(() => { this.$refs.first.focus(); this.robot(); });
+            // μετά από επιτυχημένη αποστολή: καθαρή φόρμα για το επόμενο αίτημα
+            if (this.done) this.form = { first_name: '', last_name: '', mobile: '', vat: '', consent: false, company_url: '' };
+            this.open = true; this.done = false; this.errors = {}; this.sending = false;
+            this.$nextTick(() => { this.$refs.first?.focus(); this.robot(); });
         },
         robot() {
             @if ($siteKey)
-            const render = () => { if (this.widget === null && window.turnstile) this.widget = turnstile.render(this.$refs.ts, { sitekey: '{{ $siteKey }}', language: 'el' }); else if (window.turnstile) turnstile.reset(this.widget); };
+            const render = () => {
+                if (! window.turnstile || ! this.$refs.ts) return;
+                // η φόρμα ξαναφτιάχνεται κάθε φορά: πάντα καινούργιο κουτάκι, ποτέ το παλιό
+                if (this.widget !== null) { try { turnstile.remove(this.widget); } catch (e) {} this.widget = null; }
+                this.$refs.ts.innerHTML = '';
+                this.widget = turnstile.render(this.$refs.ts, { sitekey: '{{ $siteKey }}', language: 'el' });
+            };
             if (window.turnstile) return render();
-            const s = document.createElement('script'); s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'; s.async = true; s.onload = render; document.head.appendChild(s);
+            if (! document.getElementById('cf-turnstile-api')) {
+                const s = document.createElement('script'); s.id = 'cf-turnstile-api';
+                s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'; s.async = true;
+                s.onload = render; document.head.appendChild(s);
+            }
+            @endif
+        },
+        token() {
+            @if ($siteKey)
+            try { return (window.turnstile && this.widget !== null && turnstile.getResponse(this.widget)) || ''; } catch (e) { return ''; }
+            @else
+            return '';
             @endif
         },
         async send() {
+            if (this.sending) return;
             this.sending = true; this.errors = {};
-            const body = { ...this.form, t: '{{ \App\Http\Controllers\CallbackRequestController::stamp() }}' };
-            @if ($siteKey) body['cf-turnstile-response'] = window.turnstile ? turnstile.getResponse(this.widget) : ''; @endif
             try {
+                const body = { ...this.form, t: '{{ \App\Http\Controllers\CallbackRequestController::stamp() }}' };
+                @if ($siteKey)
+                body['cf-turnstile-response'] = this.token();
+                if (! body['cf-turnstile-response']) { this.errors = { robot: ['Περιμένετε να ολοκληρωθεί ο έλεγχος «δεν είμαι ρομπότ» και πατήστε ξανά.'] }; if (! this.$refs.ts?.children.length) this.robot(); return; }
+                @endif
                 const r = await fetch('{{ route('callback.store') }}', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }, body: JSON.stringify(body) });
-                if (r.status === 422) { this.errors = (await r.json()).errors || {}; @if ($siteKey) if (window.turnstile) turnstile.reset(this.widget); @endif }
+                if (r.ok) { this.done = true; return; }
+                if (r.status === 422) { this.errors = (await r.json()).errors || {}; }
+                else if (r.status === 419) { this.errors = { form: ['Η σελίδα έμεινε ανοιχτή πολύ ώρα. Ανανεώστε τη σελίδα και δοκιμάστε ξανά.'] }; }
                 else if (r.status === 429) { this.errors = { form: ['Πολλές προσπάθειες. Δοκιμάστε ξανά σε λίγα λεπτά.'] }; }
-                else if (r.ok) { this.done = true; }
                 else { this.errors = { form: ['Κάτι πήγε στραβά. Δοκιμάστε ξανά ή καλέστε μας.'] }; }
-            } catch (e) { this.errors = { form: ['Δεν υπάρχει σύνδεση. Δοκιμάστε ξανά.'] }; }
-            this.sending = false;
+                this.robot(); // νέο token για την επόμενη προσπάθεια
+            } catch (e) {
+                this.errors = { form: ['Δεν υπάρχει σύνδεση. Δοκιμάστε ξανά.'] };
+            } finally {
+                this.sending = false;
+            }
         },
      }"
      @open-callback.window="show()" @keydown.escape.window="open = false">
@@ -45,7 +73,7 @@
         <div x-show="open" x-transition class="relative max-h-[92dvh] w-full max-w-md overflow-y-auto rounded-t-3xl bg-surface p-6 shadow-2xl sm:rounded-3xl sm:p-7" @click.stop>
             <button type="button" @click="open = false" class="absolute right-4 top-4 grid h-9 w-9 place-items-center rounded-full text-slate hover:bg-paper" aria-label="Κλείσιμο">✕</button>
 
-            <template x-if="! done">
+            <div x-show="! done">
                 <form @submit.prevent="send()" novalidate>
                     <span class="grid h-12 w-12 place-items-center rounded-2xl bg-onair/10 text-onair"><x-ui-icon name="phone" class="h-6 w-6" /></span>
                     <h2 id="cb-title" class="mt-4 text-2xl font-extrabold">Να σας καλέσουμε;</h2>
@@ -91,16 +119,16 @@
                         <span x-show="! sending">Καλέστε με</span><span x-show="sending" x-cloak>Αποστολή…</span>
                     </button>
                 </form>
-            </template>
+            </div>
 
-            <template x-if="done">
+            <div x-show="done" x-cloak>
                 <div class="py-4 text-center">
                     <span class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-emerald-500/15 text-emerald-600"><x-ui-icon name="check" class="h-7 w-7" /></span>
                     <h2 class="mt-4 text-2xl font-extrabold">Ευχαριστούμε!</h2>
                     <p class="mt-2 text-slate">Λάβαμε το αίτημά σας. Θα σας καλέσουμε στο <strong class="text-ink" x-text="form.mobile"></strong> εντός μίας εργάσιμης.</p>
                     <button type="button" @click="open = false" class="mt-6 rounded-full border border-line px-6 py-3 font-semibold hover:border-onair">Κλείσιμο</button>
                 </div>
-            </template>
+            </div>
         </div>
     </div>
 </div>
