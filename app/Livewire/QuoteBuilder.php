@@ -9,6 +9,7 @@ use App\Models\Screen;
 use App\Models\Setting;
 use App\Models\Station;
 use App\Services\CustomerEvents;
+use App\Services\Quotes\PriceBook;
 use App\Services\Quotes\QuoteCalculator;
 use App\Services\Quotes\QuoteService;
 use App\Services\Quotes\Recommender;
@@ -132,9 +133,9 @@ class QuoteBuilder extends Component
             $this->radio[$s->id] = ['on' => false, 'spots' => 4, 'seconds' => (int) ($s->spot_seconds ?: 30), 'position' => 'standard',
                 'fixed' => false, 'ml' => 0, 'mr' => 0];
         }
-        $this->banners = AdSlot::query()->active()->whereNotNull('price_per_day')->pluck('id')
+        $this->banners = $this->book()->priced(AdSlot::query()->active())->pluck('id')
             ->mapWithKeys(fn ($id) => [$id => ['on' => false, 'days' => null]])->all();
-        $this->screens = Screen::query()->active()->whereNotNull('price_per_day')->pluck('id')
+        $this->screens = $this->book()->priced(Screen::query()->active())->pluck('id')
             ->mapWithKeys(fn ($id) => [$id => ['on' => false, 'days' => null]])->all();
         $this->creative = array_fill_keys(array_keys(QuoteCalculator::CREATIVE), false);
     }
@@ -189,9 +190,17 @@ class QuoteBuilder extends Component
         return $u !== null && $u->isCustomer() && $u->hasVerifiedEmail();
     }
 
+    /** Ο τιμοκατάλογος του πελάτη (βασικός ή μεγάλα αστικά κέντρα, από την πόλη του) */
+    protected function book(): PriceBook
+    {
+        return PriceBook::for(Auth::user());
+    }
+
     protected function sellableStations()
     {
-        return Station::query()->active()->get()->filter(fn ($s) => QuoteCalculator::stationSellable($s))->values();
+        $book = $this->book();
+
+        return Station::query()->active()->get()->filter(fn ($s) => $book->stationSellable($s))->values();
     }
 
     public function choose(string $mode): void
@@ -282,7 +291,7 @@ class QuoteBuilder extends Component
             return $this->redirectRoute(Auth::check() ? 'verification.notice' : 'register');
         }
 
-        $out = (new Recommender)->recommend($this->answers());
+        $out = Recommender::forTier($this->book()->tier)->recommend($this->answers());
         $this->proposals = $out['proposals'];
         $this->minBudget = $out['min_budget'];
         $this->showResults = true;
@@ -417,7 +426,7 @@ class QuoteBuilder extends Component
 
     public function savePackage(int $id)
     {
-        $p = Package::query()->available()->find($id);
+        $p = Package::query()->available()->forTier($this->book()->tier)->find($id);
         if (! $p) {
             $this->error = 'Το πακέτο δεν είναι πλέον διαθέσιμο.';
 
@@ -460,11 +469,12 @@ class QuoteBuilder extends Component
     public function render()
     {
         $canSee = $this->canSeePrices();
-        $calc = new QuoteCalculator;
+        $book = $this->book();
+        $calc = new QuoteCalculator(tier: $book->tier);
 
         $manual = null;
         if ($this->mode === 'manual' && $canSee) {
-            $calc = $this->editing && $this->lockedSpecs ? new QuoteCalculator(staff: true) : $calc;
+            $calc = $this->editing && $this->lockedSpecs ? new QuoteCalculator(staff: true, tier: $book->tier) : $calc;
             $specs = $this->editing ? array_merge($this->manualSpecs(), $this->lockedSpecs) : $this->manualSpecs();
             $manual = $calc->price($specs, max(1, min(QuoteCalculator::MAX_DAYS, (int) $this->days)));
         }
@@ -474,15 +484,16 @@ class QuoteBuilder extends Component
             'canSave' => $this->canSave(),
             'stations' => $this->sellableStations()->keyBy('id'),
             'allStations' => Station::query()->active()->get(),
-            'slots' => AdSlot::query()->active()->whereNotNull('price_per_day')->get()->keyBy('id'),
-            'screenList' => Screen::query()->active()->whereNotNull('price_per_day')->get()->keyBy('id'),
-            'packages' => Package::query()->available()->get(),
+            'slots' => $book->priced(AdSlot::query()->active())->get()->keyBy('id'),
+            'screenList' => $book->priced(Screen::query()->active())->get()->keyBy('id'),
+            'book' => $book,
+            'packages' => Package::query()->available()->forTier($book->tier)->get(),
             'manual' => $manual,
             'vatRate' => QuoteCalculator::vatRate(),
             'prices' => [
-                'article' => Setting::get('price_sponsored_article'),
-                'writing' => Setting::get('price_article_writing'),
-                'creative' => collect(QuoteCalculator::CREATIVE)->mapWithKeys(fn ($l, $k) => [$k => Setting::get('price_'.$k)])->all(),
+                'article' => $book->extra('sponsored_article'),
+                'writing' => $book->extra('article_writing'),
+                'creative' => collect(QuoteCalculator::CREATIVE)->mapWithKeys(fn ($l, $k) => [$k => $book->extra($k)])->all(),
             ],
         ]);
     }

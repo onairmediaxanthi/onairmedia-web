@@ -59,6 +59,15 @@
                 <span class="mt-6 inline-flex font-semibold text-onair group-hover:underline">Δείτε τα πακέτα →</span>
             </button>
         </div>
+        <div class="mt-5 flex flex-wrap items-center justify-between gap-4 rounded-3xl border-2 border-dashed border-line p-6">
+            <div>
+                <p class="text-lg font-bold">Δεν θέλετε να ασχοληθείτε;</p>
+                <p class="text-slate">Αφήστε μας το κινητό σας και θα σας καλέσουμε εμείς να τη φτιάξουμε μαζί.</p>
+            </div>
+            <button type="button" x-data @click="$dispatch('open-callback')" class="inline-flex items-center gap-2 rounded-full bg-glow px-6 py-3 font-bold text-night hover:brightness-105">
+                <x-ui-icon name="phone" class="h-5 w-5" /> Να με καλέσετε
+            </button>
+        </div>
         <p class="mt-8 text-slate">Κάθε προσφορά αποθηκεύεται στο Studio σας. Την κατεβάζετε σε PDF, την αλλάζετε ή την προχωράτε όποτε θέλετε, χωρίς δέσμευση.</p>
     @endif
 
@@ -303,7 +312,7 @@
                     @if ($stations->isEmpty())
                         <p class="mt-2 text-slate">Οι τιμές των σταθμών ενημερώνονται. Για ραδιοφωνική καμπάνια καλέστε μας και θα σας ετοιμάσουμε προσφορά.</p>
                     @else
-                        <p class="mt-1 text-slate">Τιμές ανά μετάδοση, χωρίς ΦΠΑ.</p>
+                        <p class="mt-1 text-slate">{{ $book->isMetro() ? 'Χρέωση ανά δευτερόλεπτο μετάδοσης, χωρίς ΦΠΑ.' : 'Τιμές ανά μετάδοση, χωρίς ΦΠΑ.' }}</p>
                         <ul class="mt-4 space-y-3">
                             @foreach ($stations as $id => $st)
                                 @php($r = $radio[$id] ?? null)
@@ -315,7 +324,7 @@
                                         <span class="flex-1"><span class="font-semibold">{{ $st->name }}</span> <span class="text-slate freq">{{ $st->frequency_label }}</span>
                                             @if ($st->genre)<span class="block text-sm text-slate">{{ $st->genre }}</span>@endif
                                         </span>
-                                        @if ($canSee)<span class="text-sm text-slate freq max-sm:basis-full max-sm:pl-16">{{ $m($st->price_spot) }} / {{ $st->spot_seconds }}″</span>@endif
+                                        @if ($canSee)<span class="text-sm text-slate freq max-sm:basis-full max-sm:pl-16">{{ $book->stationPriceLabel($st) }}</span>@endif
                                     </label>
                                     @if ($r['on'])
                                         <div class="grid gap-3 border-t border-line p-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -344,13 +353,13 @@
                                                     <label class="flex items-center gap-2 pb-2 text-sm font-semibold"><input type="checkbox" wire:model.live="radio.{{ $id }}.fixed" class="h-4 w-4 accent-[var(--color-onair)]"> Συγκεκριμένες ώρες (+{{ rtrim(rtrim(number_format((float) $st->pct_fixed_hour, 2, ',', ''), '0'), ',') }}%)</label>
                                                 @endif
                                             </div>
-                                            @if ($st->price_mention_live !== null)
+                                            @if ($book->mention($st, 'live') !== null)
                                                 <div>
                                                     <label class="text-sm font-semibold" for="r{{ $id }}-ml">Αναφορές παραγωγού / ημέρα</label>
                                                     <input id="r{{ $id }}-ml" type="number" min="0" max="24" wire:model.live.debounce.400ms="radio.{{ $id }}.ml" class="{{ $small }} mt-1">
                                                 </div>
                                             @endif
-                                            @if ($st->price_mention_recorded !== null)
+                                            @if ($book->mention($st, 'recorded') !== null)
                                                 <div>
                                                     <label class="text-sm font-semibold" for="r{{ $id }}-mr">Έτοιμες εκφωνήσεις / ημέρα</label>
                                                     <input id="r{{ $id }}-mr" type="number" min="0" max="24" wire:model.live.debounce.400ms="radio.{{ $id }}.mr" class="{{ $small }} mt-1">
@@ -378,7 +387,7 @@
                                         <span class="flex-1"><span class="font-semibold">{{ $slot->name }}</span> <span class="text-sm text-slate">{{ $slot->dimensions }}</span>
                                             @if ($slot->description)<span class="block text-sm text-slate">{{ $slot->description }}</span>@endif
                                         </span>
-                                        @if ($canSee)<span class="text-sm text-slate freq">{{ $m($slot->price_per_day) }} / ημέρα</span>@endif
+                                        @if ($canSee)<span class="text-sm text-slate freq">{{ $m($book->slotPrice($slot)) }} / ημέρα</span>@endif
                                     </label>
                                     @if ($banners[$id]['on'] ?? false)
                                         <div class="mt-3 ml-9 max-w-xs">
@@ -414,7 +423,7 @@
                                         <span class="flex-1"><span class="font-semibold">{{ $screen->name }}</span>@if($screen->location) <span class="text-sm text-slate">· {{ $screen->location }}</span>@endif
                                             <span class="block text-sm text-slate">Προβολή {{ $screen->slot_seconds }}″@if($screen->loops_per_hour), {{ $screen->loops_per_hour }} φορές την ώρα@endif</span>
                                         </span>
-                                        @if ($canSee)<span class="text-sm text-slate freq">{{ $m($screen->price_per_day) }} / ημέρα</span>@endif
+                                        @if ($canSee)<span class="text-sm text-slate freq">{{ $m($book->screenPrice($screen)) }} / ημέρα</span>@endif
                                     </label>
                                     @if ($screens[$id]['on'] ?? false)
                                         <div class="mt-3 ml-9 max-w-xs">

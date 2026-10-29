@@ -49,7 +49,7 @@ class HomeController extends Controller
         $out = [];
 
         foreach ($sections as $section) {
-            $q = Package::query()->available();
+            $q = Package::query()->available()->forTier(\App\Services\Quotes\PriceBook::tierFor(request()->user()));
             match ($section->setting('source', $section->type === 'offers' ? 'offers' : 'all')) {
                 'featured' => $q->where('is_featured', true),
                 'offers' => $q->where('is_offer', true),

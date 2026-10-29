@@ -40,9 +40,15 @@ class MediaBuilder
 {
     public static function stationOptions(): array
     {
+        $local = new \App\Services\Quotes\PriceBook('local');
+        $metro = new \App\Services\Quotes\PriceBook('metro');
+
         return Station::query()->active()->orderBy('sort')->get()
-            ->filter(fn ($s) => QuoteCalculator::stationSellable($s, true))
-            ->mapWithKeys(fn ($s) => [$s->id => QuoteCalculator::stationLabel($s).' · '.QuoteCalculator::money($s->price_spot).($s->is_bookable ? '' : ' (όχι online)')])
+            ->filter(fn ($s) => $local->stationSellable($s, true) || $metro->stationSellable($s, true))
+            ->mapWithKeys(fn ($s) => [$s->id => QuoteCalculator::stationLabel($s)
+                .($local->stationBase($s) ? ' · '.$local->stationPriceLabel($s) : '')
+                .($metro->stationBase($s) ? ' · αστικά '.$metro->stationPriceLabel($s) : '')
+                .($s->is_bookable ? '' : ' (όχι online)')])
             ->all();
     }
 
@@ -69,8 +75,8 @@ class MediaBuilder
                     Repeater::make('banners')->label('Θέσεις banner')->addActionLabel('Προσθήκη θέσης')->columns(2)->live()->defaultItems(0)->columnSpanFull()
                         ->schema([
                             Select::make('slot_id')->label('Θέση')->required()->live()->distinct()
-                                ->options(fn () => AdSlot::query()->active()->whereNotNull('price_per_day')->get()
-                                    ->mapWithKeys(fn ($s) => [$s->id => $s->name.' · '.QuoteCalculator::money($s->price_per_day).'/ημέρα'])->all()),
+                                ->options(fn () => AdSlot::query()->active()->where(fn ($q) => $q->whereNotNull('price_per_day')->orWhereNotNull('metro_price_per_day'))->get()
+                                    ->mapWithKeys(fn ($s) => [$s->id => $s->name.($s->price_per_day !== null ? ' · '.QuoteCalculator::money($s->price_per_day).'/ημέρα' : '').($s->metro_price_per_day !== null ? ' · αστικά '.QuoteCalculator::money($s->metro_price_per_day) : '')])->all()),
                             $live(TextInput::make('days')->label('Ημέρες')->numeric()->integer()->minValue(1)->maxValue(365)->placeholder('όλη η καμπάνια')),
                         ]),
                     $live(TextInput::make('articles')->label('Χορηγούμενα άρθρα')->numeric()->integer()->minValue(0)->maxValue(30)),
@@ -81,8 +87,8 @@ class MediaBuilder
                     Repeater::make('screens')->hiddenLabel()->addActionLabel('Προσθήκη πινακίδας')->columns(2)->live()->defaultItems(0)
                         ->schema([
                             Select::make('screen_id')->label('Πινακίδα')->required()->live()->distinct()
-                                ->options(fn () => Screen::query()->active()->whereNotNull('price_per_day')->get()
-                                    ->mapWithKeys(fn ($s) => [$s->id => $s->name.' · '.QuoteCalculator::money($s->price_per_day).'/ημέρα'])->all()),
+                                ->options(fn () => Screen::query()->active()->where(fn ($q) => $q->whereNotNull('price_per_day')->orWhereNotNull('metro_price_per_day'))->get()
+                                    ->mapWithKeys(fn ($s) => [$s->id => $s->name.($s->price_per_day !== null ? ' · '.QuoteCalculator::money($s->price_per_day).'/ημέρα' : '').($s->metro_price_per_day !== null ? ' · αστικά '.QuoteCalculator::money($s->metro_price_per_day) : '')])->all()),
                             $live(TextInput::make('days')->label('Ημέρες')->numeric()->integer()->minValue(1)->maxValue(365)->placeholder('όλη η καμπάνια')),
                         ]),
                 ]),
@@ -135,9 +141,9 @@ class MediaBuilder
         return $specs;
     }
 
-    public static function summaryHtml(array $state, int $days, ?array $extra = null): HtmlString
+    public static function summaryHtml(array $state, int $days, ?array $extra = null, string $tier = 'local'): HtmlString
     {
-        $p = (new QuoteCalculator(staff: true))->price(self::specsFrom($state + ['days' => $days]), $days);
+        $p = (new QuoteCalculator(staff: true, tier: $tier))->price(self::specsFrom($state + ['days' => $days]), $days);
         if (! $p['lines']) {
             return new HtmlString('<p style="opacity:.7">Προσθέστε σταθμούς, θέσεις banner ή πινακίδα, ή χρησιμοποιήστε τον οδηγό.</p>');
         }

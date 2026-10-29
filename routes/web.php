@@ -21,6 +21,8 @@ Route::post('/preview-unlock', PreviewUnlockController::class)
 Route::get('/', HomeController::class)->name('home');
 Route::get('/radio/{station}', [StationController::class, 'show'])->name('stations.show');
 Route::view('/prosfora', 'quotes.builder')->name('quote.builder');
+Route::post('/aitima-epikoinonias', [\App\Http\Controllers\CallbackRequestController::class, 'store'])
+    ->middleware('throttle:3,10')->name('callback.store');
 
 // Πρόσκληση πελάτη που άνοιξε το προσωπικό (υπογεγραμμένο, λήγει)
 Route::get('/energopoiisi/{user}', [InviteController::class, 'show'])->middleware(['signed', 'throttle:20,1'])->name('invite.accept');

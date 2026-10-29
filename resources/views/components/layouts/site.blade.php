@@ -47,6 +47,7 @@
     </main>
 
     @include('partials.footer')
+    @include('partials.callback')
 
     {{-- Ο player ζει έξω από τη ροή των σελίδων: δεν ξαναφορτώνεται ποτέ --}}
     @persist('player')

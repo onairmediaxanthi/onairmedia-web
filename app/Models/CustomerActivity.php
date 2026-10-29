@@ -30,6 +30,7 @@ class CustomerActivity extends Model
         'quote_changed' => 'Άλλαξε την προσφορά του',
         'coupon_issued' => 'Πήρε κουπόνι καλωσορίσματος',
         'marketing_on' => 'Δέχεται προσφορές στο email',
+        'callback_requested' => 'Ζήτησε να τον καλέσουμε',
         'marketing_off' => 'Σταμάτησε τις προσφορές στο email',
         'coupon_applied' => 'Χρησιμοποίησε κουπόνι',
     ];

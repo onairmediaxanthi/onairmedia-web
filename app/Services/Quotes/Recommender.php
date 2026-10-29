@@ -47,6 +47,11 @@ class Recommender
         return new self(new QuoteCalculator(staff: true));
     }
 
+    public static function forTier(string $tier, bool $staff = false): self
+    {
+        return new self(new QuoteCalculator(staff: $staff, tier: $tier));
+    }
+
     /**
      * @param  array{budget: float|int, days: int, goal: string, ages?: list<string>, profiles?: list<string>, gender?: ?string, media?: list<string>, material?: string, seconds?: int}  $a
      * @return array{proposals: list<array<string, mixed>>, min_budget: ?float}
@@ -62,8 +67,9 @@ class Recommender
         $needCreative = ($a['material'] ?? 'ready') === 'need';
 
         $stations = $this->rankStations($a);
-        $slots = AdSlot::query()->active()->whereNotNull('price_per_day')->get();
-        $screen = Screen::query()->active()->whereNotNull('price_per_day')->first();
+        $book = $this->calc->book;
+        $slots = $book->priced(AdSlot::query()->active())->get();
+        $screen = $book->priced(Screen::query()->active())->first();
 
         $proposals = [];
         $seen = [];
@@ -100,7 +106,7 @@ class Recommender
         $seconds = max(10, min(60, (int) ($a['seconds'] ?? 30)));
 
         return Station::query()->active()->get()
-            ->filter(fn (Station $s) => QuoteCalculator::stationSellable($s, $this->calc->staff))
+            ->filter(fn (Station $s) => $this->calc->book->stationSellable($s, $this->calc->staff))
             ->map(function (Station $s) use ($ages, $profiles, $gender, $seconds) {
                 $aud = (array) $s->audience;
                 $score = 1
@@ -110,7 +116,7 @@ class Recommender
                     $score += ($aud['gender'] ?? null) === $gender ? 1 : (($aud['gender'] ?? 'balanced') === 'balanced' ? 0.5 : 0);
                 }
 
-                return ['station' => $s, 'score' => $score, 'unit' => QuoteCalculator::spotUnit($s, $seconds)];
+                return ['station' => $s, 'score' => $score, 'unit' => $this->calc->book->spotUnit($s, $seconds)];
             })
             ->sortBy([['score', 'desc'], [fn ($x) => $x['station']->sort, 'asc']])
             ->values();
@@ -119,6 +125,7 @@ class Recommender
     protected function build(array $strategy, Collection $stations, Collection $slots, ?Screen $screen, array $media, float $net, int $days,
         array $goal, int $seconds, bool $needCreative): array
     {
+        $book = $this->calc->book;
         // Ποια μέσα είναι πραγματικά διαθέσιμα σε αυτή τη στρατηγική
         $share = array_filter($strategy['share'], fn ($v, $k) => $v > 0 && in_array($k, $media, true)
             && ($k !== 'radio' || $stations->isNotEmpty())
@@ -140,7 +147,7 @@ class Recommender
         $creative = 0.0;
         if ($needCreative) {
             foreach (['radio' => 'spot_production', 'led' => 'led_graphic', 'news' => 'banner_design'] as $m => $key) {
-                if (isset($share[$m]) && ($p = Setting::get('price_'.$key)) !== null) {
+                if (isset($share[$m]) && ($p = $this->calc->book->extra($key)) !== null) {
                     $specs[] = ['type' => 'creative', 'key' => $key];
                     $creative += (float) $p;
                 }
@@ -182,11 +189,11 @@ class Recommender
         $banner = null;
         if (isset($share['news'])) {
             $pool = $budget * $share['news'];
-            $fits = $slots->filter(fn (AdSlot $s) => (float) $s->price_per_day * max($days, $s->min_days) <= $pool)->sortByDesc('price_per_day');
+            $fits = $slots->filter(fn (AdSlot $s) => $book->slotPrice($s) * max($days, $s->min_days) <= $pool)->sortByDesc(fn ($s) => $book->slotPrice($s));
             if ($s = $fits->first()) {
                 $banner = ['slot' => $s, 'days' => max($days, $s->min_days)];
-            } elseif ($s = $slots->sortBy('price_per_day')->first()) {
-                $d = (int) floor($pool / (float) $s->price_per_day);
+            } elseif ($s = $slots->sortBy(fn ($s) => $book->slotPrice($s))->first()) {
+                $d = (int) floor($pool / $book->slotPrice($s));
                 if ($d >= max(1, $s->min_days)) {
                     $banner = ['slot' => $s, 'days' => $d];
                 }
@@ -196,7 +203,7 @@ class Recommender
         // Πινακίδα LED
         $led = null;
         if (isset($share['led']) && $screen) {
-            $d = min($days, (int) floor($budget * $share['led'] / (float) $screen->price_per_day));
+            $d = min($days, (int) floor($budget * $share['led'] / $book->screenPrice($screen)));
             if ($d >= max(1, $screen->min_days)) {
                 $led = $d;
             }
@@ -204,8 +211,8 @@ class Recommender
 
         // Ό,τι περίσσεψε: περισσότερες μεταδόσεις, μέχρι την ιδανική και μετά μέχρι το όριο
         $spent = collect($radio)->sum(fn ($r) => $r['spots'] * $r['x']['unit'] * $days)
-            + ($banner ? (float) $banner['slot']->price_per_day * $banner['days'] : 0)
-            + ($led ? (float) $screen->price_per_day * $led : 0);
+            + ($banner ? $book->slotPrice($banner['slot']) * $banner['days'] : 0)
+            + ($led ? $book->screenPrice($screen) * $led : 0);
         $left = $budget - $spent;
         foreach ([$goal['ideal'], self::MAX_SPOTS] as $cap) {
             $added = true;

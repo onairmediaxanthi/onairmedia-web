@@ -23,7 +23,7 @@ class Package extends Model
 
     protected $fillable = [
         'slug', 'name', 'tagline', 'description', 'includes', 'media_mix', 'duration_days',
-        'price', 'pricing', 'discount_percent', 'specs', 'compare_at_price', 'badge', 'color', 'image_path', 'is_offer',
+        'price', 'pricing', 'price_tier', 'discount_percent', 'specs', 'compare_at_price', 'badge', 'color', 'image_path', 'is_offer',
         'available_from', 'available_until', 'is_featured', 'sort', 'is_active',
     ];
 
@@ -50,6 +50,19 @@ class Package extends Model
             ->where(fn ($q) => $q->whereNull('available_from')->orWhere('available_from', '<=', now()))
             ->where(fn ($q) => $q->whereNull('available_until')->orWhere('available_until', '>', now()))
             ->orderBy('sort');
+    }
+
+    public const TIERS = ['all' => 'Για όλους', 'local' => 'Μόνο βασικός τιμοκατάλογος', 'metro' => 'Μόνο μεγάλα αστικά κέντρα'];
+
+    public function availableFor(string $tier): bool
+    {
+        return in_array($this->price_tier ?: 'all', ['all', $tier], true);
+    }
+
+    /** Πακέτα που βλέπει ένας πελάτης ανάλογα με τον τιμοκατάλογό του */
+    public function scopeForTier(Builder $query, string $tier): Builder
+    {
+        return $query->whereIn('price_tier', ['all', $tier]);
     }
 
     /** Πόσες ημέρες μένουν μέχρι τη λήξη της προσφοράς */

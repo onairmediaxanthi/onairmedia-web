@@ -2,7 +2,9 @@
     $list = $packages[$section->id] ?? collect();
     $canSeePrices = $canSeePrices ?? false;
     $unlockUrl = auth()->check() ? route('verification.notice') : route('register');
-    $many = $list->count() > 3;
+    // Πάνω από 3: slider με κύλιση ή σταθερό πλέγμα (ρύθμιση στη διαχείριση)
+    $grid = $section->setting('many_layout', 'slider') === 'grid';
+    $many = $list->count() > 3 && ! $grid;
 @endphp
 @if ($list->isNotEmpty())
 <section class="mx-auto max-w-7xl px-4 sm:px-6 py-16" aria-labelledby="of-{{ $section->id }}"
@@ -37,12 +39,12 @@
     </div>
 
     <ul x-ref="track" @scroll.debounce.100ms="update()"
-        class="mt-8 flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4 [scrollbar-width:thin] {{ $many ? '' : 'lg:grid lg:grid-cols-3 lg:overflow-visible' }}"
+        class="mt-8 {{ $grid ? 'grid gap-5 sm:grid-cols-2 lg:grid-cols-3' : 'flex snap-x snap-mandatory gap-5 overflow-x-auto pb-4 [scrollbar-width:thin]' }} {{ ! $grid && ! $many ? 'lg:grid lg:grid-cols-3 lg:overflow-visible' : '' }}"
         aria-label="Προσφορές">
         @foreach ($list as $p)
             @php($left = $p->daysLeft())
             @php($stations = $p->stations())
-            <li data-card class="snap-start shrink-0 w-[86%] sm:w-[calc(50%-10px)] {{ $many ? 'lg:w-[calc(33.333%-14px)]' : 'lg:w-auto' }} flex flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-sm">
+            <li data-card class="{{ $grid ? '' : 'snap-start shrink-0 w-[86%] sm:w-[calc(50%-10px)] '.($many ? 'lg:w-[calc(33.333%-14px)]' : 'lg:w-auto') }} flex flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-sm">
                 <div class="relative px-6 pt-6 pb-5 text-white" style="background: linear-gradient(135deg, {{ $p->color ?: '#c80c92' }}, #121a33)">
                     <div class="flex items-start justify-between gap-3">
                         @if ($p->badge)<span class="rounded-full bg-white/95 px-3 py-1 text-xs font-extrabold" style="color: {{ $p->color ?: '#c80c92' }}">{{ $p->badge }}</span>@else<span></span>@endif

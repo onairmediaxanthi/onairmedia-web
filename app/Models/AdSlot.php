@@ -11,13 +11,13 @@ class AdSlot extends Model
     public const DEVICES = ['all' => 'Όλες οι συσκευές', 'desktop' => 'Μόνο υπολογιστής', 'mobile' => 'Μόνο κινητό'];
 
     protected $fillable = [
-        'code', 'name', 'description', 'dimensions', 'device', 'price_per_day',
+        'code', 'name', 'description', 'dimensions', 'device', 'price_per_day', 'metro_price_per_day',
         'min_days', 'max_concurrent', 'preview_path', 'is_active', 'sort',
     ];
 
     protected function casts(): array
     {
-        return ['price_per_day' => 'decimal:2', 'is_active' => 'boolean'];
+        return ['price_per_day' => 'decimal:2', 'metro_price_per_day' => 'decimal:2', 'is_active' => 'boolean'];
     }
 
     public function scopeActive(Builder $query): Builder

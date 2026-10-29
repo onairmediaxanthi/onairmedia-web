@@ -89,7 +89,7 @@ trait BuildsQuotes
                     CheckboxList::make('creative')->label('Δημιουργικό')->columnSpanFull()->columns(2)->live()
                         ->options(collect(QuoteCalculator::CREATIVE)->filter(fn ($l, $k) => Setting::get('price_'.$k) !== null)
                             ->map(fn ($l, $k) => $l.' · '.QuoteCalculator::money(Setting::get('price_'.$k)))->all()),
-                    $live(TextInput::make('discount')->label('Έκπτωση')->numeric()->minValue(0)->maxValue(QuoteCalculator::MAX_DISCOUNT)->suffix('%')
+                    $live(TextInput::make('discount')->label('Έκπτωση')->numeric()->minValue(0)->maxValue(fn () => QuoteCalculator::maxDiscount())->suffix('%')
                         ->helperText('Πάνω στο σύνολο, χωρίς ΦΠΑ. Τη βλέπει ο πελάτης ως γραμμή.')),
                     Textarea::make('intro')->label('Μήνυμα στην αρχή της πρότασης')->rows(4)->maxLength(3000)->columnSpanFull()
                         ->placeholder('π.χ. Όπως συζητήσαμε, σας προτείνουμε έναν συνδυασμό για τις εκπτώσεις του Νοεμβρίου…'),
@@ -97,12 +97,20 @@ trait BuildsQuotes
             ]),
 
             Section::make('Σύνολο')->columnSpan(['default' => 3, 'xl' => 1])->schema([
-                TextEntry::make('summary')->hiddenLabel()->html()->state(fn (Get $get) => MediaBuilder::summaryHtml(self::state($get), (int) $get('days') ?: 1)),
+                TextEntry::make('tier')->hiddenLabel()->badge()->color(fn (Get $get) => self::tierOf($get('business_id')) === 'metro' ? 'warning' : 'gray')
+                    ->state(fn (Get $get) => \App\Services\Quotes\PriceBook::TIERS[self::tierOf($get('business_id'))]),
+                TextEntry::make('summary')->hiddenLabel()->html()->state(fn (Get $get) => MediaBuilder::summaryHtml(self::state($get), (int) $get('days') ?: 1, null, self::tierOf($get('business_id')))),
             ]),
         ]);
     }
 
     // ---------------- Υπολογισμοί ----------------
+
+    /** Ο τιμοκατάλογος του πελάτη της προσφοράς */
+    public static function tierOf(mixed $businessId): string
+    {
+        return \App\Services\Quotes\PriceBook::tierFor($businessId ? Business::query()->with('user')->find($businessId)?->user : null);
+    }
 
     public static function specsFrom(array $s): array
     {
@@ -121,7 +129,7 @@ trait BuildsQuotes
             return ['proposals' => [], 'min_budget' => null];
         }
 
-        return Recommender::forStaff()->recommend([
+        return Recommender::forTier(self::tierOf($get('business_id')), true)->recommend([
             'budget' => (float) $get('budget'), 'days' => (int) $get('days') ?: 30, 'goal' => (string) ($get('goal') ?: 'awareness'),
             'ages' => (array) $get('ages'), 'profiles' => (array) $get('profiles'), 'gender' => $get('gender') ?: null,
             'media' => (array) $get('media'), 'material' => (string) ($get('material') ?: 'ready'), 'seconds' => (int) ($get('seconds') ?: 30),
@@ -153,7 +161,7 @@ trait BuildsQuotes
     {
         $state = $this->form->getRawState();
         $get = fn ($k) => data_get($state, $k);
-        $out = Recommender::forStaff()->recommend([
+        $out = Recommender::forTier(self::tierOf($get('business_id')), true)->recommend([
             'budget' => (float) $get('budget'), 'days' => (int) $get('days') ?: 30, 'goal' => (string) ($get('goal') ?: 'awareness'),
             'ages' => (array) $get('ages'), 'profiles' => (array) $get('profiles'), 'gender' => $get('gender') ?: null,
             'media' => (array) $get('media'), 'material' => (string) ($get('material') ?: 'ready'), 'seconds' => (int) ($get('seconds') ?: 30),

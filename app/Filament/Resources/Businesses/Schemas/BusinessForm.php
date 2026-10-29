@@ -34,6 +34,9 @@ class BusinessForm
                 TextEntry::make('activated')->label('Λογαριασμός')->badge()
                     ->state(fn (Business $record) => $record->isActivated() ? 'Ενεργός' : ($record->invited_at ? 'Πρόσκληση '.$record->invited_at->format('d/m/Y') : 'Δεν έχει ενεργοποιηθεί'))
                     ->color(fn (Business $record) => $record->isActivated() ? 'success' : 'gray'),
+                TextEntry::make('tier')->label('Τιμοκατάλογος')->badge()
+                    ->state(fn (Business $record) => \App\Services\Quotes\PriceBook::TIERS[\App\Services\Quotes\PriceBook::isMetroCity((string) $record->city) ? 'metro' : 'local'])
+                    ->color(fn (Business $record) => \App\Services\Quotes\PriceBook::isMetroCity((string) $record->city) ? 'warning' : 'gray'),
                 TextEntry::make('terms_accepted_at')->label('Αποδοχή όρων')->dateTime('d/m/Y H:i')->placeholder('Όχι ακόμα'),
                 TextEntry::make('marketing')->label('Προσφορές με email')->badge()->columnSpan(2)
                     ->state(fn (Business $record) => $record->marketing_consent_at

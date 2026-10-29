@@ -20,6 +20,7 @@ class StationController extends Controller
             'description' => $station->description ? Str::sanitizeHtml($station->description) : null,
             'audience' => Audience::labelsFor($station->audience),
             'canSeePrices' => (bool) $request->user()?->canSeePrices(),
+            'book' => \App\Services\Quotes\PriceBook::for($request->user()),
             'others' => Station::query()->active()->whereKeyNot($station->getKey())->get(),
         ]);
     }

@@ -83,13 +83,17 @@
             <div id="diafimisi-stathmou" class="mt-12 rounded-2xl border border-line bg-surface p-7">
                 <h2 class="text-2xl font-bold">Διαφημιστείτε στον {{ $station->name }}</h2>
                 <p class="mt-2 text-slate max-w-prose">Διαλέξτε ζώνη ωρών και διάρκεια, ή συνδυάστε τον σταθμό με τους υπόλοιπους.</p>
-                @if ($canSeePrices && $station->price_spot !== null)
+                @if ($canSeePrices && $book->stationBase($station) !== null)
                     <dl class="mt-5 grid gap-3 sm:grid-cols-3">
-                        <div class="rounded-xl bg-paper p-4"><dt class="text-sm text-slate">Μετάδοση σποτ έως {{ $station->spot_seconds }}″</dt><dd class="mt-1 text-xl font-bold">{{ number_format((float) $station->price_spot, 2, ',', '.') }} €</dd></div>
-                        @if ($station->price_mention_live !== null)<div class="rounded-xl bg-paper p-4"><dt class="text-sm text-slate">Αναφορά από τον παραγωγό</dt><dd class="mt-1 text-xl font-bold">{{ number_format((float) $station->price_mention_live, 2, ',', '.') }} €</dd></div>@endif
-                        @if ($station->price_mention_recorded !== null)<div class="rounded-xl bg-paper p-4"><dt class="text-sm text-slate">Έτοιμη εκφώνηση</dt><dd class="mt-1 text-xl font-bold">{{ number_format((float) $station->price_mention_recorded, 2, ',', '.') }} €</dd></div>@endif
+                        @if ($book->isMetro())
+                            <div class="rounded-xl bg-paper p-4"><dt class="text-sm text-slate">Μετάδοση, ανά δευτερόλεπτο</dt><dd class="mt-1 text-xl font-bold">{{ number_format((float) $station->metro_price_second, 4, ',', '.') }} €</dd><dd class="text-sm text-slate">σποτ 30″: {{ \App\Services\Quotes\QuoteCalculator::money($book->spotUnit($station, 30)) }}</dd></div>
+                        @else
+                            <div class="rounded-xl bg-paper p-4"><dt class="text-sm text-slate">Μετάδοση σποτ έως {{ $station->spot_seconds }}″</dt><dd class="mt-1 text-xl font-bold">{{ number_format((float) $station->price_spot, 2, ',', '.') }} €</dd></div>
+                        @endif
+                        @if (($v = $book->mention($station, 'live')) !== null)<div class="rounded-xl bg-paper p-4"><dt class="text-sm text-slate">Αναφορά από τον παραγωγό</dt><dd class="mt-1 text-xl font-bold">{{ number_format($v, 2, ',', '.') }} €</dd></div>@endif
+                        @if (($v = $book->mention($station, 'recorded')) !== null)<div class="rounded-xl bg-paper p-4"><dt class="text-sm text-slate">Έτοιμη εκφώνηση</dt><dd class="mt-1 text-xl font-bold">{{ number_format($v, 2, ',', '.') }} €</dd></div>@endif
                     </dl>
-                    <p class="mt-3 text-sm text-slate">Τιμές ανά μετάδοση, χωρίς ΦΠΑ 24%.@if((float) $station->pct_first_position > 0) Πάντα πρώτη θέση: +{{ rtrim(rtrim(number_format((float) $station->pct_first_position, 2, ',', ''), '0'), ',') }}%.@endif @if((float) $station->pct_sandwich > 0) Sandwich: +{{ rtrim(rtrim(number_format((float) $station->pct_sandwich, 2, ',', ''), '0'), ',') }}%.@endif</p>
+                    <p class="mt-3 text-sm text-slate">{{ $book->isMetro() ? 'Χρέωση ανά δευτερόλεπτο μετάδοσης' : 'Τιμές ανά μετάδοση' }}, χωρίς ΦΠΑ 24%.@if((float) $station->pct_first_position > 0) Πάντα πρώτη θέση: +{{ rtrim(rtrim(number_format((float) $station->pct_first_position, 2, ',', ''), '0'), ',') }}%.@endif @if((float) $station->pct_sandwich > 0) Sandwich: +{{ rtrim(rtrim(number_format((float) $station->pct_sandwich, 2, ',', ''), '0'), ',') }}%.@endif</p>
                 @elseif (! $canSeePrices)
                     <p class="mt-4"><a href="{{ route('register') }}" class="font-semibold text-onair hover:underline">Δωρεάν εγγραφή για να δείτε τιμές</a></p>
                 @endif

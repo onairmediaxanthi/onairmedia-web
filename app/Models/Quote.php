@@ -27,7 +27,7 @@ class Quote extends Model
     public const SOURCES = ['wizard' => 'Οδηγός', 'manual' => 'Δική του επιλογή', 'package' => 'Έτοιμο πακέτο', 'staff' => 'Από το προσωπικό'];
 
     protected $fillable = [
-        'title', 'intro', 'source', 'answers', 'items', 'starts_on', 'days', 'subtotal', 'vat_rate', 'vat', 'total',
+        'title', 'intro', 'source', 'price_tier', 'answers', 'items', 'starts_on', 'days', 'subtotal', 'vat_rate', 'vat', 'total',
         'valid_until', 'customer_notes', 'admin_notes',
     ];
 

@@ -35,7 +35,7 @@ class RadioPriceResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRadio;
 
-    protected static ?string $navigationLabel = 'Ραδιόφωνα';
+    protected static ?string $navigationLabel = 'Ραδιόφωνα · βασικός';
 
     protected static ?string $modelLabel = 'τιμές σταθμού';
 

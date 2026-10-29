@@ -37,6 +37,8 @@ class ExtraCharges extends Page
     public const KEYS = [
         'vat_rate', 'price_sponsored_article', 'price_article_writing', 'price_spot_production',
         'price_spot_production_voices', 'price_led_graphic', 'price_banner_design',
+        'metro_cities', 'metro_price_sponsored_article', 'metro_price_article_writing', 'metro_price_spot_production',
+        'metro_price_spot_production_voices', 'metro_price_led_graphic', 'metro_price_banner_design',
     ];
 
     /** @var array<string, mixed>|null */
@@ -63,6 +65,18 @@ class ExtraCharges extends Page
                 $money('price_led_graphic', 'Γραφικό για πινακίδα LED'),
                 $money('price_banner_design', 'Σχεδιασμός banner (όλες οι διαστάσεις)'),
             ]),
+            Section::make('Μεγάλα αστικά κέντρα (δεύτερος τιμοκατάλογος)')->columns(2)
+                ->description('Πελάτης με πόλη από αυτή τη λίστα βλέπει ΜΟΝΟ τον τιμοκατάλογο αστικών κέντρων: ραδιόφωνο ανά δευτερόλεπτο και τις δικές του τιμές για banner, πινακίδα, άρθρα και δημιουργικό. Η σύγκριση δεν κοιτά τόνους και κεφαλαία.')
+                ->schema([
+                    \Filament\Forms\Components\TagsInput::make('metro_cities')->label('Πόλεις')->columnSpanFull()->placeholder('Προσθήκη πόλης')
+                        ->helperText('Γράψτε την πόλη και πατήστε Enter. Βάλτε και λατινικά αν τα χρησιμοποιούν πελάτες, π.χ. Athens.'),
+                    $money('metro_price_sponsored_article', 'Χορηγούμενο άρθρο'),
+                    $money('metro_price_article_writing', 'Συγγραφή άρθρου'),
+                    $money('metro_price_spot_production', 'Παραγωγή σποτ (1 φωνή)'),
+                    $money('metro_price_spot_production_voices', 'Παραγωγή σποτ με διάλογο'),
+                    $money('metro_price_led_graphic', 'Γραφικό για πινακίδα LED'),
+                    $money('metro_price_banner_design', 'Σχεδιασμός banner'),
+                ]),
             Section::make('ΦΠΑ')->schema([
                 TextInput::make('vat_rate')->label('Συντελεστής ΦΠΑ')->numeric()->minValue(0)->maxValue(30)->suffix('%')->required()
                     ->helperText('Όλες οι τιμές του τιμοκαταλόγου καταχωρίζονται χωρίς ΦΠΑ· ο πελάτης βλέπει και το τελικό ποσό.'),
@@ -86,7 +100,9 @@ class ExtraCharges extends Page
 
     public function save(): void
     {
-        Setting::putMany(array_intersect_key($this->form->getState(), array_flip(self::KEYS)));
+        $state = array_intersect_key($this->form->getState(), array_flip(self::KEYS));
+        $state['metro_cities'] = array_values(array_unique(array_filter(array_map('trim', (array) ($state['metro_cities'] ?? [])))));
+        Setting::putMany($state);
 
         Notification::make()->success()->title('Οι χρεώσεις αποθηκεύτηκαν')->send();
     }

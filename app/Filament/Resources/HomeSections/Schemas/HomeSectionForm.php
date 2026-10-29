@@ -122,7 +122,10 @@ class HomeSectionForm
                         ->options(fn () => Package::query()->orderBy('sort')->pluck('name', 'id'))
                         ->visible(fn (Get $get) => $get('settings.source') === 'chosen'),
                     Select::make('settings.limit')->label('Πόσες το πολύ')->default(12)->options([3 => 3, 6 => 6, 9 => 9, 12 => 12, 20 => 20]),
-                    Toggle::make('settings.autoplay')->label('Αυτόματη κύλιση')->default(true)->inline(false),
+                    ToggleButtons::make('settings.many_layout')->label('Όταν είναι πάνω από 3')->inline()->default('slider')->live()
+                        ->options(['slider' => 'Slider με κύλιση', 'grid' => 'Σταθερές, η μία κάτω από την άλλη']),
+                    Toggle::make('settings.autoplay')->label('Αυτόματη κύλιση')->default(true)->inline(false)
+                        ->visible(fn (Get $get) => $get('settings.many_layout') !== 'grid'),
                 ]),
 
             Section::make('Ρυθμίσεις ειδήσεων')->columnSpanFull()->visible($is('news'))->schema([

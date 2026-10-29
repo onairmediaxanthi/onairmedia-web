@@ -64,6 +64,7 @@ class ScreenResource extends Resource
             Section::make('Προβολή & τιμή')->columns(3)->columnSpanFull()->schema([
                 TextInput::make('price_per_day')->label('Τιμή προβολής ανά ημέρα')->numeric()->minValue(0)->maxValue(100000)->step(0.01)->suffix('€')
                     ->helperText('Χωρίς ΦΠΑ.'),
+                TextInput::make('metro_price_per_day')->label('Τιμή ανά ημέρα · αστικά κέντρα')->numeric()->minValue(0)->maxValue(100000)->step(0.01)->suffix('€'),
                 TextInput::make('min_days')->label('Ελάχιστες ημέρες')->numeric()->minValue(1)->maxValue(365)->default(1)->required(),
                 TextInput::make('max_advertisers')->label('Μέγιστοι διαφημιζόμενοι')->numeric()->minValue(1)->maxValue(100)
                     ->helperText('Πόσα γραφικά χωράει ο κύκλος προβολής.'),
@@ -83,7 +84,9 @@ class ScreenResource extends Resource
             ->defaultSort('sort')->reorderable('sort')->paginated(false)
             ->columns([
                 TextColumn::make('name')->label('Πινακίδα')->weight('bold')->description(fn (Screen $r) => $r->location),
-                TextInputColumn::make('price_per_day')->label('€ / ημέρα')->type('number')->step(0.01)
+                TextInputColumn::make('price_per_day')->label('Βασικός € / ημέρα')->type('number')->step(0.01)
+                    ->rules(['nullable', 'numeric', 'min:0', 'max:100000'])->width('8rem'),
+                TextInputColumn::make('metro_price_per_day')->label('Αστικά € / ημέρα')->type('number')->step(0.01)
                     ->rules(['nullable', 'numeric', 'min:0', 'max:100000'])->width('8rem'),
                 TextColumn::make('slot_seconds')->label('Προβολή')->suffix('″'),
                 TextColumn::make('loops_per_hour')->label('Φορές/ώρα')->placeholder('—'),

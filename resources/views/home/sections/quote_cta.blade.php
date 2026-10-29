@@ -17,6 +17,9 @@
                         <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
                     </a>
                     <a href="{{ $secondaryUrl }}" class="inline-flex rounded-full border-2 border-white/60 px-6 py-3 font-semibold hover:bg-white/10">{{ $secondary }}</a>
+                    <button type="button" x-data @click="$dispatch('open-callback')" class="inline-flex items-center gap-2 rounded-full px-4 py-3 font-semibold text-white/90 underline-offset-4 hover:underline">
+                        <x-ui-icon name="phone" class="h-4 w-4" /> ή να σας καλέσουμε
+                    </button>
                 </div>
             </div>
             @if ($section->setting('show_steps', true))

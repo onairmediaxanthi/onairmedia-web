@@ -262,4 +262,13 @@ class OffersCouponsTest extends TestCase
         $this->post(route('logout'))->assertRedirect(route('home'));
         $this->assertGuest('web');
     }
+
+    public function test_offers_can_be_fixed_grid_instead_of_slider(): void
+    {
+        HomeSection::query()->create(['type' => 'offers', 'settings' => ['source' => 'offers', 'many_layout' => 'grid'], 'is_active' => true, 'sort' => 1]);
+        foreach (range(1, 5) as $i) {
+            Package::query()->create(['slug' => 'g'.$i, 'name' => 'Πλέγμα '.$i, 'price' => 100, 'is_offer' => true, 'available_until' => now()->addDays(5), 'is_active' => true]);
+        }
+        $this->get('/')->assertOk()->assertSee('Πλέγμα 5')->assertDontSee('Επόμενες προσφορές')->assertSee('grid gap-5 sm:grid-cols-2 lg:grid-cols-3', false);
+    }
 }

@@ -13,7 +13,10 @@
         <div>
             <h2 id="ct-{{ $section->id }}" class="text-3xl sm:text-4xl font-extrabold tracking-tight">{{ $section->title ?: 'Μιλήστε μαζί μας' }}</h2>
             <p class="mt-3 text-lg text-slate">{{ $section->subtitle ?: 'Θα χαρούμε να σχεδιάσουμε μαζί την καμπάνια σας.' }}</p>
-            <a href="{{ route('quote.builder') }}" class="mt-6 inline-flex items-center gap-2 rounded-full bg-onair px-6 py-3.5 font-semibold text-white hover:bg-onair-dark">Βγάλτε προσφορά <x-ui-icon name="arrow" class="h-4 w-4" /></a>
+            <div class="mt-6 flex flex-wrap gap-3">
+                <a href="{{ route('quote.builder') }}" class="inline-flex items-center gap-2 rounded-full bg-onair px-6 py-3.5 font-semibold text-white hover:bg-onair-dark">Βγάλτε προσφορά <x-ui-icon name="arrow" class="h-4 w-4" /></a>
+                <button type="button" x-data @click="$dispatch('open-callback')" class="inline-flex items-center gap-2 rounded-full border-2 border-line px-6 py-3 font-semibold hover:border-onair"><x-ui-icon name="phone" class="h-4 w-4" /> Να με καλέσετε</button>
+            </div>
         </div>
         <ul class="grid gap-4 sm:grid-cols-2">
             @foreach ($cards as $c)

@@ -38,7 +38,7 @@ class QuoteSettings extends Page
     public const KEYS = [
         'quote_valid_days', 'quote_reminder_days', 'quote_reminder_max', 'notify_emails',
         'welcome_coupon_enabled', 'welcome_coupon_type', 'welcome_coupon_value', 'welcome_coupon_days', 'welcome_coupon_min', 'welcome_coupon_prefix',
-        'campaign_per_minute', 'notify_registered', 'notify_quote_saved', 'notify_quote_changed', 'notify_quote_submitted', 'notify_quote_deleted', 'notify_quote_pdf', 'notify_wizard_used',
+        'campaign_per_minute', 'max_staff_discount', 'callback_emails', 'callback_floating', 'notify_registered', 'notify_quote_saved', 'notify_quote_changed', 'notify_quote_submitted', 'notify_quote_deleted', 'notify_quote_pdf', 'notify_wizard_used',
     ];
 
     /** @var array<string, mixed>|null */
@@ -57,6 +57,8 @@ class QuoteSettings extends Page
                     ->helperText('Για τόσες μέρες «κλειδώνουν» οι τιμές. Μετά ο πελάτης την ανανεώνει με τις τρέχουσες.'),
                 TextInput::make('quote_reminder_days')->label('Υπενθύμιση κάθε')->numeric()->integer()->minValue(0)->maxValue(60)->suffix('ημέρες')->required()
                     ->helperText('0 = καμία υπενθύμιση. Στέλνεται στις 10:00 το πρωί.'),
+                TextInput::make('max_staff_discount')->label('Μέγιστη χειροκίνητη έκπτωση')->numeric()->minValue(0)->maxValue(90)->suffix('%')->required()
+                    ->helperText('Πόση έκπτωση μπορεί να δώσει το προσωπικό σε μια προσφορά.'),
                 TextInput::make('quote_reminder_max')->label('Το πολύ')->numeric()->integer()->minValue(0)->maxValue(10)->suffix('υπενθυμίσεις')->required()
                     ->helperText('Ανά προσφορά. Ο πελάτης μπορεί να τις σταματήσει από το email.'),
             ]),
@@ -70,6 +72,19 @@ class QuoteSettings extends Page
                     TextInput::make('welcome_coupon_min')->label('Ελάχιστη καμπάνια')->numeric()->minValue(0)->suffix('€')->helperText('Χωρίς ΦΠΑ. Κενό = χωρίς όριο.'),
                     TextInput::make('welcome_coupon_prefix')->label('Πρόθεμα κωδικού')->maxLength(12)->alphaNum()->helperText('π.χ. KALOS → KALOS-7FK2QM'),
                 ]),
+            Section::make('«Να σας καλέσουμε»')->columns(2)->schema([
+                TextInput::make('callback_emails')->label('Email για αιτήματα επικοινωνίας')->maxLength(500)
+                    ->placeholder('sales@onairmedia.gr')
+                    ->helperText('Ένα ή περισσότερα, χωρισμένα με κόμμα. Κενό = τα email ειδοποιήσεων από κάτω.')
+                    ->rule(fn () => function (string $attribute, $value, \Closure $fail) {
+                        foreach (array_filter(array_map('trim', preg_split('/[,;\s]+/', (string) $value))) as $e) {
+                            if (! filter_var($e, FILTER_VALIDATE_EMAIL)) {
+                                $fail('Μη έγκυρο email: '.$e);
+                            }
+                        }
+                    }),
+                Toggle::make('callback_floating')->label('Σταθερό κουμπί «Να σας καλέσουμε;» σε όλες τις σελίδες')->inline(false),
+            ]),
             Section::make('Μαζικές αποστολές')->schema([
                 TextInput::make('campaign_per_minute')->label('Email ανά λεπτό')->numeric()->integer()->minValue(1)->maxValue(200)->required()
                     ->helperText('Οι πάροχοι φιλοξενίας έχουν όριο ανά ώρα (συχνά 300–500). Με 20/λεπτό στέλνονται ~1.200 την ώρα· ρωτήστε τον πάροχο αν χρειάζεται λιγότερο.'),

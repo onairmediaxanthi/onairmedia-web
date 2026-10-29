@@ -20,6 +20,21 @@ class CreateBusiness extends CreateRecord
 
     protected static ?string $title = 'Νέος πελάτης';
 
+    protected function fillForm(): void
+    {
+        parent::fillForm();
+        // Από «Αιτήματα επικοινωνίας»: ΑΦΜ, όνομα και κινητό έτοιμα
+        $q = request()->query();
+        $extra = array_filter([
+            'vat' => preg_replace('/\D/', '', (string) ($q['afm'] ?? '')) ?: null,
+            'contact_person' => isset($q['onoma']) ? mb_substr((string) $q['onoma'], 0, 120) : null,
+            'mobile' => preg_replace('/\D/', '', (string) ($q['kinito'] ?? '')) ?: null,
+        ], fn ($v) => $v !== null);
+        if ($extra) {
+            $this->form->fill(array_merge($this->form->getRawState(), $extra));
+        }
+    }
+
     protected function handleRecordCreation(array $data): Model
     {
         $email = mb_strtolower(trim($data['account_email']));

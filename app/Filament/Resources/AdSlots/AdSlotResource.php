@@ -51,6 +51,8 @@ class AdSlotResource extends Resource
             Select::make('device')->label('Συσκευές')->options(AdSlot::DEVICES)->default('all')->required()->native(false),
             TextInput::make('price_per_day')->label('Τιμή ανά ημέρα')->numeric()->minValue(0)->maxValue(100000)->step(0.01)->suffix('€')
                 ->helperText('Χωρίς ΦΠΑ. Κενό = η θέση δεν πωλείται ακόμα online.'),
+            TextInput::make('metro_price_per_day')->label('Τιμή ανά ημέρα · αστικά κέντρα')->numeric()->minValue(0)->maxValue(100000)->step(0.01)->suffix('€')
+                ->helperText('Για πελάτες από τις πόλεις του δεύτερου τιμοκαταλόγου.'),
             TextInput::make('min_days')->label('Ελάχιστες ημέρες')->numeric()->minValue(1)->maxValue(365)->default(1)->required(),
             TextInput::make('max_concurrent')->label('Διαφημιζόμενοι ταυτόχρονα')->numeric()->minValue(1)->maxValue(20)->default(1)->required()
                 ->helperText('Πόσα banner εναλλάσσονται στη θέση την ίδια μέρα.'),
@@ -69,7 +71,9 @@ class AdSlotResource extends Resource
             ->columns([
                 TextColumn::make('name')->label('Θέση')->weight('bold')->description(fn (AdSlot $r) => $r->dimensions),
                 TextColumn::make('device')->label('Συσκευές')->formatStateUsing(fn ($state) => AdSlot::DEVICES[$state] ?? $state)->badge(),
-                TextInputColumn::make('price_per_day')->label('€ / ημέρα')->type('number')->step(0.01)
+                TextInputColumn::make('price_per_day')->label('Βασικός € / ημέρα')->type('number')->step(0.01)
+                    ->rules(['nullable', 'numeric', 'min:0', 'max:100000'])->width('8rem'),
+                TextInputColumn::make('metro_price_per_day')->label('Αστικά € / ημέρα')->type('number')->step(0.01)
                     ->rules(['nullable', 'numeric', 'min:0', 'max:100000'])->width('8rem'),
                 TextInputColumn::make('min_days')->label('Ελάχ. ημέρες')->type('number')
                     ->rules(['required', 'integer', 'min:1', 'max:365'])->width('6rem'),

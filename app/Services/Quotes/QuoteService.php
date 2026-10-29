@@ -34,7 +34,8 @@ class QuoteService
             throw new InvalidArgumentException('Έχετε ήδη '.self::MAX_OPEN_QUOTES.' ανοιχτές προσφορές. Σβήστε κάποιες παλιές για να αποθηκεύσετε νέα.');
         }
 
-        $priced = $this->calc->price($specs, $days);
+        $tier = PriceBook::tierFor($user);
+        $priced = (new QuoteCalculator(tier: $tier))->price($specs, $days);
         if (! $priced['lines'] || $priced['subtotal'] <= 0) {
             throw new InvalidArgumentException('Η προσφορά δεν έχει καμία γραμμή με τιμή.');
         }
@@ -42,6 +43,7 @@ class QuoteService
         $quote = new Quote([
             'title' => mb_substr(trim($title) ?: 'Η καμπάνια μου', 0, 120),
             'source' => array_key_exists($source, Quote::SOURCES) ? $source : 'manual',
+            'price_tier' => $tier,
             'answers' => $answers ?: null,
             'starts_on' => self::parseStart($startsOn),
             'days' => max(1, min(QuoteCalculator::MAX_DAYS, $days)),
@@ -58,12 +60,14 @@ class QuoteService
     /** Προσφορά που ετοιμάζει το προσωπικό για λογαριασμό πελάτη */
     public function createForCustomer(User $staff, User $customer, string $title, array $specs, int $days, ?string $startsOn, ?string $intro, array $answers = []): Quote
     {
-        $priced = (new QuoteCalculator(staff: true))->price($specs, $days);
+        $tier = PriceBook::tierFor($customer);
+        $priced = (new QuoteCalculator(staff: true, tier: $tier))->price($specs, $days);
         if (! $priced['lines'] || $priced['subtotal'] <= 0) {
             throw new InvalidArgumentException('Η προσφορά δεν έχει καμία γραμμή με τιμή.');
         }
 
         $quote = new Quote([
+            'price_tier' => $tier,
             'title' => mb_substr(trim($title) ?: 'Πρόταση προβολής', 0, 120),
             'intro' => $intro ? mb_substr(trim($intro), 0, 3000) : null,
             'source' => 'staff',
@@ -84,7 +88,7 @@ class QuoteService
     /** Αλλαγές από το προσωπικό σε υπάρχουσα προσφορά: ίδιος αριθμός, νέες τιμές, νέα λήξη */
     public function updateByStaff(Quote $quote, User $staff, string $title, array $specs, int $days, ?string $startsOn, ?string $intro): Quote
     {
-        $priced = (new QuoteCalculator(staff: true))->price($specs, $days);
+        $priced = (new QuoteCalculator(staff: true, tier: $quote->price_tier ?: 'local'))->price($specs, $days);
         if (! $priced['lines'] || $priced['subtotal'] <= 0) {
             throw new InvalidArgumentException('Η προσφορά δεν έχει καμία γραμμή με τιμή.');
         }
@@ -115,7 +119,7 @@ class QuoteService
     {
         $specs = array_merge(QuoteCalculator::customerSpecs($specs), $locked);
         $staffTouched = $quote->created_by_id !== null || $quote->updated_by_id !== null;
-        $priced = (new QuoteCalculator(staff: $staffTouched && $locked !== []))->price($specs, $days);
+        $priced = (new QuoteCalculator(staff: $staffTouched && $locked !== [], tier: $quote->price_tier ?: 'local'))->price($specs, $days);
         if (! $priced['lines'] || $priced['subtotal'] <= 0) {
             throw new InvalidArgumentException('Διαλέξτε τουλάχιστον ένα μέσο.');
         }
@@ -139,7 +143,7 @@ class QuoteService
     /** Νέες τιμές από τον τρέχοντα τιμοκατάλογο, νέα ημερομηνία λήξης */
     public function renew(Quote $quote): Quote
     {
-        $priced = (new QuoteCalculator(staff: $quote->created_by_id !== null || $quote->updated_by_id !== null))->price($quote->specs(), $quote->days);
+        $priced = (new QuoteCalculator(staff: $quote->created_by_id !== null || $quote->updated_by_id !== null, tier: $quote->price_tier ?: 'local'))->price($quote->specs(), $quote->days);
         if (! $priced['lines']) {
             throw new InvalidArgumentException('Τα μέσα αυτής της προσφοράς δεν είναι πια διαθέσιμα. Φτιάξτε μια νέα.');
         }

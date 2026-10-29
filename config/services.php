@@ -39,4 +39,11 @@ return [
         'feed_url' => env('NEWS_FEED_URL', 'https://thrakitoday.gr/feed'),
     ],
 
+
+    // «Δεν είμαι ρομπότ» (Cloudflare Turnstile)
+    'turnstile' => [
+        'site_key' => env('TURNSTILE_SITE_KEY'),
+        'secret_key' => env('TURNSTILE_SECRET_KEY'),
+    ],
+
 ];

@@ -34,7 +34,7 @@ class PackageForm
         $data['specs'] = $specs ?: null;
 
         if ($specs) {
-            $priced = (new QuoteCalculator(staff: true))->price($specs, $days);
+            $priced = (new QuoteCalculator(staff: true, tier: ($data['price_tier'] ?? 'all') === 'metro' ? 'metro' : 'local'))->price($specs, $days);
             $data['duration_days'] = $data['duration_days'] ?: $days;
             if (empty(array_filter((array) ($data['includes'] ?? [])))) {
                 $data['includes'] = array_map(fn ($l) => trim($l['label'].($l['detail'] ? ' · '.$l['detail'] : '')), $priced['lines']);
@@ -91,7 +91,7 @@ class PackageForm
                 ->schema([
                     Group::make(MediaBuilder::sections(withCreative: true))->statePath('builder'),
                     TextEntry::make('builder_summary')->label('Αξία από τον τιμοκατάλογο')->html()
-                        ->state(fn (Get $get) => MediaBuilder::summaryHtml((array) $get('builder'), (int) $get('duration_days') ?: 1)),
+                        ->state(fn (Get $get) => MediaBuilder::summaryHtml((array) $get('builder'), (int) $get('duration_days') ?: 1, null, $get('price_tier') === 'metro' ? 'metro' : 'local')),
                 ]),
 
             Section::make('Τιμή')->columns(3)->columnSpanFull()
@@ -109,6 +109,8 @@ class PackageForm
                     TextInput::make('compare_at_price')->label('Αρχική τιμή (για έκπτωση)')->numeric()->minValue(0)->suffix('€')
                         ->visible(fn (Get $get) => $get('pricing') !== 'auto')
                         ->gt('price')->helperText('Συμπληρώστε μόνο σε προσφορά: εμφανίζεται διαγραμμένη.'),
+                    Select::make('price_tier')->label('Ποιοι το βλέπουν')->options(Package::TIERS)->default('all')->required()->native(false)->live()
+                        ->helperText('«Μόνο μεγάλα αστικά κέντρα» = μόνο πελάτες από τις πόλεις του δεύτερου τιμοκαταλόγου.'),
                     TextInput::make('badge')->label('Ετικέτα')->maxLength(30)->placeholder('π.χ. -20% ή Black Friday'),
                 ]),
 
