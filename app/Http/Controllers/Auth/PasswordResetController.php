@@ -22,6 +22,7 @@ class PasswordResetController extends Controller
     public function email(Request $request): RedirectResponse
     {
         $request->validate(['email' => ['required', 'email']]);
+        \App\Support\Turnstile::check($request);
 
         Password::sendResetLink($request->only('email'));
 

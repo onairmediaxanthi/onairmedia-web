@@ -22,6 +22,7 @@ class RegisterController extends Controller
     public function store(RegisterRequest $request): RedirectResponse
     {
         $data = $request->validated();
+        \App\Support\Turnstile::check($request);
 
         $user = DB::transaction(function () use ($data, $request) {
             $user = User::create([

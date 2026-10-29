@@ -71,6 +71,7 @@
                 </label>
             </fieldset>
 
+            <x-turnstile />
             <x-form.button class="w-full sm:w-auto">Δημιουργία λογαριασμού</x-form.button>
         </form>
 

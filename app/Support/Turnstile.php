@@ -22,6 +22,14 @@ final class Turnstile
         return self::siteKey() !== null && config('services.turnstile.secret_key');
     }
 
+    /** Για τις φόρμες του site: σφάλμα επικύρωσης αν δεν περάσει ο έλεγχος */
+    public static function check(\Illuminate\Http\Request $request): void
+    {
+        if (! self::verify($request->input('cf-turnstile-response'), $request->ip())) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['robot' => 'Επιβεβαιώστε ότι δεν είστε ρομπότ.']);
+        }
+    }
+
     public static function verify(?string $token, ?string $ip): bool
     {
         if (! self::enabled()) {

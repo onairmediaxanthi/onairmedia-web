@@ -25,6 +25,8 @@ class LoginController extends Controller
             'password' => ['required', 'string'],
         ]);
 
+        \App\Support\Turnstile::check($request);
+
         // 5 λάθος προσπάθειες ανά email+IP → αναμονή
         $key = Str::transliterate(Str::lower($credentials['email'])).'|'.$request->ip();
         if (RateLimiter::tooManyAttempts($key, 5)) {

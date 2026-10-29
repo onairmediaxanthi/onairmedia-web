@@ -8,6 +8,7 @@
                 <label class="flex items-center gap-2 text-[15px]"><input type="checkbox" name="remember" value="1" class="h-4 w-4 rounded border-line text-onair focus:ring-onair"> Να με θυμάσαι</label>
                 <a href="{{ route('password.request') }}" class="text-[15px] font-semibold text-onair hover:underline">Ξεχάσατε τον κωδικό;</a>
             </div>
+            <x-turnstile />
             <x-form.button class="w-full">Σύνδεση</x-form.button>
         </form>
         <x-slot:footer>Νέος επαγγελματίας; <a href="{{ route('register') }}" class="font-semibold text-onair hover:underline">Δωρεάν εγγραφή</a></x-slot:footer>
