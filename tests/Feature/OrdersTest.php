@@ -232,4 +232,19 @@ class OrdersTest extends TestCase
             ->post(route('orders.upload', $order), [], ['Referer' => route('orders.show', $order)])
             ->assertStatus(413)->assertSee('Πολύ μεγάλα αρχεία')->assertSee(route('orders.show', $order), false);
     }
+
+    public function test_staff_can_preview_sent_email_and_send_test_mail(): void
+    {
+        $order = $this->order();
+        app(OrderService::class)->confirm($order, null, 'Γεια σας');
+        $event = $order->events()->where('notified', true)->first();
+
+        $this->actingAs($this->staff(), 'admin');
+        $this->get(route('admin.order-email', $event))->assertOk()->assertSee('Η παραγγελία επιβεβαιώθηκε')->assertSee('GR16 0110 1250 0000 0001 2300 695');
+        $this->get('/admin/paraggelies/'.$order->ulid)->assertSee('προβολή email');
+
+        $this->actingAs($this->staff(UserRole::Admin), 'admin');
+        Livewire::test(\App\Filament\Pages\QuoteSettings::class)->callAction('testMail', ['to' => 'test@example.com']);
+        Mail::assertSent(\App\Mail\TestMail::class, fn ($m) => $m->hasTo('test@example.com'));
+    }
 }

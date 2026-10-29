@@ -144,6 +144,27 @@ class QuoteSettings extends Page
         ]);
     }
 
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('testMail')->label('Δοκιμαστικό email')->icon('heroicon-o-envelope')->color('gray')
+                ->modalDescription('Στέλνει ένα σύντομο email με τον ίδιο τρόπο που φεύγουν οι ενημερώσεις προς τους πελάτες, και δείχνει αμέσως αν ο server το δέχτηκε.')
+                ->fillForm(fn () => ['to' => \Filament\Facades\Filament::auth()->user()?->email])
+                ->schema([TextInput::make('to')->label('Προς')->email()->required()])
+                ->modalSubmitActionLabel('Αποστολή')
+                ->action(function (array $data) {
+                    try {
+                        \Illuminate\Support\Facades\Mail::to($data['to'])->send(new \App\Mail\TestMail(\Filament\Facades\Filament::auth()->user()?->name ?? '—'));
+                        Notification::make()->success()->title('Στάλθηκε στο '.$data['to'])
+                            ->body('Ο server το δέχτηκε. Αν δεν φτάσει σε 2–3 λεπτά, κοιτάξτε τα Ανεπιθύμητα. Αποστολέας: '.config('mail.from.address'))
+                            ->persistent()->send();
+                    } catch (\Throwable $e) {
+                        Notification::make()->danger()->title('Η αποστολή απέτυχε')->body(mb_substr($e->getMessage(), 0, 400))->persistent()->send();
+                    }
+                }),
+        ];
+    }
+
     public function save(): void
     {
         Setting::putMany(array_intersect_key($this->form->getState(), array_flip(self::KEYS)));

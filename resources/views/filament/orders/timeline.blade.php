@@ -11,7 +11,7 @@
                 @if ($e->note)<p style="margin-top:.25rem;white-space:pre-line">{{ $e->note }}</p>@endif
                 <p style="margin-top:.25rem;font-size:.8rem;opacity:.65">
                     {{ $e->user?->name ?? (in_array($e->stage, ['received', 'payment_review'], true) || \Illuminate\Support\Str::startsWith($e->title, ['Ανεβάσατε', 'Στείλατε', 'Δηλώσατε']) ? 'Ο πελάτης' : 'Αυτόματα') }}
-                    @if ($e->internal) · <strong>εσωτερική σημείωση</strong>@elseif ($e->notified) · ✉ στάλθηκε email στον πελάτη @endif
+                    @if ($e->internal) · <strong>εσωτερική σημείωση</strong>@elseif ($e->notified) · ✉ στάλθηκε email στο {{ $getRecord()->user?->email }} · <a href="{{ route('admin.order-email', $e) }}" target="_blank" style="color:#c80c92;font-weight:600">προβολή email</a>@endif
                 </p>
             </div>
         </li>

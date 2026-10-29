@@ -97,3 +97,10 @@ Route::get('/diaxeirisi-arxeia/paraggelia/{file}', function (\App\Models\OrderFi
     return \Illuminate\Support\Facades\Storage::disk('local')->download($file->path, $file->name, ['Cache-Control' => 'private, no-store']);
 })->middleware('auth:admin')->name('admin.order-file');
 
+// Προβολή του email που στάλθηκε στον πελάτη για ένα βήμα της παραγγελίας
+Route::get('/diaxeirisi-arxeia/email/{event}', function (\App\Models\OrderEvent $event) {
+    abort_unless(\Illuminate\Support\Facades\Auth::guard('admin')->user()?->canAccessArea('sales'), 403);
+    abort_if($event->internal, 404);
+
+    return response((new \App\Mail\OrderUpdated($event->order, $event))->render())->header('Cache-Control', 'private, no-store');
+})->middleware('auth:admin')->name('admin.order-email');
