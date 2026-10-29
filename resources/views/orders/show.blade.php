@@ -144,20 +144,23 @@
 
                         @if ($order->acceptsFiles())
                             <form method="POST" action="{{ route('orders.upload', $order) }}" enctype="multipart/form-data" class="mt-5 space-y-3"
-                                  x-data="{ names: [], busy: false }" @submit="busy = true">
+                                  x-data="{ names: [], busy: false, tooBig: false,
+                                      pick(list) { this.names = [...list].map(f => f.name); this.tooBig = [...list].reduce((s, f) => s + f.size, 0) > {{ \App\Models\Order::BATCH_MAX_MB }} * 1048576 || [...list].some(f => f.size > {{ \App\Models\Order::FILE_MAX_MB }} * 1048576) } }"
+                                  @submit="if (tooBig) { $event.preventDefault(); return; } busy = true">
                                 @csrf
                                 <label class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line bg-surface px-4 py-7 text-center hover:border-onair"
-                                       @dragover.prevent @drop.prevent="$refs.files.files = $event.dataTransfer.files; names = [...$event.dataTransfer.files].map(f => f.name)">
+                                       @dragover.prevent @drop.prevent="$refs.files.files = $event.dataTransfer.files; pick($event.dataTransfer.files)">
                                     <x-ui-icon name="upload" class="h-7 w-7 text-onair" />
                                     <span class="font-semibold" x-text="names.length ? names.join(', ') : 'Διαλέξτε ή σύρετε εδώ αρχεία'"></span>
                                     <span class="text-sm text-slate">Σποτ (MP3, WAV), λογότυπα, φωτογραφίες, PDF, Word, ZIP · έως {{ \App\Models\Order::FILE_MAX_MB }} MB το καθένα, 10 τη φορά</span>
                                     <input x-ref="files" type="file" name="files[]" multiple class="sr-only" accept="{{ collect(\App\Models\Order::FILE_TYPES)->map(fn ($e) => '.'.$e)->implode(',') }}"
-                                           @change="names = [...$event.target.files].map(f => f.name)">
+                                           @change="pick($event.target.files)">
                                 </label>
+                                <p x-show="tooBig" x-cloak class="text-sm text-red-600 dark:text-red-400">Πολύ μεγάλα για μία αποστολή: έως {{ \App\Models\Order::FILE_MAX_MB }} MB το καθένα και {{ \App\Models\Order::BATCH_MAX_MB }} MB συνολικά. Ανεβάστε τα σε ομάδες, ή γράψτε μας σύνδεσμο (WeTransfer, Google Drive) στη σημείωση.</p>
                                 @error('files')<p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>@enderror
                                 @foreach ($errors->get('files.*') as $msgs)<p class="text-sm text-red-600 dark:text-red-400">{{ $msgs[0] }}</p>@break @endforeach
                                 <input name="note" maxlength="1000" placeholder="Σημείωση ή σύνδεσμος για μεγάλα αρχεία (WeTransfer, Google Drive)" class="block w-full rounded-xl border border-line bg-surface px-4 py-3 text-[16px] outline-none focus:border-onair focus:ring-2 focus:ring-onair/25">
-                                <button :disabled="busy || ! names.length" class="rounded-full border-2 border-onair px-6 py-2.5 font-semibold text-onair hover:bg-onair hover:text-white disabled:opacity-50">
+                                 <button :disabled="busy || tooBig || ! names.length" class="rounded-full border-2 border-onair px-6 py-2.5 font-semibold text-onair hover:bg-onair hover:text-white disabled:opacity-50">
                                     <span x-show="! busy">Ανέβασμα</span><span x-show="busy" x-cloak>Ανεβαίνει…</span>
                                 </button>
                             </form>

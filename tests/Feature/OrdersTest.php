@@ -223,4 +223,13 @@ class OrdersTest extends TestCase
         $this->assertFalse(BankAccounts::valid('GR16 0110 1250 0000 0001 2300 696'));
         $this->assertSame('GR16 0110 1250 0000 0001 2300 695', BankAccounts::format('gr1601101250000000012300695'));
     }
+
+    public function test_too_large_upload_shows_friendly_page(): void
+    {
+        $order = $this->order();
+        $this->actingAs($this->customer);
+        $this->withServerVariables(['CONTENT_LENGTH' => (string) (200 * 1048576)])
+            ->post(route('orders.upload', $order), [], ['Referer' => route('orders.show', $order)])
+            ->assertStatus(413)->assertSee('Πολύ μεγάλα αρχεία')->assertSee(route('orders.show', $order), false);
+    }
 }

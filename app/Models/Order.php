@@ -59,6 +59,9 @@ class Order extends Model
 
     public const FILE_MAX_MB = 50;
 
+    /** Σύνολο ανά αποστολή: κάτω από το post_max_size του server (130 MB) */
+    public const BATCH_MAX_MB = 120;
+
     protected $fillable = ['admin_notes', 'invoice_number'];
 
     protected function casts(): array
