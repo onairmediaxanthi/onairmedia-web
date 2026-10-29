@@ -19,6 +19,8 @@ class AccountController extends Controller
             'business' => $request->user()->business,
             'quotes' => $request->user()->quotes()->latest()->limit(5)->get(),
             'quoteCount' => $request->user()->quotes()->count(),
+            'orders' => $request->user()->orders()->with('quote')->latest()->limit(5)->get(),
+            'orderCount' => $request->user()->orders()->count(),
             'coupons' => \App\Models\Coupon::query()->where('user_id', $request->user()->id)->where('is_active', true)
                 ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>', now()))
                 ->whereDoesntHave('redemptions')->latest()->get(),

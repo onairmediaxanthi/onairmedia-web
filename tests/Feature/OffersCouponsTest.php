@@ -81,7 +81,7 @@ class OffersCouponsTest extends TestCase
         $this->assertSame('210.80', $q->total);
         $this->get(route('quotes.checkout', $q))->assertSee('Κουπόνι BLACKFRIDAY (15%)');
 
-        $this->post(route('quotes.submit', $q), ['accept' => '1'])->assertRedirect(route('quotes.show', $q));
+        $this->post(route('quotes.submit', $q), ['accept' => '1'])->assertRedirect(route('orders.show', $q->refresh()->order));
         $this->assertDatabaseHas('coupon_redemptions', ['quote_id' => $q->id, 'amount' => 30]);
 
         // Το PDF δείχνει την έκπτωση

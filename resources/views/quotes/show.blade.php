@@ -72,8 +72,11 @@
                         </form>
                     @endif
                 </div>
-                @if ($quote->status === 'submitted')
-                    <p class="rounded-2xl bg-amber-500/10 p-5 text-[15px]">Η ομάδα μας θα επικοινωνήσει μαζί σας για επιβεβαίωση του προγράμματος, του υλικού και της πληρωμής.</p>
+                @if ($quote->order)
+                    <a href="{{ route('orders.show', $quote->order) }}" class="block rounded-2xl border-2 border-onair bg-onair/5 p-5 hover:bg-onair/10">
+                        <span class="block text-sm text-slate">Παραγγελία {{ $quote->order->number }}</span>
+                        <span class="mt-0.5 block font-bold">{{ $quote->order->stageLabel(true) }} →</span>
+                    </a>
                 @endif
             </aside>
         </div>

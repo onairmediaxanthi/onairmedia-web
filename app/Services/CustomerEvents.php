@@ -22,7 +22,7 @@ use Throwable;
 class CustomerEvents
 {
     /** Ενέργειες που εμφανίζονται στο καμπανάκι της διαχείρισης */
-    protected const BELL = ['registered', 'quote_saved', 'quote_changed', 'quote_submitted', 'quote_deleted'];
+    protected const BELL = ['registered', 'quote_saved', 'quote_changed', 'quote_submitted', 'quote_deleted', 'deposit_declared', 'files_uploaded', 'materials_done'];
 
     public static function record(string $type, ?User $user, ?Quote $quote = null, array $meta = []): CustomerActivity
     {
@@ -63,11 +63,15 @@ class CustomerEvents
                 ->icon(match ($type) {
                     'registered' => 'heroicon-o-user-plus',
                     'quote_submitted' => 'heroicon-o-shopping-cart',
+                    'deposit_declared' => 'heroicon-o-banknotes',
+                    'files_uploaded', 'materials_done' => 'heroicon-o-arrow-up-tray',
                     'quote_deleted' => 'heroicon-o-trash',
                     default => 'heroicon-o-document-text',
                 })
-                ->iconColor($type === 'quote_submitted' ? 'success' : ($type === 'quote_deleted' ? 'danger' : 'primary'));
-            if ($quote) {
+                ->iconColor(in_array($type, ['quote_submitted', 'deposit_declared'], true) ? 'success' : ($type === 'quote_deleted' ? 'danger' : 'primary'));
+            if ($quote?->order) {
+                $n->actions([Action::make('view')->label('Άνοιγμα')->url(\App\Filament\Resources\Orders\OrderResource::getUrl('view', ['record' => $quote->order], panel: 'admin'))->markAsRead()]);
+            } elseif ($quote) {
                 $n->actions([Action::make('view')->label('Άνοιγμα')->url(\App\Filament\Resources\Quotes\QuoteResource::getUrl('view', ['record' => $quote], panel: 'admin'))->markAsRead()]);
             }
             $n->sendToDatabase($staff);

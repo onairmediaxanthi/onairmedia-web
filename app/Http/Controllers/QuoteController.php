@@ -72,7 +72,7 @@ class QuoteController extends Controller
             return redirect()->route('quotes.show', $quote);
         }
 
-        return view('quotes.checkout', ['quote' => $quote]);
+        return view('quotes.checkout', ['quote' => $quote, 'methods' => \App\Services\Orders\OrderService::methodsFor($request->user())]);
     }
 
     public function submit(Request $request, Quote $quote): RedirectResponse
@@ -84,18 +84,19 @@ class QuoteController extends Controller
         $data = $request->validate([
             'notes' => ['nullable', 'string', 'max:2000'],
             'accept' => ['accepted'],
-        ], ['accept.accepted' => 'Χρειάζεται να αποδεχτείτε τους όρους.']);
+            'payment_method' => ['nullable', \Illuminate\Validation\Rule::in(\App\Services\Orders\OrderService::methodsFor($request->user()))],
+        ], ['accept.accepted' => 'Χρειάζεται να αποδεχτείτε τους όρους.', 'payment_method.*' => 'Διαλέξτε τρόπο πληρωμής.']);
 
         try {
-            $this->service->submit($quote, $data['notes'] ?? null);
+            $this->service->submit($quote, $data['notes'] ?? null, $data['payment_method'] ?? 'bank');
         } catch (InvalidArgumentException $e) {
             app(Coupons::class)->remove($quote);
 
             return redirect()->route('quotes.checkout', $quote)->with('error', 'Το κουπόνι αφαιρέθηκε: '.$e->getMessage());
         }
 
-        return redirect()->route('quotes.show', $quote)
-            ->with('status', 'Λάβαμε την παραγγελία σας. Θα επικοινωνήσουμε μαζί σας εντός μίας εργάσιμης ημέρας για επιβεβαίωση και πληρωμή.');
+        return redirect()->route('orders.show', $quote->order)
+            ->with('status', 'Λάβαμε την παραγγελία σας. Θα σας επιβεβαιώσουμε εντός μίας εργάσιμης ημέρας και θα βλέπετε εδώ κάθε βήμα.');
     }
 
     public function applyCoupon(Request $request, Quote $quote): RedirectResponse

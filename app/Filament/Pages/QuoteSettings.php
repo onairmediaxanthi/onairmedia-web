@@ -38,7 +38,7 @@ class QuoteSettings extends Page
     public const KEYS = [
         'quote_valid_days', 'quote_reminder_days', 'quote_reminder_max', 'notify_emails',
         'welcome_coupon_enabled', 'welcome_coupon_type', 'welcome_coupon_value', 'welcome_coupon_days', 'welcome_coupon_min', 'welcome_coupon_prefix',
-        'campaign_per_minute', 'max_staff_discount', 'callback_emails', 'callback_floating', 'notify_registered', 'notify_quote_saved', 'notify_quote_changed', 'notify_quote_submitted', 'notify_quote_deleted', 'notify_quote_pdf', 'notify_wizard_used',
+        'campaign_per_minute', 'max_staff_discount', 'callback_emails', 'callback_floating', 'bank_accounts', 'payment_due_days', 'payment_office_enabled', 'notify_deposit_declared', 'notify_registered', 'notify_quote_saved', 'notify_quote_changed', 'notify_quote_submitted', 'notify_quote_deleted', 'notify_quote_pdf', 'notify_wizard_used',
     ];
 
     /** @var array<string, mixed>|null */
@@ -71,6 +71,26 @@ class QuoteSettings extends Page
                     TextInput::make('welcome_coupon_days')->label('Ισχύει για')->numeric()->integer()->minValue(1)->maxValue(365)->suffix('ημέρες')->required(),
                     TextInput::make('welcome_coupon_min')->label('Ελάχιστη καμπάνια')->numeric()->minValue(0)->suffix('€')->helperText('Χωρίς ΦΠΑ. Κενό = χωρίς όριο.'),
                     TextInput::make('welcome_coupon_prefix')->label('Πρόθεμα κωδικού')->maxLength(12)->alphaNum()->helperText('π.χ. KALOS → KALOS-7FK2QM'),
+                ]),
+            Section::make('Πληρωμές παραγγελιών')->columns(2)
+                ->description('Οι λογαριασμοί εμφανίζονται στον πελάτη μόλις επιβεβαιώσετε την παραγγελία, με αιτιολογία τον αριθμό παραγγελίας. Την πίστωση την ενεργοποιείτε ανά πελάτη, στην καρτέλα του.')
+                ->schema([
+                    \Filament\Forms\Components\Repeater::make('bank_accounts')->label('Τραπεζικοί λογαριασμοί')->columnSpanFull()->columns(3)
+                        ->addActionLabel('Προσθήκη λογαριασμού')->defaultItems(0)->reorderable()
+                        ->schema([
+                            TextInput::make('bank')->label('Τράπεζα')->required()->maxLength(60)->placeholder('Εθνική Τράπεζα'),
+                            TextInput::make('iban')->label('IBAN')->required()->maxLength(40)->placeholder('GR16 0110 1250 0000 0001 2300 695')
+                                ->dehydrateStateUsing(fn ($state) => \App\Support\BankAccounts::format((string) $state))
+                                ->rule(fn () => function (string $attribute, $value, \Closure $fail) {
+                                    if (! \App\Support\BankAccounts::valid((string) $value)) {
+                                        $fail('Ο IBAN δεν είναι σωστός. Ελέγξτε τα ψηφία.');
+                                    }
+                                }),
+                            TextInput::make('beneficiary')->label('Δικαιούχος')->maxLength(120)->placeholder('Κενό = η επωνυμία της εταιρείας'),
+                        ]),
+                    TextInput::make('payment_due_days')->label('Προθεσμία πληρωμής')->numeric()->integer()->minValue(1)->maxValue(60)->suffix('ημέρες')->required()
+                        ->helperText('Από την επιβεβαίωση της παραγγελίας. Φαίνεται στον πελάτη.'),
+                    Toggle::make('payment_office_enabled')->label('Πληρωμή στο γραφείο (μετρητά ή κάρτα)')->inline(false),
                 ]),
             Section::make('«Να σας καλέσουμε»')->columns(2)->schema([
                 TextInput::make('callback_emails')->label('Email για αιτήματα επικοινωνίας')->maxLength(500)
@@ -106,6 +126,7 @@ class QuoteSettings extends Page
                     Toggle::make('notify_quote_saved')->label('Νέα προσφορά'),
                     Toggle::make('notify_quote_changed')->label('Αλλαγή προσφοράς από πελάτη'),
                     Toggle::make('notify_quote_submitted')->label('Παραγγελία (ταμείο)'),
+                    Toggle::make('notify_deposit_declared')->label('Ο πελάτης δήλωσε κατάθεση'),
                     Toggle::make('notify_quote_deleted')->label('Διαγραφή προσφοράς'),
                     Toggle::make('notify_quote_pdf')->label('Λήψη PDF'),
                     Toggle::make('notify_wizard_used')->label('Είδε προτάσεις στον οδηγό'),

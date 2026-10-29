@@ -59,6 +59,11 @@ class Quote extends Model
         return 'ulid';
     }
 
+    public function order(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Order::class);
+    }
+
     protected static function booted(): void
     {
         static::created(function (Quote $q) {

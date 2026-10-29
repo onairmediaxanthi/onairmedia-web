@@ -38,6 +38,7 @@
                         </div>
                         <a href="{{ route('account') }}" class="block px-4 py-2.5 text-sm hover:bg-paper" role="menuitem">Το Studio μου</a>
                         <a href="{{ route('quotes.index') }}" class="block px-4 py-2.5 text-sm hover:bg-paper" role="menuitem">Οι προσφορές μου</a>
+                        <a href="{{ route('orders.index') }}" class="block px-4 py-2.5 text-sm hover:bg-paper" role="menuitem">Οι παραγγελίες μου</a>
                         <a href="{{ route('account.edit') }}" class="block px-4 py-2.5 text-sm hover:bg-paper" role="menuitem">Στοιχεία επιχείρησης</a>
                         <form method="POST" action="{{ route('logout') }}" class="border-t border-line">
                             @csrf
@@ -78,6 +79,7 @@
                 </div>
                 <a href="{{ route('account') }}" class="py-3 text-lg font-medium border-b border-line">Το Studio μου</a>
                 <a href="{{ route('quotes.index') }}" class="py-3 text-lg font-medium border-b border-line">Οι προσφορές μου</a>
+                <a href="{{ route('orders.index') }}" class="py-3 text-lg font-medium border-b border-line">Οι παραγγελίες μου</a>
                 <a href="{{ route('account.edit') }}" class="py-3 text-lg font-medium border-b border-line">Στοιχεία επιχείρησης</a>
                 <form method="POST" action="{{ route('logout') }}">@csrf
                     <button class="w-full py-3 text-left text-lg font-semibold text-red-600 dark:text-red-400">Αποσύνδεση</button>

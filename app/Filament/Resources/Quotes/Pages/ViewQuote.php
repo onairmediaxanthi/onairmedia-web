@@ -26,6 +26,9 @@ class ViewQuote extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('order')->label(fn (Quote $record) => 'Παραγγελία '.$record->order?->number)->icon('heroicon-o-shopping-bag')->color('success')
+                ->visible(fn (Quote $record) => (bool) $record->order)
+                ->url(fn (Quote $record) => \App\Filament\Resources\Orders\OrderResource::getUrl('view', ['record' => $record->order])),
             Action::make('send')->label(fn (Quote $record) => $record->sent_at ? 'Νέα αποστολή' : 'Αποστολή στον πελάτη')
                 ->icon('heroicon-o-paper-airplane')
                 ->hidden(fn (Quote $record) => $record->trashed() || ! $record->user)

@@ -60,6 +60,13 @@ class Setting extends Model
         'notify_wizard_used' => false,
         'campaign_per_minute' => 20,
         'callback_emails' => null,
+        // Παραγγελίες & πληρωμές
+        'bank_accounts' => [],
+        'payment_due_days' => 3,
+        'payment_office_enabled' => true,
+        'notify_deposit_declared' => true,
+        'notify_files_uploaded' => true,
+        'notify_materials_done' => true,
         'callback_floating' => true,
         'max_staff_discount' => 50,
         'metro_cities' => ['Αθήνα', 'Θεσσαλονίκη', 'Πάτρα'],

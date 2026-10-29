@@ -47,12 +47,32 @@
                 @error('notes')<p class="mt-1.5 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>@enderror
             </div>
 
+            <fieldset>
+                <legend class="text-sm font-semibold">Τρόπος πληρωμής</legend>
+                <div class="mt-2 grid gap-3">
+                    @foreach ($methods as $m)
+                        <label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-line p-4 has-[:checked]:border-onair has-[:checked]:bg-onair/5">
+                            <input type="radio" name="payment_method" value="{{ $m }}" @checked(old('payment_method', 'bank') === $m) class="mt-1 h-4 w-4 accent-[var(--color-onair)]">
+                            <span>
+                                <span class="font-semibold">{{ \App\Models\Order::METHODS[$m] }}</span>
+                                <span class="block text-sm text-slate">{{ [
+                                    'bank' => 'Μόλις επιβεβαιώσουμε την παραγγελία, θα δείτε εδώ και στο email σας τον λογαριασμό και την αιτιολογία.',
+                                    'office' => 'Περνάτε από το γραφείο μας μετά την επιβεβαίωση.',
+                                    'credit' => 'Η καμπάνια ξεκινά με την επιβεβαίωση· εξοφλείτε βάσει τιμολογίου, όπως έχουμε συμφωνήσει.',
+                                ][$m] }}</span>
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+                @error('payment_method')<p class="mt-1.5 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>@enderror
+            </fieldset>
+
             <div class="rounded-2xl bg-paper p-5 text-[15px]">
                 <p class="font-semibold">Πώς προχωράμε</p>
                 <ol class="mt-2 list-decimal space-y-1 pl-5 text-slate">
-                    <li>Λαμβάνουμε την παραγγελία και σας στέλνουμε επιβεβαίωση με το PDF.</li>
-                    <li>Σας καλούμε εντός μίας εργάσιμης για το πρόγραμμα και το υλικό.</li>
-                    <li>Πληρώνετε με κάρτα ή τραπεζική κατάθεση και η καμπάνια ξεκινά.</li>
+                    <li>Ελέγχουμε τη διαθεσιμότητα και σας επιβεβαιώνουμε την παραγγελία, εντός μίας εργάσιμης.</li>
+                    <li>Εξοφλείτε με τον τρόπο που διαλέξατε και μας στέλνετε (ή φτιάχνουμε εμείς) το υλικό.</li>
+                    <li>Προγραμματίζουμε την καμπάνια. Σε κάθε βήμα σας ενημερώνουμε με email και το βλέπετε στο Studio σας.</li>
                 </ol>
             </div>
 

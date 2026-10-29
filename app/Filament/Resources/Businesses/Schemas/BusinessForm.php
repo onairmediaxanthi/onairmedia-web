@@ -63,6 +63,10 @@ class BusinessForm
                 TextInput::make('city')->label('Πόλη')->required(),
                 TextInput::make('postal_code')->label('Τ.Κ.')->required(),
             ]),
+            Section::make('Πληρωμές')->columnSpanFull()->schema([
+                Toggle::make('credit_allowed')->label('Επιτρέπεται πληρωμή με πίστωση (βάσει τιμολογίου)')
+                    ->helperText('Ο πελάτης βλέπει στο ταμείο και την επιλογή «Με πίστωση»: η καμπάνια ξεκινά με την επιβεβαίωση, πριν την εξόφληση.'),
+            ]),
             Section::make('Εσωτερικές σημειώσεις')->columnSpanFull()
                 ->description('Τις βλέπει μόνο το προσωπικό.')
                 ->schema([

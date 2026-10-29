@@ -21,7 +21,7 @@ class QuoteSubmitted extends Mailable
 
     public function content(): Content
     {
-        return new Content(markdown: 'mail.quote-submitted', with: ['url' => route('quotes.show', $this->quote)]);
+        return new Content(markdown: 'mail.quote-submitted', with: ['url' => $this->quote->order ? route('orders.show', $this->quote->order) : route('quotes.show', $this->quote)]);
     }
 
     public function attachments(): array

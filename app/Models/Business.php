@@ -29,7 +29,7 @@ class Business extends Model
         'legal_name', 'trade_name', 'business_type', 'business_type_other', 'vat', 'tax_office', 'gemi',
         'address', 'city', 'postal_code', 'mobile', 'phone', 'contact_person', 'website',
         // Μόνο από τη διαχείριση· οι φόρμες πελατών περνούν μόνο τα δικά τους πεδία
-        'admin_notes',
+        'admin_notes', 'credit_allowed',
     ];
 
     protected function casts(): array
@@ -40,6 +40,7 @@ class Business extends Model
             'marketing_consent_at' => 'datetime',
             'marketing_withdrawn_at' => 'datetime',
             'invited_at' => 'datetime',
+            'credit_allowed' => 'boolean',
         ];
     }
 

@@ -62,18 +62,6 @@ class QuoteResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'number';
 
-    public static function getNavigationBadge(): ?string
-    {
-        $n = Quote::query()->where('status', 'submitted')->count();
-
-        return $n ? (string) $n : null;
-    }
-
-    public static function getNavigationBadgeTooltip(): ?string
-    {
-        return 'Περιμένουν επιβεβαίωση';
-    }
-
     public static function getEloquentQuery(): Builder
     {
         return parent::getEloquentQuery()->with(['user.business', 'createdBy'])->withoutGlobalScopes([SoftDeletingScope::class]);

@@ -240,7 +240,7 @@ class QuoteFlowTest extends TestCase
         $this->assertDatabaseHas('customer_activities', ['type' => 'quote_pdf']);
 
         $this->post(route('quotes.submit', $quote), [])->assertSessionHasErrors('accept');
-        $this->post(route('quotes.submit', $quote), ['accept' => '1', 'notes' => 'Πρωινές ώρες'])->assertRedirect(route('quotes.show', $quote));
+        $this->post(route('quotes.submit', $quote), ['accept' => '1', 'notes' => 'Πρωινές ώρες'])->assertRedirect(route('orders.show', $quote->refresh()->order));
         $this->assertSame('submitted', $quote->refresh()->status);
         Mail::assertSent(QuoteSubmitted::class, fn ($m) => $m->hasTo($owner->email));
         Mail::assertSent(CompanyAlert::class, fn ($m) => $m->type === 'quote_submitted');

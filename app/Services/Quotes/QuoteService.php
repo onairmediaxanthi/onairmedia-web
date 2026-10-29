@@ -162,14 +162,18 @@ class QuoteService
         return $quote;
     }
 
-    public function submit(Quote $quote, ?string $notes): Quote
+    public function submit(Quote $quote, ?string $notes, string $method = 'bank'): Quote
     {
+        if (! in_array($method, \App\Services\Orders\OrderService::methodsFor($quote->user), true)) {
+            throw new \InvalidArgumentException('Ο τρόπος πληρωμής δεν είναι διαθέσιμος.');
+        }
         app(\App\Services\Coupons::class)->redeem($quote); // πετάει εξήγηση αν το κουπόνι δεν ισχύει πια
 
         $quote->customer_notes = $notes ? mb_substr(trim($notes), 0, 2000) : null;
         $quote->status = 'submitted';
         $quote->submitted_at = now();
         $quote->save();
+        app(\App\Services\Orders\OrderService::class)->createFromQuote($quote, $method);
 
         try {
             Mail::to($quote->user->email)->send(new QuoteSubmitted($quote));

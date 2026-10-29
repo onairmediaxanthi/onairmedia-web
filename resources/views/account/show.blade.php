@@ -26,6 +26,25 @@
                     <p class="mt-2 max-w-prose text-white/75">Απαντήστε σε τέσσερις ερωτήσεις και σας προτείνουμε συνδυασμούς μέσα στο ποσό σας, ή διαλέξτε μόνοι σας σταθμούς, banner και πινακίδα.</p>
                     <a href="{{ route('quote.builder') }}" class="mt-5 inline-flex rounded-full bg-onair px-6 py-3 font-semibold text-white hover:bg-onair-dark">Νέα προσφορά</a>
                 </div>
+                @if ($orders->isNotEmpty())
+                    @php($attention = $orders->first(fn ($o) => in_array($o->stage, ['awaiting_payment', 'materials'], true)))
+                    @if ($attention)
+                        <a href="{{ route('orders.show', $attention) }}#{{ $attention->stage === 'materials' ? 'yliko' : '' }}" class="flex items-center justify-between gap-4 rounded-2xl border-2 border-onair bg-onair/5 p-5 hover:bg-onair/10">
+                            <span>
+                                <span class="block font-bold">{{ $attention->stage === 'materials' ? 'Περιμένουμε το υλικό σας' : 'Η παραγγελία σας περιμένει πληρωμή' }}</span>
+                                <span class="block text-sm text-slate">{{ $attention->number }} · {{ $attention->quote?->title }}</span>
+                            </span>
+                            <x-ui-icon name="arrow" class="h-5 w-5 shrink-0 text-onair" />
+                        </a>
+                    @endif
+                    <div class="rounded-2xl border border-line bg-surface p-6">
+                        <div class="flex items-center justify-between gap-3">
+                            <h2 class="text-xl font-bold">Οι παραγγελίες μου</h2>
+                            @if ($orderCount > 5)<a href="{{ route('orders.index') }}" class="text-[15px] font-semibold text-onair hover:underline">Όλες ({{ $orderCount }})</a>@endif
+                        </div>
+                        <div class="mt-2">@include('orders._list')</div>
+                    </div>
+                @endif
                 <div class="rounded-2xl border border-line bg-surface p-6">
                     <div class="flex items-center justify-between gap-3">
                         <h2 class="text-xl font-bold">Οι προσφορές μου</h2>

@@ -33,6 +33,11 @@ class CustomerActivity extends Model
         'callback_requested' => 'Ζήτησε να τον καλέσουμε',
         'marketing_off' => 'Σταμάτησε τις προσφορές στο email',
         'coupon_applied' => 'Χρησιμοποίησε κουπόνι',
+        'deposit_declared' => 'Δήλωσε κατάθεση',
+        'files_uploaded' => 'Ανέβασε υλικό καμπάνιας',
+        'materials_done' => 'Έστειλε όλο το υλικό',
+        'order_stage' => 'Ενημέρωση παραγγελίας',
+        'invoice_download' => 'Κατέβασε τιμολόγιο',
     ];
 
     protected $fillable = ['user_id', 'quote_id', 'type', 'summary', 'meta'];

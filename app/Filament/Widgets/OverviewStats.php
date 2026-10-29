@@ -40,7 +40,9 @@ class OverviewStats extends StatsOverviewWidget
 
         $newCallbacks = CallbackRequest::query()->where('status', 'new')->count();
         $oldestCallback = CallbackRequest::query()->where('status', 'new')->oldest()->value('created_at');
-        $submitted = Quote::query()->where('status', 'submitted');
+        $toConfirm = \App\Models\Order::query()->where('stage', 'received');
+        $deposits = \App\Models\Order::query()->where('stage', 'payment_review')->count();
+        $unpaid = \App\Models\Order::query()->whereNull('paid_at')->whereIn('stage', \App\Models\Order::OPEN);
         $openQuotes = Quote::query()->where('status', 'saved')->whereDate('valid_until', '>=', today());
         $customers = Business::query()->count();
 
@@ -49,10 +51,14 @@ class OverviewStats extends StatsOverviewWidget
                 ->description($newCallbacks ? 'σε αναμονή από '.$oldestCallback?->locale('el')->diffForHumans() : 'κανένα σε αναμονή')
                 ->descriptionIcon('heroicon-m-phone')->color($newCallbacks ? 'warning' : 'success')
                 ->url(CallbackRequestResource::getUrl('index', ['filters' => ['status' => ['value' => 'new']]])),
-            Stat::make('Παραγγελίες για επιβεβαίωση', (clone $submitted)->count())
-                ->description($eur((clone $submitted)->sum('total')).' με ΦΠΑ')
-                ->descriptionIcon('heroicon-m-shopping-cart')->color((clone $submitted)->exists() ? 'danger' : 'success')
-                ->url(QuoteResource::getUrl('index')),
+            Stat::make('Παραγγελίες για επιβεβαίωση', (clone $toConfirm)->count())
+                ->description($eur((clone $toConfirm)->sum('total')).' με ΦΠΑ'.($deposits ? ' · '.$deposits.' κατάθεση/εις για έλεγχο' : ''))
+                ->descriptionIcon('heroicon-m-shopping-bag')->color((clone $toConfirm)->exists() || $deposits ? 'danger' : 'success')
+                ->url(\App\Filament\Resources\Orders\OrderResource::getUrl('index')),
+            Stat::make('Ανεξόφλητες παραγγελίες', (clone $unpaid)->count())
+                ->description('Υπόλοιπο '.$eur((clone $unpaid)->get()->sum(fn ($o) => $o->balance())).' με ΦΠΑ')
+                ->descriptionIcon('heroicon-m-banknotes')->color((clone $unpaid)->exists() ? 'warning' : 'success')
+                ->url(\App\Filament\Resources\Orders\OrderResource::getUrl('index', ['activeTab' => 'unpaid'])),
             Stat::make('Ανοιχτές προσφορές', (clone $openQuotes)->count())
                 ->description($eur((clone $openQuotes)->sum('total')).' σε ισχύ')
                 ->descriptionIcon('heroicon-m-document-text')->color('info')
@@ -62,16 +68,14 @@ class OverviewStats extends StatsOverviewWidget
                 ->descriptionIcon('heroicon-m-sparkles')->color('primary')
                 ->chart($this->daily(Quote::query())),
             Stat::make('Σύνολο πελατών', $customers)
-                ->description(Business::query()->where('created_at', '>=', $week)->count().' νέες εγγραφές σε 7 ημέρες')
+                ->description(Business::query()->where('created_at', '>=', $week)->count().' νέες σε 7 ημέρες · '.Business::query()->whereNotNull('marketing_consent_at')->count().' με συναίνεση για ενημερωτικά')
                 ->descriptionIcon('heroicon-m-user-group')->color('primary')
                 ->chart($this->daily(Business::query()))
                 ->url(BusinessResource::getUrl('index')),
-            Stat::make('Με συναίνεση για ενημερωτικά', Business::query()->whereNotNull('marketing_consent_at')->count())
-                ->description($customers ? round(100 * Business::query()->whereNotNull('marketing_consent_at')->count() / $customers).'% των πελατών' : '—')
-                ->descriptionIcon('heroicon-m-envelope')->color('gray'),
-            Stat::make('Επιβεβαιωμένες · 30 ημέρες', Quote::query()->where('status', 'ordered')->where('updated_at', '>=', now()->subDays(30))->count())
-                ->description($eur(Quote::query()->where('status', 'ordered')->where('updated_at', '>=', now()->subDays(30))->sum('total')).' με ΦΠΑ')
-                ->descriptionIcon('heroicon-m-check-badge')->color('success'),
+            Stat::make('Καμπάνιες σε προβολή', \App\Models\Order::query()->where('stage', 'running')->count())
+                ->description(\App\Models\Order::query()->where('stage', 'scheduled')->count().' προγραμματισμένες')
+                ->descriptionIcon('heroicon-m-signal')->color('success')
+                ->url(\App\Filament\Resources\Orders\OrderResource::getUrl('index', ['activeTab' => 'progress'])),
             Stat::make('Αιτήματα επικοινωνίας · 30 ημέρες', CallbackRequest::query()->where('created_at', '>=', now()->subDays(30))->count())
                 ->description(CallbackRequest::query()->where('created_at', '>=', now()->subDays(30))->whereNotNull('business_id')->count().' από υπάρχοντες πελάτες')
                 ->descriptionIcon('heroicon-m-chat-bubble-left-right')->color('gray')
