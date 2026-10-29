@@ -1,5 +1,5 @@
 {{-- «Να σας καλέσουμε»: ανοίγει από οποιοδήποτε κουμπί με $dispatch('open-callback') --}}
-@php($siteKey = \App\Support\Turnstile::siteKey())
+@php($siteKey = \App\Support\Turnstile::enabled() ? \App\Support\Turnstile::siteKey() : null)
 @php($u = auth()->user())
 <div x-data="{
         open: false, sending: false, done: false, errors: {}, widget: null,

@@ -42,7 +42,7 @@ return [
 
     // «Δεν είμαι ρομπότ» (Cloudflare Turnstile)
     'turnstile' => [
-        'site_key' => env('TURNSTILE_SITE_KEY'),
+        'site_key' => env('TURNSTILE_SITE_KEY', '0x4AAAAAAFrrz3LdCTmYkYys'), // δημόσιο κλειδί, δεν είναι μυστικό
         'secret_key' => env('TURNSTILE_SECRET_KEY'),
     ],
 
