@@ -103,7 +103,7 @@
                     </div>
                     {{-- Παγίδα για bots: κρυφό από ανθρώπους και αναγνώστες οθόνης --}}
                     <div class="absolute -left-[9999px] h-0 overflow-hidden" aria-hidden="true">
-                        <label>Ιστοσελίδα <input x-model="form.company_url" tabindex="-1" autocomplete="off"></label>
+                        <label>Αφήστε το κενό <input x-model="form.company_url" id="cb-hp-{{ \Illuminate\Support\Str::random(6) }}" tabindex="-1" autocomplete="new-password" data-1p-ignore data-lpignore="true" data-form-type="other"></label>
                     </div>
 
                     <label class="mt-4 flex items-start gap-2.5 text-sm">

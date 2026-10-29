@@ -39,7 +39,7 @@ class CallbackRequestController extends Controller
 
         // Παγίδα για bots: κρυφό πεδίο που ο άνθρωπος δεν βλέπει, και ελάχιστος χρόνος συμπλήρωσης
         if (filled($request->input('company_url')) || ! self::humanSpeed($request->input('t'))) {
-            Log::info('Callback request blocked as bot');
+            Log::warning('Callback request blocked as bot', ['honeypot' => filled($request->input('company_url')), 'ip' => $request->ip()]);
 
             return response()->json(['ok' => true]); // δεν δίνουμε στοιχεία στο bot
         }
