@@ -204,4 +204,22 @@ class AirplayTest extends TestCase
         $this->assertSame(0, $r['recorded']); // ταυτότητα σταθμού, όχι τραγούδι
         $this->assertNotNull($this->star->refresh()->last_seen_at);
     }
+
+    public function test_greek_and_greeklish_are_the_same_song(): void
+    {
+        $this->playing('ΝΙΚΟΣ ΟΙΚΟΝΟΜΟΠΟΥΛΟΣ - ΕΝΟΧΟ ΚΟΡΜΙ');
+        $this->playing('Κάτι - Ενδιάμεσο');
+        $this->playing('Nikos Oikonomopoulos - Enoxo Kormi');
+        $this->assertSame(2, Song::query()->count());
+        $this->assertSame(2, Airplay::query()->whereHas('song', fn ($q) => $q->where('title', 'ΕΝΟΧΟ ΚΟΡΜΙ'))->count());
+
+        // Παλιά κλειδιά (πριν τους νέους κανόνες): η ένωση διπλών τα φέρνει σε ένα
+        $dup = Song::query()->create(['artist' => 'Giorgos Sampanis', 'title' => 'Tipota', 'norm' => str_repeat('a', 40)]);
+        $orig = Song::query()->create(['artist' => 'Γιώργος Σαμπάνης', 'title' => 'Τίποτα', 'norm' => str_repeat('b', 40)]);
+        DB::table('airplay_daily')->insert(['station_id' => $this->star->id, 'song_id' => $orig->id, 'day' => today()->toDateString(), 'plays' => 2]);
+        DB::table('airplay_daily')->insert(['station_id' => $this->star->id, 'song_id' => $dup->id, 'day' => today()->toDateString(), 'plays' => 3]);
+        $this->assertSame(1, Song::renormalizeAll());
+        $this->assertSame(3, Song::query()->count());
+        $this->assertEquals(5, DB::table('airplay_daily')->where('song_id', $dup->id)->sum('plays'));
+    }
 }
