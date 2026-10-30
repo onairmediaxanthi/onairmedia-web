@@ -1,0 +1,76 @@
+name: Build
+
+# Κάθε push στο main: τεστ → έτοιμη έκδοση (vendor + assets) στο branch `build`.
+# Ο server την κατεβάζει μόνος του κάθε λεπτό (deploy/pull.sh μέσω cron).
+# Δεν χρειάζεται εισερχόμενο SSH ούτε κωδικοί του server στο GitHub.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: build
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, intl, mbstring, pdo_sqlite, zip, gd, exif, sodium
+          coverage: none
+      - run: composer install --prefer-dist --no-interaction --no-progress
+      - run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan test
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, intl, mbstring, pdo_mysql, zip, gd, exif, sodium
+          coverage: none
+
+      - name: Composer (production)
+        run: composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build assets
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+          npm run build
+
+      - name: Publish to build branch
+        run: |
+          SRC_SHA="$(git rev-parse --short HEAD)"
+          OUT="$RUNNER_TEMP/release"
+          mkdir -p "$OUT"
+          rsync -a --exclude='.git/' --exclude='node_modules/' --exclude='tests/' --exclude='.env' ./ "$OUT/"
+          cd "$OUT"
+          git init -q -b build
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # vendor/ και public/build/ είναι στο .gitignore του κώδικα — εδώ τα θέλουμε
+          git add -A
+          git add -f vendor public/build public/js public/css public/fonts 2>/dev/null || true
+          git commit -q -m "Release ${SRC_SHA}"
+          git push -q --force "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" build
+          echo "Έτοιμη έκδοση ${SRC_SHA} στο branch build" >> "$GITHUB_STEP_SUMMARY"

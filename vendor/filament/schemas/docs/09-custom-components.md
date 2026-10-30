@@ -1,0 +1,542 @@
+---
+title: Custom components
+---
+
+## Introduction
+
+For a one-off component, insert a [Blade view](#inserting-a-blade-view-into-a-schema) into your schema. For a reusable component with its own PHP configuration, generate a class and view:
+
+```bash
+php artisan make:filament-schema-component Chart
+```
+
+Use the generated class in your schema:
+
+```php
+use App\Filament\Schemas\Components\Chart;
+
+Chart::make()
+```
+
+Then customize the generated view, following [custom component classes](#custom-component-classes). Most custom components can use Blade and the schema's existing utilities; use a [nested Livewire component](#inserting-a-livewire-component-into-a-schema) when you need a separately managed Livewire component.
+
+## Inserting a Blade view into a schema
+
+You may use a "view" component to insert a Blade view into a schema arbitrarily:
+
+```php
+use Filament\Schemas\Components\View;
+
+View::make('filament.schemas.components.chart')
+```
+
+This assumes that you have a `resources/views/filament/schemas/components/chart.blade.php` file.
+
+You may pass data to this view through the `viewData()` method:
+
+```php
+use Filament\Schemas\Components\View;
+
+View::make('filament.schemas.components.chart')
+    ->viewData(['data' => $data])
+```
+
+### Rendering the component's child schema
+
+You may pass an array of child schema components to the `schema()` method of the component:
+
+```php
+use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\View;
+
+View::make('filament.schemas.components.chart')
+    ->schema([
+        TextInput::make('subtotal'),
+        TextInput::make('total'),
+    ])
+```
+
+Inside the Blade view, you may render the component's `schema()` using the `$getChildSchema()` function:
+
+```blade
+<div>
+    {{ $getChildSchema() }}
+</div>
+```
+
+### Accessing the state of another component in the Blade view
+
+Inside the Blade view, you may access the state of another component in the schema using the `$get()` function:
+
+```blade
+<div>
+    {{ $get('email') }}
+</div>
+```
+
+<Aside variant="tip">
+    Unless a form field is [reactive](../forms/overview#the-basics-of-reactivity), the Blade view will not refresh when the value of the field changes, only when the next user interaction occurs that makes a request to the server. If you need to react to changes in a field's value, it should be `live()`.
+</Aside>
+
+### Accessing the Eloquent record in the Blade view
+
+Inside the Blade view, you may access the current Eloquent record using the `$record` variable:
+
+```blade
+<div>
+    {{ $record->name }}
+</div>
+```
+
+### Accessing the current operation in the Blade view
+
+Inside the Blade view, you may access the current operation, usually `create`, `edit` or `view`, using the `$operation` variable:
+
+```blade
+<p>
+    @if ($operation === 'create')
+        This is a new post.
+    @else
+        This is an existing post.
+    @endif
+</p>
+```
+
+### Accessing the current Livewire component instance in the Blade view
+
+Inside the Blade view, you may access the current Livewire component instance using `$this`:
+
+```blade
+@php
+    use Filament\Resources\Users\RelationManagers\PostsRelationManager;
+@endphp
+
+<p>
+    @if ($this instanceof PostsRelationManager)
+        You are editing posts the of a user.
+    @endif
+</p>
+```
+
+### Accessing the current component instance in the Blade view
+
+Inside the Blade view, you may access the current component instance using `$schemaComponent`. You can call public methods on this object to access other information that may not be available in variables:
+
+```blade
+<p>
+    @if ($schemaComponent->getState())
+        This is a new post.
+    @endif
+</p>
+```
+
+## Inserting a Livewire component into a schema
+
+You may insert a Livewire component directly into a schema:
+
+```php
+use App\Livewire\Chart;
+use Filament\Schemas\Components\Livewire;
+
+Livewire::make(Chart::class)
+```
+
+<Aside variant="info">
+    When inserting a Livewire component into the schema, there are limited capabilities. Only serializable data is accessible from the nested Livewire component, since they are rendered separately. As such, you can't [render a child schema](#rendering-the-components-child-schema), [access another component's live state](#accessing-the-state-of-another-component-in-the-blade-view), [access the current Livewire component instance](#accessing-the-current-livewire-component-instance-in-the-blade-view), or [access the current component instance](#accessing-the-current-component-instance-in-the-blade-view). Only [static data that you pass to the Livewire component](#passing-parameters-to-a-livewire-component), and [the current record](#accessing-the-current-record-in-the-livewire-component) are accessible. Situations where you should render a nested Livewire component instead of a [Blade view](#inserting-a-blade-view-into-a-schema) are rare because of these limitations.
+</Aside>
+
+<Aside variant="warning">
+    A custom Livewire component does not inherit the parent component's model scoping or authorization. Re-query and authorize models in its public properties, including a record passed into the component. Do the same for model arguments passed to a lazy component's `mount()` method. Filament components such as widgets still run their own documented checks. See [Eloquent model restoration in Livewire](../advanced/security#understanding-eloquent-model-restoration-in-livewire) for more information.
+</Aside>
+
+If you are rendering multiple of the same Livewire component, please make sure to pass a unique `key()` to each:
+
+```php
+use App\Livewire\Chart;
+use Filament\Schemas\Components\Livewire;
+
+Livewire::make(Chart::class)
+    ->key('chart-first')
+
+Livewire::make(Chart::class)
+    ->key('chart-second')
+
+Livewire::make(Chart::class)
+    ->key('chart-third')
+```
+
+### Passing parameters to a Livewire component
+
+You can pass an array of parameters to a Livewire component:
+
+```php
+use App\Livewire\Chart;
+use Filament\Schemas\Components\Livewire;
+
+Livewire::make(Chart::class, ['bar' => 'baz'])
+```
+
+<UtilityInjection set="schemaComponents">As well as allowing a static value, the `make()` method also accepts a function to dynamically calculate it. You can inject various utilities into the function as parameters.</UtilityInjection>
+
+Now, those parameters will be passed to the Livewire component's `mount()` method:
+
+```php
+class Chart extends Component
+{
+    public function mount(string $bar): void
+    {       
+        // ...
+    }
+}
+```
+
+Alternatively, they will be available as public properties on the Livewire component:
+
+```php
+class Chart extends Component
+{
+    public string $bar;
+}
+```
+
+For server-provided configuration that should not be editable, add [`#[Locked]`](../advanced/security#protecting-server-managed-component-state) to the property.
+
+#### Accessing the current record in the Livewire component
+
+You can access the current record in the Livewire component using the `$record` parameter in the `mount()` method, or the `$record` property:
+
+```php
+use Illuminate\Database\Eloquent\Model;
+use Livewire\Attributes\Locked;
+
+class Chart extends Component
+{
+    public function mount(?Model $record = null): void
+    {       
+        // ...
+    }
+    
+    // or
+    
+    #[Locked]
+    public ?Model $record = null;
+}
+```
+
+Please be aware that when the record has not yet been created, it will be `null`. If you'd like to hide the Livewire component when the record is `null`, you can use the `hidden()` method:
+
+```php
+use Filament\Schemas\Components\Livewire;
+use Illuminate\Database\Eloquent\Model;
+
+Livewire::make(Chart::class)
+    ->hidden(fn (?Model $record): bool => $record === null)
+```
+
+### Lazy loading a Livewire component
+
+You may allow the component to [lazily load](https://livewire.laravel.com/docs/lazy#rendering-placeholder-html) when it enters the viewport using the `lazyLoaded()` method:
+
+```php
+use Filament\Schemas\Components\Livewire;
+use App\Livewire\Chart;
+
+Livewire::make(Chart::class)
+    ->lazyLoaded()
+```
+
+## Custom component classes
+
+You may create your own custom component classes and views, which you can reuse across your project, and even release as a plugin to the community.
+
+<Aside variant="tip">
+    If you're just creating a simple custom component to use once, you could instead use a [view component](#inserting-a-blade-view-into-a-schema) to render any custom Blade file.
+</Aside>
+
+To create a custom component class and view, you may use the following command:
+
+```bash
+php artisan make:filament-schema-component Chart
+```
+
+This will create the following component class:
+
+```php
+use Filament\Schemas\Components\Component;
+
+class Chart extends Component
+{
+    protected string $view = 'filament.schemas.components.chart';
+
+    public static function make(): static
+    {
+        return app(static::class);
+    }
+}
+```
+
+It will also create a view file at `resources/views/filament/schemas/components/chart.blade.php`.
+
+You may use the same utilities as you would when [inserting a Blade view into a schema](#inserting-a-blade-view-into-a-schema) to [render the component's child schema](#rendering-the-components-child-schema), [access another component's live state](#accessing-the-state-of-another-component-in-the-blade-view), [access the current Eloquent record](#accessing-the-eloquent-record-in-the-blade-view), [access the current operation](#accessing-the-current-operation-in-the-blade-view), [access the current Livewire component instance](#accessing-the-current-livewire-component-instance-in-the-blade-view), and [access the current component instance](#accessing-the-current-component-instance-in-the-blade-view).
+
+<Aside variant="info">
+    Filament schema components are **not** Livewire components. Defining public properties and methods on a schema component class will not make them accessible in the Blade view.
+</Aside>
+
+### Adding a configuration method to a custom component class
+
+You may add a public method to the custom component class that accepts a configuration value, stores it in a protected property, and returns it again from another public method:
+
+```php
+use Filament\Schemas\Components\Component;
+
+class Chart extends Component
+{
+    protected string $view = 'filament.schemas.components.chart';
+    
+    protected ?string $heading = null;
+
+    public static function make(): static
+    {
+        return app(static::class);
+    }
+
+    public function heading(?string $heading): static
+    {
+        $this->heading = $heading;
+
+        return $this;
+    }
+
+    public function getHeading(): ?string
+    {
+        return $this->heading;
+    }
+}
+```
+
+Now, in the Blade view for the custom component, you may access the heading using the `$getHeading()` function:
+
+```blade
+<div>
+    {{ $getHeading() }}
+</div>
+```
+
+Any public method that you define on the custom component class can be accessed in the Blade view as a variable function in this way.
+
+To pass the configuration value to the custom component class, you may use the public method:
+
+```php
+use App\Filament\Schemas\Components\Chart;
+
+Chart::make()
+    ->heading('Sales')
+```
+
+#### Allowing utility injection in a custom component configuration method
+
+[Utility injection](overview#component-utility-injection) is a powerful feature of Filament that allows users to configure a component using functions that can access various utilities. You can allow utility injection by ensuring that the parameter type and property type of the configuration allows the user to pass a `Closure`. In the getter method, you should pass the configuration value to the `$this->evaluate()` method, which will inject utilities into the user's function if they pass one, or return the value if it is static:
+
+```php
+use Closure;
+use Filament\Schemas\Components\Component;
+
+class Chart extends Component
+{
+    protected string $view = 'filament.schemas.components.chart';
+    
+    protected string | Closure | null $heading = null;
+
+    public static function make(): static
+    {
+        return app(static::class);
+    }
+
+    public function heading(string | Closure | null $heading): static
+    {
+        $this->heading = $heading;
+
+        return $this;
+    }
+
+    public function getHeading(): ?string
+    {
+        return $this->evaluate($this->heading);
+    }
+}
+```
+
+Now, you can pass a static value or a function to the `heading()` method, and [inject any utility](overview#component-utility-injection) as a parameter:
+
+```php
+use App\Filament\Schemas\Components\Chart;
+
+Chart::make()
+    ->heading(fn (Product $record): string => "{$record->name} Sales")
+```
+
+### Accepting a configuration value in the constructor of a custom component class
+
+You may accept a configuration value in the `make()` constructor method of the custom component and pass it to the corresponding setter method:
+
+```php
+use Closure;
+use Filament\Schemas\Components\Component;
+
+class Chart extends Component
+{
+    protected string $view = 'filament.schemas.components.chart';
+
+    protected string | Closure | null $heading = null;
+
+    public function __construct(string | Closure | null $heading = null)
+    {
+        $this->heading($heading);
+    }
+
+    public static function make(string | Closure | null $heading = null): static
+    {
+        return app(static::class, ['heading' => $heading]);
+    }
+
+    public function heading(string | Closure | null $heading): static
+    {
+        $this->heading = $heading;
+
+        return $this;
+    }
+
+    public function getHeading(): ?string
+    {
+        return $this->evaluate($this->heading);
+    }
+}
+```
+
+### Calling component methods from JavaScript
+
+Sometimes you need to call a method on the component class from JavaScript in the Blade view. For example, you might want to fetch data asynchronously or perform some server-side computation. Filament provides a way to expose methods on your component class to JavaScript using the `#[Exposed]` attribute.
+
+#### Exposing a method
+
+To expose a method to JavaScript, add the `#[Exposed]` attribute to a public method on your custom component class:
+
+```php
+use Filament\Schemas\Components\Component;
+use Filament\Support\Components\Attributes\Exposed;
+
+class Chart extends Component
+{
+    protected string $view = 'filament.schemas.components.chart';
+
+    public static function make(): static
+    {
+        return app(static::class);
+    }
+
+    #[Exposed]
+    public function getChartData(): array
+    {
+        // Fetch and process chart data...
+
+        return $chartData;
+    }
+}
+```
+
+<Aside variant="warning">
+    Only methods marked with `#[Exposed]` can be called from JavaScript. The attribute does not authorize access to the method's data or operations. Validate client-supplied arguments and [authorize sensitive operations](../advanced/security#authorization) inside the method.
+
+    Exposed methods remain callable when the component is [disabled](../forms/overview#disabling-a-field), since read methods may still be needed to display its value. If a method changes the component's state and should respect its disabled state, check `$this->isDisabled()` before making changes.
+</Aside>
+
+#### Calling the method from JavaScript
+
+Give your component a unique `key()` when adding it to a schema so Filament can locate it when the method is called:
+
+```php
+use App\Filament\Schemas\Components\Chart;
+
+Chart::make()->key('chart')
+```
+
+In your Blade view or embedded HTML, call the exposed public instance method using its `$`-prefixed name. The utility is bound to this schema component, so you do not need to pass its key:
+
+```blade
+<div
+    x-data="{
+        data: null,
+        async loadData() {
+            this.data = await this.$getChartData()
+        },
+    }"
+    x-init="loadData"
+>
+    <template x-if="data">
+        {{-- Render the chart using the data --}}
+    </template>
+</div>
+```
+
+You can also use `$callSchemaComponentMethod('getChartData')`. Built-in utility and Alpine magic names are reserved; methods with colliding names remain available through the general utility. Avoid registering your own Alpine magics with the same names as exposed methods.
+
+#### Passing arguments to an exposed method
+
+Pass arguments as an object keyed by PHP parameter name:
+
+```blade
+<div
+    x-data="{
+        data: null,
+        dateRange: 'week',
+        async loadData() {
+            this.data = await this.$getChartData(
+                { dateRange: this.dateRange },
+            )
+        },
+    }"
+    x-init="loadData"
+>
+    <select x-model="dateRange" x-on:change="loadData">
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+        <option value="year">This Year</option>
+    </select>
+
+    <template x-if="data">
+        {{-- Render the chart using the data --}}
+    </template>
+</div>
+```
+
+#### Preventing re-renders
+
+By default, calling an exposed method will trigger a re-render of the Livewire component. If your method doesn't need to update the UI, you may add Livewire's `#[Renderless]` attribute alongside `#[Exposed]` to skip the re-render:
+
+```php
+use Filament\Schemas\Components\Component;
+use Filament\Support\Components\Attributes\Exposed;
+use Livewire\Attributes\Renderless;
+
+class Chart extends Component
+{
+    protected string $view = 'filament.schemas.components.chart';
+
+    public static function make(): static
+    {
+        return app(static::class);
+    }
+
+    #[Exposed]
+    #[Renderless]
+    public function getChartData(): array
+    {
+        // ...
+    }
+}
+```
+
+### Styling components outside the container grid
+
+Components using `liberatedFromContainerGrid()` receive a `.fi-sc-liberated` Alpine scope wrapper with `display: contents`, so their contents still participate in the surrounding layout. If your [custom CSS](../styling/css-hooks) targets their output as a direct child of `.fi-sc`, include `.fi-sc > .fi-sc-liberated > ...` in that selector too. The wrapper provides the scope for [calling component methods](#calling-component-methods-from-javascript), but does not generate its own layout box.

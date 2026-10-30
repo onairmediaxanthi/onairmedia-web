@@ -1,0 +1,116 @@
+<x-layouts.site title="Το Studio μου — On Air Media Group">
+    <section class="mx-auto max-w-5xl px-4 sm:px-6 py-12 sm:py-16">
+        <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+                <p class="text-slate">Το Studio μου</p>
+                <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight">{{ $business->displayName() }}</h1>
+            </div>
+            <form method="POST" action="{{ route('logout') }}">@csrf<button class="font-semibold text-slate hover:text-ink">Αποσύνδεση</button></form>
+        </div>
+
+        @if (session('status'))
+            <p class="mt-6 rounded-xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3" role="status">{{ session('status') }}</p>
+        @endif
+
+        @unless ($user->hasVerifiedEmail())
+            <div class="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-amber-500/50 bg-amber-500/10 px-5 py-4">
+                <p><span class="font-semibold">Επιβεβαιώστε το email σας</span> για να δείτε τιμές και να κλείσετε καμπάνια.</p>
+                <form method="POST" action="{{ route('verification.send') }}">@csrf<button class="font-semibold text-onair hover:underline">Στείλτε ξανά τον σύνδεσμο</button></form>
+            </div>
+        @endunless
+
+        <div class="mt-10 grid gap-6 lg:grid-cols-[1fr_340px]">
+            <div class="space-y-6">
+                <div class="rounded-3xl bg-night p-7 text-white">
+                    <h2 class="text-2xl font-extrabold">Studio Καμπάνιας</h2>
+                    <p class="mt-2 max-w-prose text-white/75">Απαντήστε σε τέσσερις ερωτήσεις και σας προτείνουμε συνδυασμούς μέσα στο ποσό σας, ή διαλέξτε μόνοι σας σταθμούς, banner και πινακίδα.</p>
+                    <a href="{{ route('quote.builder') }}" class="mt-5 inline-flex rounded-full bg-onair px-6 py-3 font-semibold text-white hover:bg-onair-dark">Νέα προσφορά</a>
+                </div>
+                @if ($orders->isNotEmpty())
+                    @php($attention = $orders->first(fn ($o) => in_array($o->stage, ['awaiting_payment', 'materials'], true)))
+                    @if ($attention)
+                        <a href="{{ route('orders.show', $attention) }}#{{ $attention->stage === 'materials' ? 'yliko' : '' }}" class="flex items-center justify-between gap-4 rounded-2xl border-2 border-onair bg-onair/5 p-5 hover:bg-onair/10">
+                            <span>
+                                <span class="block font-bold">{{ $attention->stage === 'materials' ? 'Περιμένουμε το υλικό σας' : 'Η παραγγελία σας περιμένει πληρωμή' }}</span>
+                                <span class="block text-sm text-slate">{{ $attention->number }} · {{ $attention->quote?->title }}</span>
+                            </span>
+                            <x-ui-icon name="arrow" class="h-5 w-5 shrink-0 text-onair" />
+                        </a>
+                    @endif
+                    <div class="rounded-2xl border border-line bg-surface p-6">
+                        <div class="flex items-center justify-between gap-3">
+                            <h2 class="text-xl font-bold">Οι παραγγελίες μου</h2>
+                            @if ($orderCount > 5)<a href="{{ route('orders.index') }}" class="text-[15px] font-semibold text-onair hover:underline">Όλες ({{ $orderCount }})</a>@endif
+                        </div>
+                        <div class="mt-2">@include('orders._list')</div>
+                    </div>
+                @endif
+                <div class="rounded-2xl border border-line bg-surface p-6">
+                    <div class="flex items-center justify-between gap-3">
+                        <h2 class="text-xl font-bold">Οι προσφορές μου</h2>
+                        @if ($quoteCount > 5)<a href="{{ route('quotes.index') }}" class="text-[15px] font-semibold text-onair hover:underline">Όλες ({{ $quoteCount }})</a>@endif
+                    </div>
+                    @if ($quotes->isEmpty())
+                        <p class="mt-2 text-slate">Δεν έχετε ακόμα προσφορά. Ό,τι φτιάξετε στο Studio Καμπάνιας μένει εδώ: το κατεβάζετε σε PDF, το αλλάζετε ή το προχωράτε όποτε θέλετε.</p>
+                    @else
+                        <div class="mt-2">@include('quotes._list')</div>
+                    @endif
+                </div>
+            </div>
+
+            <aside class="space-y-6">
+                @foreach ($coupons as $c)
+                    <div class="rounded-2xl border-2 border-dashed border-onair bg-onair/5 p-6">
+                        <p class="text-sm font-semibold text-onair">{{ $c->name }}</p>
+                        <p class="mt-1 text-2xl font-extrabold">{{ $c->valueLabel() }} έκπτωση</p>
+                        <p class="mt-3 select-all rounded-xl bg-surface px-4 py-2.5 text-center text-lg font-bold tracking-widest freq">{{ $c->code }}</p>
+                        <p class="mt-2 text-sm text-slate">Γράψτε τον στο ταμείο.@if($c->ends_at) Ισχύει έως {{ $c->ends_at->format('d/m/Y') }}.@endif</p>
+                    </div>
+                @endforeach
+                <div class="rounded-2xl border border-line bg-surface p-6">
+                    <div class="flex items-center justify-between gap-3">
+                        <h2 class="text-lg font-bold">Στοιχεία επιχείρησης</h2>
+                        <a href="{{ route('account.edit') }}" class="text-[15px] font-semibold text-onair hover:underline">Αλλαγή</a>
+                    </div>
+                    <dl class="mt-4 space-y-3 text-[15px]">
+                        <div><dt class="text-slate text-sm">Επωνυμία</dt><dd>{{ $business->legal_name }}</dd></div>
+                        <div><dt class="text-slate text-sm">ΑΦΜ</dt><dd class="freq">{{ $business->vat }}@if($business->tax_office) · {{ $business->tax_office }}@endif</dd></div>
+                        @if ($business->gemi)<div><dt class="text-slate text-sm">ΓΕΜΗ</dt><dd class="freq">{{ $business->gemi }}</dd></div>@endif
+                        <div><dt class="text-slate text-sm">Είδος</dt><dd>{{ $business->typeLabel() }}</dd></div>
+                        <div><dt class="text-slate text-sm">Διεύθυνση</dt><dd>{{ $business->address }}, {{ $business->postal_code }} {{ $business->city }}</dd></div>
+                        <div><dt class="text-slate text-sm">Επικοινωνία</dt><dd>{{ $business->contact_person }} · <span class="freq">{{ $business->mobile }}</span></dd></div>
+                        <div><dt class="text-slate text-sm">Email</dt><dd class="break-all">{{ $user->email }}</dd></div>
+                    </dl>
+                </div>
+
+                <form method="POST" action="{{ route('account.marketing') }}" class="rounded-2xl border border-line bg-surface p-6">
+                    @csrf @method('PUT')
+                    <h2 class="text-lg font-bold">Προσφορές στο email</h2>
+                    @if ($business->marketing_consent_at)
+                        <p class="mt-2 text-[15px] text-slate">Λαμβάνετε τις προσφορές μας.</p>
+                        <input type="hidden" name="marketing" value="0">
+                        <button class="mt-3 font-semibold text-slate hover:text-ink">Σταματήστε τις προσφορές</button>
+                    @else
+                        <p class="mt-2 text-[15px] text-slate">Μάθετε πρώτοι για εκπτώσεις και κουπόνια.</p>
+                        <input type="hidden" name="marketing" value="1">
+                        <button class="mt-3 font-semibold text-onair hover:underline">Θέλω προσφορές</button>
+                    @endif
+                </form>
+
+                <details class="rounded-2xl border border-line bg-surface p-6" @if($errors->delete->any()) open @endif>
+                    <summary class="cursor-pointer font-semibold text-slate">Διαγραφή λογαριασμού</summary>
+                    <form method="POST" action="{{ route('account.destroy') }}" class="mt-4 space-y-4">
+                        @csrf @method('DELETE')
+                        <p class="text-[15px] text-slate">Διαγράφονται ο λογαριασμός και τα στοιχεία της επιχείρησης. Δεν αναιρείται.</p>
+                        <div>
+                            <label for="del-pass" class="block text-sm font-semibold">Ο κωδικός σας</label>
+                            <input id="del-pass" type="password" name="password" required autocomplete="current-password" class="mt-1.5 block w-full rounded-xl border border-line bg-surface px-4 py-3">
+                            @error('password', 'delete')<p class="mt-1.5 text-sm text-red-600 dark:text-red-400">{{ $message }}</p>@enderror
+                        </div>
+                        <button class="rounded-full border border-red-500 px-5 py-2.5 font-semibold text-red-600 hover:bg-red-500/10 dark:text-red-400">Οριστική διαγραφή</button>
+                    </form>
+                </details>
+            </aside>
+        </div>
+    </section>
+</x-layouts.site>

@@ -1,0 +1,137 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/commissioner';
+
+@source '../views';
+@source '../../app/Models/HomeSection.php';
+
+/* Σκοτεινή λειτουργία: κλάση .dark στο <html> (επιλογή χρήστη ή ρύθμιση συσκευής) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * On Air Media — tokens
+ * onair    : το ματζέντα του λογοτύπου On Air Media (κύριο χρώμα δράσης)
+ * night    : το βαθύ μπλε της νυχτερινής εκπομπής (δείκτης, player)
+ * glow     : η κεχριμπαρένια λάμψη της βελόνας
+ * paper    : φόντο περιεχομένου
+ * slate    : δευτερεύον κείμενο
+ */
+@theme {
+    --font-sans: 'Commissioner Variable', system-ui, sans-serif;
+
+    --color-onair: #c80c92;
+    --color-onair-dark: #a00a75;
+    --color-night: #121a33;
+    --color-night-2: #1b2547;
+    --color-night-3: #2a3560;
+    --color-glow: #ffb627;
+    --color-paper: #f6f7fa;
+    --color-surface: #ffffff;
+    --color-ink: #141a2e;
+    --color-slate: #5b6478;
+    --color-line: #dde1ea;
+}
+
+/* Τα ίδια ονόματα, άλλες τιμές: όλη η σελίδα αλλάζει χωρίς διπλές κλάσεις */
+.dark {
+    color-scheme: dark;
+    --color-paper: #0c1224;
+    --color-surface: #151d36;
+    --color-ink: #eef1f8;
+    --color-slate: #a3acc2;
+    --color-line: #263055;
+    --color-onair: #e13aaa;
+    --color-onair-dark: #c80c92;
+}
+
+@layer base {
+    [x-cloak] { display: none !important; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    body { @apply bg-paper text-ink font-sans antialiased; font-feature-settings: 'tnum' 0; }
+    :focus-visible { outline: 3px solid var(--color-glow); outline-offset: 2px; border-radius: 4px; }
+    ::selection { background: var(--color-onair); color: #fff; }
+}
+
+/* Αριθμοί συχνότητας: σταθερό πλάτος ψηφίων */
+.freq { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+
+/* ---------- Slider ---------- */
+.slide-img { transform-origin: 60% 40%; }
+.slide[data-active='true'] .fx-zoom { animation: kenburns 9s ease-out both; }
+.slide[data-active='true'] .fx-pan { animation: pan 9s linear both; }
+@keyframes kenburns { from { transform: scale(1.12); } to { transform: scale(1); } }
+@keyframes pan { from { transform: scale(1.1) translateX(-3%); } to { transform: scale(1.1) translateX(3%); } }
+
+.slide-text > * { opacity: 0; transform: translateY(14px); }
+.slide[data-active='true'] .slide-text > * {
+    animation: rise .7s cubic-bezier(.2,.7,.2,1) forwards;
+}
+.slide[data-active='true'] .slide-text > :nth-child(2) { animation-delay: .12s; }
+.slide[data-active='true'] .slide-text > :nth-child(3) { animation-delay: .24s; }
+@keyframes rise { to { opacity: 1; transform: none; } }
+
+.progress-fill { transform-origin: left; transform: scaleX(0); }
+.progress[data-active='true'] .progress-fill { animation: fill var(--slide-ms, 7000ms) linear forwards; }
+.progress[data-done='true'] .progress-fill { transform: scaleX(1); }
+.paused .progress-fill { animation-play-state: paused !important; }
+@keyframes fill { to { transform: scaleX(1); } }
+
+/* ---------- Δείκτης FM ---------- */
+.needle {
+    transition: left .9s cubic-bezier(.5,.05,.2,1);
+    box-shadow: 0 0 12px 2px rgb(255 182 39 / .7);
+}
+
+/* ---------- Ισοσταθμιστής (παίζει τώρα) ---------- */
+.eq { display: inline-flex; gap: 2px; align-items: flex-end; height: 14px; }
+.eq i { width: 3px; background: currentColor; border-radius: 1px; animation: eq 1s ease-in-out infinite; }
+.eq i:nth-child(2) { animation-delay: .2s; } .eq i:nth-child(3) { animation-delay: .4s; } .eq i:nth-child(4) { animation-delay: .1s; }
+@keyframes eq { 0%, 100% { height: 25%; } 50% { height: 100%; } }
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+    .slide-text > * { opacity: 1; transform: none; }
+    .eq i { height: 60%; }
+}
+
+/* Λογότυπο χωρίς λευκή εκδοχή: στη σκοτεινή εμφάνιση το μαύρο γίνεται λευκό, το ματζέντα μένει */
+.dark .logo-auto { filter: invert(1) hue-rotate(180deg) saturate(1.3); }
+.logo-auto-always { filter: invert(1) hue-rotate(180deg) saturate(1.3); }
+
+/* ---------- Εμφάνιση ενοτήτων αρχικής (ρυθμίσεις από τη διαχείριση) ---------- */
+/* Σκούρο φόντο: τα χρώματα κειμένου/γραμμών γίνονται ανοιχτά μόνο μέσα στην ενότητα */
+.sec-tone-light {
+    --color-ink: #ffffff;
+    --color-slate: rgb(255 255 255 / .78);
+    --color-line: rgb(255 255 255 / .18);
+    --color-surface: rgb(255 255 255 / .07);
+    --color-paper: rgb(255 255 255 / .1);
+    --sec-accent: #ffb627;
+    color: #fff;
+}
+.sec-tone-dark {
+    --color-ink: #141a2e;
+    --color-slate: #4b5468;
+    --color-line: rgb(18 26 51 / .14);
+    --color-surface: rgb(255 255 255 / .85);
+    --color-paper: rgb(255 255 255 / .6);
+    color: #141a2e;
+}
+[data-pad="none"] > section { padding-top: 0 !important; padding-bottom: 0 !important; }
+[data-pad="compact"] > section { padding-top: 2rem !important; padding-bottom: 2rem !important; }
+[data-pad="large"] > section { padding-top: 7rem !important; padding-bottom: 7rem !important; }
+[data-width="narrow"] > section { max-width: 56rem !important; }
+[data-width="full"] > section { max-width: none !important; }
+[data-align="center"] > section { text-align: center; }
+[data-align="center"] > section :is(.max-w-2xl, .max-w-3xl, .max-w-xl) { margin-inline: auto; }
+[data-align="center"] > section :is(.justify-between) { justify-content: center; }
+[data-title="sm"] > section h2 { font-size: 1.6rem !important; }
+[data-title="lg"] > section h2 { font-size: clamp(2.2rem, 5vw, 3.4rem) !important; line-height: 1.08; }
+[data-title="xl"] > section h2 { font-size: clamp(2.6rem, 7vw, 4.6rem) !important; line-height: 1.02; }
+
+/* Εμφάνιση με κύλιση (μόνο όταν τρέχει JS και ο χρήστης δεν ζήτησε λιγότερη κίνηση) */
+@media (prefers-reduced-motion: no-preference) {
+    .js-reveal [data-reveal] { opacity: 0; transform: translateY(18px); transition: opacity .7s ease, transform .7s ease; }
+    .js-reveal [data-reveal].is-in { opacity: 1; transform: none; }
+}
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { [class*="animate-[marquee"] { animation: none !important; } }

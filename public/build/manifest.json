@@ -1,0 +1,41 @@
+{
+  "node_modules/@fontsource-variable/commissioner/files/commissioner-cyrillic-ext-wght-normal.woff2": {
+    "file": "assets/commissioner-cyrillic-ext-wght-normal-BnWI7fIG.woff2",
+    "src": "node_modules/@fontsource-variable/commissioner/files/commissioner-cyrillic-ext-wght-normal.woff2"
+  },
+  "node_modules/@fontsource-variable/commissioner/files/commissioner-cyrillic-wght-normal.woff2": {
+    "file": "assets/commissioner-cyrillic-wght-normal-bgdX5wL6.woff2",
+    "src": "node_modules/@fontsource-variable/commissioner/files/commissioner-cyrillic-wght-normal.woff2"
+  },
+  "node_modules/@fontsource-variable/commissioner/files/commissioner-greek-wght-normal.woff2": {
+    "file": "assets/commissioner-greek-wght-normal-M9Lxztrh.woff2",
+    "src": "node_modules/@fontsource-variable/commissioner/files/commissioner-greek-wght-normal.woff2"
+  },
+  "node_modules/@fontsource-variable/commissioner/files/commissioner-latin-ext-wght-normal.woff2": {
+    "file": "assets/commissioner-latin-ext-wght-normal-rva7dkhN.woff2",
+    "src": "node_modules/@fontsource-variable/commissioner/files/commissioner-latin-ext-wght-normal.woff2"
+  },
+  "node_modules/@fontsource-variable/commissioner/files/commissioner-latin-wght-normal.woff2": {
+    "file": "assets/commissioner-latin-wght-normal-BAwLJtOy.woff2",
+    "src": "node_modules/@fontsource-variable/commissioner/files/commissioner-latin-wght-normal.woff2"
+  },
+  "node_modules/@fontsource-variable/commissioner/files/commissioner-vietnamese-wght-normal.woff2": {
+    "file": "assets/commissioner-vietnamese-wght-normal-DEkWUU3X.woff2",
+    "src": "node_modules/@fontsource-variable/commissioner/files/commissioner-vietnamese-wght-normal.woff2"
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-CJ_drYAS.css",
+    "src": "resources/css/app.css",
+    "isEntry": true,
+    "name": "app",
+    "names": [
+      "app.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-l6QIJryc.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true
+  }
+}

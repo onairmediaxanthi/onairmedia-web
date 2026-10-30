@@ -1,0 +1,202 @@
+<?php
+
+namespace App\Filament\Pages;
+
+use App\Models\Setting;
+use BackedEnum;
+use Filament\Actions\Action;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
+use Filament\Pages\Page;
+use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\EmbeddedSchema;
+use Filament\Schemas\Components\Form;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Support\Icons\Heroicon;
+
+/** Ισχύς προσφορών, υπενθυμίσεις πελατών και ειδοποιήσεις προς την εταιρεία */
+class QuoteSettings extends Page
+{
+    use \App\Filament\Concerns\PageRestrictedToArea;
+
+    protected static string $area = 'settings';
+
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedAdjustmentsHorizontal;
+
+    protected static ?string $navigationLabel = 'Ρυθμίσεις προσφορών';
+
+    protected static ?string $title = 'Ρυθμίσεις προσφορών & ειδοποιήσεων';
+
+    protected static ?string $slug = 'rythmiseis-prosforon';
+
+    protected static string|\UnitEnum|null $navigationGroup = 'Ρυθμίσεις';
+
+    protected static ?int $navigationSort = 90;
+
+    public const KEYS = [
+        'quote_valid_days', 'quote_reminder_days', 'quote_reminder_max', 'notify_emails',
+        'welcome_coupon_enabled', 'welcome_coupon_type', 'welcome_coupon_value', 'welcome_coupon_days', 'welcome_coupon_min', 'welcome_coupon_prefix',
+        'campaign_per_minute', 'max_staff_discount', 'pdf_design', 'spot_tolerance_seconds', 'spot_min_kbps', 'spot_good_kbps', 'banner_max_kb', 'callback_emails', 'callback_floating', 'bank_accounts', 'payment_due_days', 'payment_office_enabled', 'notify_deposit_declared', 'notify_order_message', 'notify_files_uploaded', 'notify_materials_done', 'notify_registered', 'notify_quote_saved', 'notify_quote_changed', 'notify_quote_submitted', 'notify_quote_deleted', 'notify_quote_pdf', 'notify_wizard_used',
+    ];
+
+    /** @var array<string, mixed>|null */
+    public ?array $data = [];
+
+    public function mount(): void
+    {
+        $this->form->fill(array_intersect_key(Setting::allValues(), array_flip(self::KEYS)));
+    }
+
+    public function form(Schema $schema): Schema
+    {
+        return $schema->statePath('data')->components([
+            Section::make('Προσφορές πελατών')->columns(3)->schema([
+                TextInput::make('quote_valid_days')->label('Ισχύς προσφοράς')->numeric()->integer()->minValue(1)->maxValue(90)->suffix('ημέρες')->required()
+                    ->helperText('Για τόσες μέρες «κλειδώνουν» οι τιμές. Μετά ο πελάτης την ανανεώνει με τις τρέχουσες.'),
+                TextInput::make('quote_reminder_days')->label('Υπενθύμιση κάθε')->numeric()->integer()->minValue(0)->maxValue(60)->suffix('ημέρες')->required()
+                    ->helperText('0 = καμία υπενθύμιση. Στέλνεται στις 10:00 το πρωί.'),
+                TextInput::make('max_staff_discount')->label('Μέγιστη χειροκίνητη έκπτωση')->numeric()->minValue(0)->maxValue(90)->suffix('%')->required()
+                    ->helperText('Πόση έκπτωση μπορεί να δώσει το προσωπικό σε μια προσφορά.'),
+                TextInput::make('quote_reminder_max')->label('Το πολύ')->numeric()->integer()->minValue(0)->maxValue(10)->suffix('υπενθυμίσεις')->required()
+                    ->helperText('Ανά προσφορά. Ο πελάτης μπορεί να τις σταματήσει από το email.'),
+            ]),
+            Section::make('Σχέδιο PDF προσφοράς')
+                ->description('Έτσι φαίνεται το PDF που κατεβάζει ο πελάτης και που επισυνάπτεται στα email. Δείτε κάθε σχέδιο με την πιο πρόσφατη προσφορά από το «Προεπισκόπηση PDF» πάνω δεξιά.')
+                ->schema([
+                    \Filament\Forms\Components\Radio::make('pdf_design')->label('')->required()
+                        ->options(collect(\App\Services\Quotes\QuotePdf::DESIGNS)->map(fn ($d) => $d['label'])->all())
+                        ->descriptions(collect(\App\Services\Quotes\QuotePdf::DESIGNS)->map(fn ($d) => $d['text'])->all())
+                        ->columns(2),
+                ]),
+            Section::make('Υλικό καμπάνιας: έλεγχος αρχείων')->columns(4)
+                ->description('Όταν ο πελάτης ανεβάζει σποτ ή banner, το site ελέγχει αυτόματα το αρχείο. Η διάρκεια του σποτ δεν απορρίπτει ποτέ: μόνο σας σημειώνεται. Βάλτε 0 για να μην ελέγχεται κάτι.')
+                ->schema([
+                    TextInput::make('spot_tolerance_seconds')->label('Ανοχή διάρκειας σποτ')->numeric()->integer()->minValue(0)->maxValue(60)->suffix('δευτ.')->required()
+                        ->helperText('Πέρα από ±τόσα δευτερόλεπτα, σημείωση «η διάρκεια διαφέρει».'),
+                    TextInput::make('spot_min_kbps')->label('Ελάχιστη ποιότητα MP3')->numeric()->integer()->minValue(0)->maxValue(320)->suffix('kbps')->required()
+                        ->helperText('Κάτω από αυτό, το αρχείο δεν γίνεται δεκτό.'),
+                    TextInput::make('spot_good_kbps')->label('Επιθυμητή ποιότητα MP3')->numeric()->integer()->minValue(0)->maxValue(320)->suffix('kbps')->required()
+                        ->helperText('Κάτω από αυτό, γίνεται δεκτό με σημείωση.'),
+                    TextInput::make('banner_max_kb')->label('Μέγεθος banner')->numeric()->integer()->minValue(0)->maxValue(10000)->suffix('KB')->required()
+                        ->helperText('Πάνω από αυτό, σημείωση για συμπίεση.'),
+                ]),
+            Section::make('Κουπόνι καλωσορίσματος')->columns(3)
+                ->description('Κάθε νέος πελάτης παίρνει με email προσωπικό κωδικό μίας χρήσης, μόλις επιβεβαιώσει το email του (ή ενεργοποιήσει λογαριασμό που ανοίξατε εσείς). Ένας ανά λογαριασμό, άρα ένας ανά ΑΦΜ.')
+                ->schema([
+                    Toggle::make('welcome_coupon_enabled')->label('Ενεργό')->inline(false)->live()->columnSpanFull(),
+                    \Filament\Forms\Components\Select::make('welcome_coupon_type')->label('Είδος')->options(\App\Models\Coupon::TYPES)->native(false)->required(),
+                    TextInput::make('welcome_coupon_value')->label('Αξία')->numeric()->minValue(0)->maxValue(100000)->required(),
+                    TextInput::make('welcome_coupon_days')->label('Ισχύει για')->numeric()->integer()->minValue(1)->maxValue(365)->suffix('ημέρες')->required(),
+                    TextInput::make('welcome_coupon_min')->label('Ελάχιστη καμπάνια')->numeric()->minValue(0)->suffix('€')->helperText('Χωρίς ΦΠΑ. Κενό = χωρίς όριο.'),
+                    TextInput::make('welcome_coupon_prefix')->label('Πρόθεμα κωδικού')->maxLength(12)->alphaNum()->helperText('π.χ. KALOS → KALOS-7FK2QM'),
+                ]),
+            Section::make('Πληρωμές παραγγελιών')->columns(2)
+                ->description('Οι λογαριασμοί εμφανίζονται στον πελάτη μόλις επιβεβαιώσετε την παραγγελία, με αιτιολογία τον αριθμό παραγγελίας. Την πίστωση την ενεργοποιείτε ανά πελάτη, στην καρτέλα του.')
+                ->schema([
+                    \Filament\Forms\Components\Repeater::make('bank_accounts')->label('Τραπεζικοί λογαριασμοί')->columnSpanFull()->columns(3)
+                        ->addActionLabel('Προσθήκη λογαριασμού')->defaultItems(0)->reorderable()
+                        ->schema([
+                            TextInput::make('bank')->label('Τράπεζα')->required()->maxLength(60)->placeholder('Εθνική Τράπεζα'),
+                            TextInput::make('iban')->label('IBAN')->required()->maxLength(40)->placeholder('GR16 0110 1250 0000 0001 2300 695')
+                                ->dehydrateStateUsing(fn ($state) => \App\Support\BankAccounts::format((string) $state))
+                                ->rule(fn () => function (string $attribute, $value, \Closure $fail) {
+                                    if (! \App\Support\BankAccounts::valid((string) $value)) {
+                                        $fail('Ο IBAN δεν είναι σωστός. Ελέγξτε τα ψηφία.');
+                                    }
+                                }),
+                            TextInput::make('beneficiary')->label('Δικαιούχος')->maxLength(120)->placeholder('Κενό = η επωνυμία της εταιρείας'),
+                        ]),
+                    TextInput::make('payment_due_days')->label('Προθεσμία πληρωμής')->numeric()->integer()->minValue(1)->maxValue(60)->suffix('ημέρες')->required()
+                        ->helperText('Από την επιβεβαίωση της παραγγελίας. Φαίνεται στον πελάτη.'),
+                    Toggle::make('payment_office_enabled')->label('Πληρωμή στο γραφείο (μετρητά ή κάρτα)')->inline(false),
+                ]),
+            Section::make('«Να σας καλέσουμε»')->columns(2)->schema([
+                TextInput::make('callback_emails')->label('Email για αιτήματα επικοινωνίας')->maxLength(500)
+                    ->placeholder('sales@onairmedia.gr')
+                    ->helperText('Ένα ή περισσότερα, χωρισμένα με κόμμα. Κενό = τα email ειδοποιήσεων από κάτω.')
+                    ->rule(fn () => function (string $attribute, $value, \Closure $fail) {
+                        foreach (array_filter(array_map('trim', preg_split('/[,;\s]+/', (string) $value))) as $e) {
+                            if (! filter_var($e, FILTER_VALIDATE_EMAIL)) {
+                                $fail('Μη έγκυρο email: '.$e);
+                            }
+                        }
+                    }),
+                Toggle::make('callback_floating')->label('Σταθερό κουμπί «Να σας καλέσουμε;» σε όλες τις σελίδες')->inline(false),
+            ]),
+            Section::make('Μαζικές αποστολές')->schema([
+                TextInput::make('campaign_per_minute')->label('Email ανά λεπτό')->numeric()->integer()->minValue(1)->maxValue(200)->required()
+                    ->helperText('Οι πάροχοι φιλοξενίας έχουν όριο ανά ώρα (συχνά 300–500). Με 20/λεπτό στέλνονται ~1.200 την ώρα· ρωτήστε τον πάροχο αν χρειάζεται λιγότερο.'),
+            ]),
+            Section::make('Ειδοποιήσεις προς εσάς')
+                ->description('Όλες οι ενέργειες φαίνονται πάντα στη «Δραστηριότητα πελατών» και οι σημαντικές στο καμπανάκι πάνω δεξιά. Εδώ διαλέγετε ποιες έρχονται και με email.')
+                ->columns(3)->schema([
+                    TextInput::make('notify_emails')->label('Email για ειδοποιήσεις')->columnSpanFull()->maxLength(500)
+                        ->placeholder('sales@onairmedia.gr, info@onairmedia.gr')
+                        ->helperText('Ένα ή περισσότερα, χωρισμένα με κόμμα. Κενό = το email επικοινωνίας των ρυθμίσεων site.')
+                        ->rule(fn () => function (string $attribute, $value, \Closure $fail) {
+                            foreach (array_filter(array_map('trim', preg_split('/[,;\s]+/', (string) $value))) as $e) {
+                                if (! filter_var($e, FILTER_VALIDATE_EMAIL)) {
+                                    $fail('Μη έγκυρο email: '.$e);
+                                }
+                            }
+                        }),
+                    Toggle::make('notify_registered')->label('Νέα εγγραφή'),
+                    Toggle::make('notify_quote_saved')->label('Νέα προσφορά'),
+                    Toggle::make('notify_quote_changed')->label('Αλλαγή προσφοράς από πελάτη'),
+                    Toggle::make('notify_quote_submitted')->label('Παραγγελία (ταμείο)'),
+                    Toggle::make('notify_deposit_declared')->label('Ο πελάτης δήλωσε κατάθεση'),
+                    Toggle::make('notify_order_message')->label('Μήνυμα πελάτη για παραγγελία'),
+                    Toggle::make('notify_files_uploaded')->label('Ο πελάτης ανέβασε υλικό'),
+                    Toggle::make('notify_materials_done')->label('Ο πελάτης έστειλε όλο το υλικό'),
+                    Toggle::make('notify_quote_deleted')->label('Διαγραφή προσφοράς'),
+                    Toggle::make('notify_quote_pdf')->label('Λήψη PDF'),
+                    Toggle::make('notify_wizard_used')->label('Είδε προτάσεις στον οδηγό'),
+                ]),
+        ]);
+    }
+
+    public function content(Schema $schema): Schema
+    {
+        return $schema->components([
+            Form::make([EmbeddedSchema::make('form')])
+                ->id('form')
+                ->livewireSubmitHandler('save')
+                ->footer([Actions::make([Action::make('save')->label('Αποθήκευση')->submit('save')->keyBindings(['mod+s'])])]),
+        ]);
+    }
+
+    protected function getHeaderActions(): array
+    {
+        $latest = \App\Models\Quote::query()->latest('id')->value('id');
+
+        return [
+            \Filament\Actions\ActionGroup::make(collect(\App\Services\Quotes\QuotePdf::DESIGNS)->map(fn ($d, $key) => Action::make('pdf_'.$key)->label($d['label'])
+                ->url($latest ? route('admin.quote-pdf', [$latest, $key]) : null)->openUrlInNewTab())->values()->all())
+                ->label('Προεπισκόπηση PDF')->icon('heroicon-o-document-magnifying-glass')->button()->color('gray')
+                ->visible((bool) $latest),
+            Action::make('testMail')->label('Δοκιμαστικό email')->icon('heroicon-o-envelope')->color('gray')
+                ->modalDescription('Στέλνει ένα σύντομο email με τον ίδιο τρόπο που φεύγουν οι ενημερώσεις προς τους πελάτες, και δείχνει αμέσως αν ο server το δέχτηκε.')
+                ->fillForm(fn () => ['to' => \Filament\Facades\Filament::auth()->user()?->email])
+                ->schema([TextInput::make('to')->label('Προς')->email()->required()])
+                ->modalSubmitActionLabel('Αποστολή')
+                ->action(function (array $data) {
+                    try {
+                        \Illuminate\Support\Facades\Mail::to($data['to'])->send(new \App\Mail\TestMail(\Filament\Facades\Filament::auth()->user()?->name ?? '—'));
+                        Notification::make()->success()->title('Στάλθηκε στο '.$data['to'])
+                            ->body('Ο server το δέχτηκε. Αν δεν φτάσει σε 2–3 λεπτά, κοιτάξτε τα Ανεπιθύμητα. Αποστολέας: '.config('mail.from.address'))
+                            ->persistent()->send();
+                    } catch (\Throwable $e) {
+                        Notification::make()->danger()->title('Η αποστολή απέτυχε')->body(mb_substr($e->getMessage(), 0, 400))->persistent()->send();
+                    }
+                }),
+        ];
+    }
+
+    public function save(): void
+    {
+        Setting::putMany(array_intersect_key($this->form->getState(), array_flip(self::KEYS)));
+        Notification::make()->success()->title('Οι ρυθμίσεις αποθηκεύτηκαν')->send();
+    }
+}
