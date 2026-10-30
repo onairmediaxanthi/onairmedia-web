@@ -85,6 +85,10 @@ class AirplayRecorder
         if (Setting::get('airplay_require_artist', true) && blank($np['artist'])) {
             return true;
         }
+        // Όνομα σταθμού με συχνότητα FM (π.χ. «METROPOLIS 95.5 - THESSALONIKI»): αναμετάδοση/ταυτότητα, όχι τραγούδι
+        if (preg_match('/(^|\D)(8[7-9]|9\d|10[0-8])[.,]\d(\D|$)/u', $raw)) {
+            return true;
+        }
         $name = self::fold($st->name);
         if ($raw === $name || ($st->frequency && str_contains($raw, (string) $st->frequency)) || str_contains($raw, 'http') || str_contains($raw, 'www')) {
             return true;

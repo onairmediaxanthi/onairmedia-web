@@ -86,6 +86,10 @@ class NowPlaying
     protected function extractTitle(string $body, string $mount): ?string
     {
         $data = json_decode(trim($body), true);
+        if ($data === null) {
+            // Κάποια mount στέλνουν μη έγκυρα escapes (π.χ. «Now Playing\\: …»): τα αφαιρούμε και ξαναδοκιμάζουμε
+            $data = json_decode(preg_replace('/\\\\(?!["\\\\\/bfnrtu])/', '', trim($body)), true);
+        }
         $entry = $data['icestats'][$mount] ?? (is_array($data['icestats'] ?? null) ? reset($data['icestats']) : null);
         $title = is_array($entry) ? ($entry['title'] ?? null) : null;
 
@@ -118,6 +122,10 @@ class NowPlaying
             return ['artist' => null, 'title' => null, 'raw' => null];
         }
 
+        $raw = trim(preg_replace('/^(now\s+playing|τώρα\s+παίζει)\s*[:\-]\s*/iu', '', $raw));
+        if ($raw === '') {
+            return ['artist' => null, 'title' => null, 'raw' => null];
+        }
         $parts = preg_split('/\s+-\s+/u', $raw, 2);
 
         return count($parts) === 2

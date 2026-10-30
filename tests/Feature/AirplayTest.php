@@ -30,6 +30,8 @@ class AirplayTest extends TestCase
 
     protected string $now = '';
 
+    protected ?string $body = null;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -38,7 +40,7 @@ class AirplayTest extends TestCase
         Station::query()->update(['now_playing_mount' => null]);
         $this->star = Station::query()->orderBy('sort')->first();
         $this->star->update(['now_playing_mount' => '/star888xanthi', 'airplay_enabled' => true, 'chart_public' => true]);
-        Http::fake(['songs.live24.gr/*' => fn () => Http::response(json_encode(['icestats' => ['/star888xanthi' => ['title' => $this->now]]]))]);
+        Http::fake(['songs.live24.gr/*' => fn () => Http::response($this->body ?? json_encode(['icestats' => ['/star888xanthi' => ['title' => $this->now]]]))]);
     }
 
     protected function playing(string $title, ?Carbon $at = null): array
@@ -187,5 +189,19 @@ class AirplayTest extends TestCase
         \App\Filament\Resources\Songs\SongResource::merge($two, $one);
         $this->assertSame(1, Song::query()->count());
         $this->assertEquals(3, DB::table('airplay_daily')->where('song_id', $one->id)->sum('plays'));
+    }
+
+    public function test_invalid_live24_json_and_relayed_station_names(): void
+    {
+        // Όπως ακριβώς το στέλνει το live24 για τον Goal: μη έγκυρο «\:» και όνομα άλλου σταθμού
+        $this->body = "{\"icestats\":{\n\"/star888xanthi\" : {\n\"title\" : \"Now Playing\\: METROPOLIS 95.5 - THESSALONIKI\"\n}\n}\n}";
+        Cache::flush();
+        $np = app(\App\Services\NowPlaying::class)->fresh();
+        $this->assertSame('METROPOLIS 95.5', $np[$this->star->slug]['artist']);
+        $this->assertSame('THESSALONIKI', $np[$this->star->slug]['title']);
+
+        $r = app(AirplayRecorder::class)->record();
+        $this->assertSame(0, $r['recorded']); // ταυτότητα σταθμού, όχι τραγούδι
+        $this->assertNotNull($this->star->refresh()->last_seen_at);
     }
 }
