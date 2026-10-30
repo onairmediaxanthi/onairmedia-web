@@ -361,4 +361,23 @@ class OrdersTest extends TestCase
             $this->assertStringContainsString($contains, $e->getMessage());
         }
     }
+
+    public function test_customer_can_message_about_order_and_staff_is_alerted(): void
+    {
+        $order = $this->order();
+        $staff = $this->staff();
+        $this->actingAs($this->customer);
+
+        $page = $this->get(route('orders.show', $order))->assertOk()->assertSee('Αποστολή μηνύματος');
+        $this->assertMatchesRegularExpression('/x-data @click="\$dispatch\(\'open-callback\'\)"/', $page->getContent()); // το κουμπί δουλεύει
+        $this->assertStringContainsString('090000045', $page->getContent()); // «Να σας καλέσουμε» με τα στοιχεία του
+
+        $this->post(route('orders.message', $order), ['message' => ''])->assertSessionHasErrors('message');
+        $this->post(route('orders.message', $order), ['message' => 'Μπορούμε να ξεκινήσουμε μια μέρα νωρίτερα;'])->assertSessionHas('status');
+
+        $this->assertDatabaseHas('order_events', ['order_id' => $order->id, 'title' => 'Μήνυμα από εσάς', 'note' => 'Μπορούμε να ξεκινήσουμε μια μέρα νωρίτερα;']);
+        $this->assertTrue($staff->notifications()->get()->contains(fn ($n) => ($n->data['title'] ?? '') === 'Μήνυμα για παραγγελία'));
+        Mail::assertSent(\App\Mail\CompanyAlert::class, fn ($m) => $m->type === 'order_message' && str_contains($m->render(), 'μια μέρα νωρίτερα') && str_contains($m->render(), $order->number));
+        $this->get(route('orders.show', $order))->assertSee('μια μέρα νωρίτερα');
+    }
 }

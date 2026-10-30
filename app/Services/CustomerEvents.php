@@ -22,7 +22,7 @@ use Throwable;
 class CustomerEvents
 {
     /** Ενέργειες που εμφανίζονται στο καμπανάκι της διαχείρισης */
-    protected const BELL = ['registered', 'quote_saved', 'quote_changed', 'quote_submitted', 'quote_deleted', 'deposit_declared', 'files_uploaded', 'materials_done'];
+    protected const BELL = ['registered', 'quote_saved', 'quote_changed', 'quote_submitted', 'quote_deleted', 'deposit_declared', 'files_uploaded', 'materials_done', 'order_message'];
 
     public static function record(string $type, ?User $user, ?Quote $quote = null, array $meta = []): CustomerActivity
     {
@@ -37,7 +37,7 @@ class CustomerEvents
         }
 
         if (Setting::get('notify_'.$type, false)) {
-            self::email($type, $summary, $user, $quote);
+            self::email($type, $summary, $user, $quote, $meta);
         }
 
         return $activity;
@@ -64,6 +64,7 @@ class CustomerEvents
                     'registered' => 'heroicon-o-user-plus',
                     'quote_submitted' => 'heroicon-o-shopping-cart',
                     'deposit_declared' => 'heroicon-o-banknotes',
+                    'order_message' => 'heroicon-o-chat-bubble-left-ellipsis',
                     'files_uploaded', 'materials_done' => 'heroicon-o-arrow-up-tray',
                     'quote_deleted' => 'heroicon-o-trash',
                     default => 'heroicon-o-document-text',
@@ -88,14 +89,14 @@ class CustomerEvents
         return array_values(array_filter(array_map('trim', preg_split('/[,;\s]+/', $raw)), fn ($e) => filter_var($e, FILTER_VALIDATE_EMAIL)));
     }
 
-    protected static function email(string $type, string $summary, ?User $user, ?Quote $quote): void
+    protected static function email(string $type, string $summary, ?User $user, ?Quote $quote, array $meta = []): void
     {
         $to = self::recipients();
         if (! $to) {
             return;
         }
         try {
-            Mail::to($to)->send(new CompanyAlert($type, $summary, $user, $quote));
+            Mail::to($to)->send(new CompanyAlert($type, $summary, $user, $quote, $meta));
         } catch (Throwable $e) {
             Log::warning('Company alert email failed: '.$e->getMessage());
         }

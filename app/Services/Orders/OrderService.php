@@ -252,6 +252,16 @@ class OrderService
         $this->log($order, null, 'Αφαιρέσατε το αρχείο '.$file->name, null);
     }
 
+    /** Μήνυμα πελάτη για την παραγγελία: στο ιστορικό, στο καμπανάκι και με email στην ομάδα */
+    public function customerMessage(Order $order, string $text): OrderEvent
+    {
+        $text = mb_substr(trim($text), 0, 2000);
+        $event = $this->log($order, null, 'Μήνυμα από εσάς', $text);
+        CustomerEvents::record('order_message', $order->user, $order->quote, ['order' => $order->number, 'text' => mb_strimwidth($text, 0, 300, '…')]);
+
+        return $event;
+    }
+
     /** Κείμενο πελάτη για ένα κουτί (κείμενο σποτ, σύνδεσμος banner…) */
     public function saveBrief(Order $order, string $slot, ?string $text): Order
     {

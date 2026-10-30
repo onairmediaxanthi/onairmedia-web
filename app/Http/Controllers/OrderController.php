@@ -91,6 +91,15 @@ class OrderController extends Controller
             ->with('status', ($n === 1 ? 'Το αρχείο ανέβηκε.' : 'Ανέβηκαν '.$n.' αρχεία.').($warn ? ' Σημείωση: '.implode(' ', $warn) : ''));
     }
 
+    public function message(Request $request, Order $order, OrderService $service): RedirectResponse
+    {
+        $this->own($request, $order);
+        $text = $request->validate(['message' => ['required', 'string', 'max:2000']], ['message.required' => 'Γράψτε το μήνυμά σας.'])['message'];
+        $service->customerMessage($order, $text);
+
+        return redirect()->to(route('orders.show', $order).'#minima')->with('status', 'Το μήνυμά σας στάλθηκε. Θα σας απαντήσουμε στο email σας το συντομότερο.');
+    }
+
     public function brief(Request $request, Order $order, OrderService $service): RedirectResponse
     {
         $this->own($request, $order);

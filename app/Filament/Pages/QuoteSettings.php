@@ -38,7 +38,7 @@ class QuoteSettings extends Page
     public const KEYS = [
         'quote_valid_days', 'quote_reminder_days', 'quote_reminder_max', 'notify_emails',
         'welcome_coupon_enabled', 'welcome_coupon_type', 'welcome_coupon_value', 'welcome_coupon_days', 'welcome_coupon_min', 'welcome_coupon_prefix',
-        'campaign_per_minute', 'max_staff_discount', 'pdf_design', 'spot_tolerance_seconds', 'spot_min_kbps', 'spot_good_kbps', 'banner_max_kb', 'callback_emails', 'callback_floating', 'bank_accounts', 'payment_due_days', 'payment_office_enabled', 'notify_deposit_declared', 'notify_registered', 'notify_quote_saved', 'notify_quote_changed', 'notify_quote_submitted', 'notify_quote_deleted', 'notify_quote_pdf', 'notify_wizard_used',
+        'campaign_per_minute', 'max_staff_discount', 'pdf_design', 'spot_tolerance_seconds', 'spot_min_kbps', 'spot_good_kbps', 'banner_max_kb', 'callback_emails', 'callback_floating', 'bank_accounts', 'payment_due_days', 'payment_office_enabled', 'notify_deposit_declared', 'notify_order_message', 'notify_files_uploaded', 'notify_materials_done', 'notify_registered', 'notify_quote_saved', 'notify_quote_changed', 'notify_quote_submitted', 'notify_quote_deleted', 'notify_quote_pdf', 'notify_wizard_used',
     ];
 
     /** @var array<string, mixed>|null */
@@ -147,6 +147,9 @@ class QuoteSettings extends Page
                     Toggle::make('notify_quote_changed')->label('Αλλαγή προσφοράς από πελάτη'),
                     Toggle::make('notify_quote_submitted')->label('Παραγγελία (ταμείο)'),
                     Toggle::make('notify_deposit_declared')->label('Ο πελάτης δήλωσε κατάθεση'),
+                    Toggle::make('notify_order_message')->label('Μήνυμα πελάτη για παραγγελία'),
+                    Toggle::make('notify_files_uploaded')->label('Ο πελάτης ανέβασε υλικό'),
+                    Toggle::make('notify_materials_done')->label('Ο πελάτης έστειλε όλο το υλικό'),
                     Toggle::make('notify_quote_deleted')->label('Διαγραφή προσφοράς'),
                     Toggle::make('notify_quote_pdf')->label('Λήψη PDF'),
                     Toggle::make('notify_wizard_used')->label('Είδε προτάσεις στον οδηγό'),

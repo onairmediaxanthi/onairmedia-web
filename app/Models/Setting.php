@@ -65,6 +65,7 @@ class Setting extends Model
         'payment_due_days' => 3,
         'payment_office_enabled' => true,
         'notify_deposit_declared' => true,
+        'notify_order_message' => true,
         'notify_files_uploaded' => true,
         'notify_materials_done' => true,
         'callback_floating' => true,

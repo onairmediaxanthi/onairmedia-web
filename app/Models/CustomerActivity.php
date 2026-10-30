@@ -34,6 +34,7 @@ class CustomerActivity extends Model
         'marketing_off' => 'Σταμάτησε τις προσφορές στο email',
         'coupon_applied' => 'Χρησιμοποίησε κουπόνι',
         'deposit_declared' => 'Δήλωσε κατάθεση',
+        'order_message' => 'Μήνυμα για παραγγελία',
         'files_uploaded' => 'Ανέβασε υλικό καμπάνιας',
         'materials_done' => 'Έστειλε όλο το υλικό',
         'order_stage' => 'Ενημέρωση παραγγελίας',

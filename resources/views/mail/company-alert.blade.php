@@ -11,7 +11,17 @@
 {{ $customer->name }} · {{ $customer->email }}
 @endif
 
-@if ($quote)
+@if ($text)
+<x-mail::panel>
+{!! nl2br(e($text)) !!}
+</x-mail::panel>
+
+Απαντήστε από τη διαχείριση με «Μήνυμα / σημείωση»: ο πελάτης το λαμβάνει με email και το βλέπει στην παραγγελία του.
+@endif
+
+@if ($order && $type !== 'quote_submitted')
+**Παραγγελία {{ $order->number }}** · {{ $order->stageLabel() }} · {{ $order->money() }}
+@elseif ($quote)
 <x-mail::table>
 | | |
 |:--|--:|

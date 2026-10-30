@@ -1,12 +1,15 @@
 {{-- «Να σας καλέσουμε»: ανοίγει από οποιοδήποτε κουμπί με $dispatch('open-callback') --}}
 @php($siteKey = \App\Support\Turnstile::enabled() ? \App\Support\Turnstile::siteKey() : null)
 @php($u = auth()->user())
+@php($bz = $u?->business)
+@php($names = $bz ? preg_split('/\s+/u', trim((string) $bz->contact_person), 2) : [])
+@php($prefill = ['first_name' => $names[0] ?? '', 'last_name' => $names[1] ?? '', 'mobile' => (string) ($bz->mobile ?? ''), 'vat' => (string) ($bz->vat ?? ''), 'consent' => false, 'company_url' => ''])
 <div x-data="{
         open: false, sending: false, done: false, errors: {}, widget: null,
-        form: { first_name: '', last_name: '', mobile: '', vat: '', consent: false, company_url: '' },
+        form: @js($prefill),
         show() {
             // μετά από επιτυχημένη αποστολή: καθαρή φόρμα για το επόμενο αίτημα
-            if (this.done) this.form = { first_name: '', last_name: '', mobile: '', vat: '', consent: false, company_url: '' };
+            if (this.done) this.form = @js($prefill);
             this.open = true; this.done = false; this.errors = {}; this.sending = false;
             this.$nextTick(() => { this.$refs.first?.focus(); this.robot(); });
         },

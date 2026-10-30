@@ -162,12 +162,20 @@
                     @endif
                 </div>
 
-                <div class="rounded-2xl bg-night p-6 text-white">
+                <div id="minima" class="rounded-2xl bg-night p-6 text-white">
                     <p class="font-bold">Ερώτηση για την παραγγελία;</p>
-                    <p class="mt-1 text-sm text-white/70">Αναφέρετε τον αριθμό {{ $order->number }}.</p>
-                    <div class="mt-4 flex flex-wrap gap-3">
-                        @if ($company['phone'])<a href="tel:{{ preg_replace('/\s+/', '', $company['phone']) }}" class="rounded-full bg-white/10 px-4 py-2 font-semibold hover:bg-white/20">{{ $company['phone'] }}</a>@endif
-                        <button type="button" @click="$dispatch('open-callback')" class="rounded-full bg-onair px-4 py-2 font-semibold hover:bg-onair-dark">Να σας καλέσουμε</button>
+                    <form method="POST" action="{{ route('orders.message', $order) }}" class="mt-3 space-y-3" x-data="{ busy: false, text: '' }" @submit="busy = true">
+                        @csrf
+                        <label for="order-msg" class="sr-only">Το μήνυμά σας</label>
+                        <textarea id="order-msg" name="message" rows="3" maxlength="2000" required x-model="text" placeholder="Γράψτε μας εδώ· απαντάμε στο email σας και φαίνεται στο ιστορικό."
+                                  class="block w-full rounded-xl border border-white/15 bg-white/10 px-3.5 py-2.5 text-[16px] text-white placeholder:text-white/50 outline-none focus:border-onair focus:ring-2 focus:ring-onair/40"></textarea>
+                        @error('message')<p class="text-sm text-red-300">{{ $message }}</p>@enderror
+                        <button :disabled="busy || ! text.trim()" class="w-full rounded-full bg-onair px-4 py-2.5 font-semibold hover:bg-onair-dark disabled:opacity-50">Αποστολή μηνύματος</button>
+                    </form>
+                    <div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/10 pt-4 text-sm">
+                        <span class="text-white/60">ή</span>
+                        <button type="button" x-data @click="$dispatch('open-callback')" class="font-semibold text-white underline decoration-white/30 underline-offset-4 hover:decoration-white">Να σας καλέσουμε</button>
+                        @if ($company['phone'])<a href="tel:{{ preg_replace('/\s+/', '', $company['phone']) }}" class="font-semibold text-white/80 hover:text-white">{{ $company['phone'] }}</a>@endif
                     </div>
                 </div>
             </aside>

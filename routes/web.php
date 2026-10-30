@@ -80,6 +80,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/to-studio-mou/paraggelies/{order}/katathesi', [\App\Http\Controllers\OrderController::class, 'deposit'])->middleware('throttle:5,1,orders.deposit')->name('orders.deposit');
         Route::post('/to-studio-mou/paraggelies/{order}/yliko', [\App\Http\Controllers\OrderController::class, 'upload'])->middleware('throttle:20,1,orders.upload')->name('orders.upload');
         Route::post('/to-studio-mou/paraggelies/{order}/yliko/oloklirosi', [\App\Http\Controllers\OrderController::class, 'materialsDone'])->middleware('throttle:5,1,orders.materials-done')->name('orders.materials-done');
+        Route::post('/to-studio-mou/paraggelies/{order}/minima', [\App\Http\Controllers\OrderController::class, 'message'])->middleware('throttle:10,10,orders.message')->name('orders.message');
         Route::post('/to-studio-mou/paraggelies/{order}/keimeno', [\App\Http\Controllers\OrderController::class, 'brief'])->middleware('throttle:30,1,orders.brief')->name('orders.brief');
         Route::delete('/to-studio-mou/paraggelies/{order}/yliko/{file}', [\App\Http\Controllers\OrderController::class, 'removeFile'])->middleware('throttle:30,1,orders.file-remove')->name('orders.file-remove');
         Route::get('/to-studio-mou/paraggelies/{order}/yliko/{file}', [\App\Http\Controllers\OrderController::class, 'file'])->middleware('throttle:60,1,orders.file')->name('orders.file');
