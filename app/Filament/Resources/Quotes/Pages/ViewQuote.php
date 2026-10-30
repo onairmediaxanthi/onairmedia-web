@@ -67,6 +67,10 @@ class ViewQuote extends ViewRecord
                 }),
             \Filament\Actions\EditAction::make()->label('Αλλαγές')->icon('heroicon-o-adjustments-horizontal')->color('gray')
                 ->hidden(fn (Quote $record) => $record->trashed()),
+            \Filament\Actions\ActionGroup::make(collect(\App\Services\Quotes\QuotePdf::DESIGNS)->map(fn ($d, $key) => Action::make('design_'.$key)
+                ->label($d['label'].($key === \App\Services\Quotes\QuotePdf::design() ? ' · σε χρήση' : ''))
+                ->url(fn (Quote $record) => route('admin.quote-pdf', [$record->id, $key]))->openUrlInNewTab())->values()->all())
+                ->label('Σχέδια PDF')->icon('heroicon-o-swatch')->button()->color('gray'),
             Action::make('pdf')->label('PDF')->icon('heroicon-o-arrow-down-tray')->color('gray')
                 ->action(fn (Quote $record) => response()->streamDownload(fn () => print (QuotePdf::render($record)), QuotePdf::filename($record))),
             Action::make('update')->label('Κατάσταση')->icon('heroicon-o-pencil-square')->color('gray')

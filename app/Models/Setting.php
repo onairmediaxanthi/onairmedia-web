@@ -69,6 +69,7 @@ class Setting extends Model
         'notify_materials_done' => true,
         'callback_floating' => true,
         'max_staff_discount' => 50,
+        'pdf_design' => 'classic',
         'metro_cities' => ['Αθήνα', 'Θεσσαλονίκη', 'Πάτρα'],
         'metro_price_sponsored_article' => null,
         'metro_price_article_writing' => null,

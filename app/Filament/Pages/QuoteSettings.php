@@ -38,7 +38,7 @@ class QuoteSettings extends Page
     public const KEYS = [
         'quote_valid_days', 'quote_reminder_days', 'quote_reminder_max', 'notify_emails',
         'welcome_coupon_enabled', 'welcome_coupon_type', 'welcome_coupon_value', 'welcome_coupon_days', 'welcome_coupon_min', 'welcome_coupon_prefix',
-        'campaign_per_minute', 'max_staff_discount', 'callback_emails', 'callback_floating', 'bank_accounts', 'payment_due_days', 'payment_office_enabled', 'notify_deposit_declared', 'notify_registered', 'notify_quote_saved', 'notify_quote_changed', 'notify_quote_submitted', 'notify_quote_deleted', 'notify_quote_pdf', 'notify_wizard_used',
+        'campaign_per_minute', 'max_staff_discount', 'pdf_design', 'callback_emails', 'callback_floating', 'bank_accounts', 'payment_due_days', 'payment_office_enabled', 'notify_deposit_declared', 'notify_registered', 'notify_quote_saved', 'notify_quote_changed', 'notify_quote_submitted', 'notify_quote_deleted', 'notify_quote_pdf', 'notify_wizard_used',
     ];
 
     /** @var array<string, mixed>|null */
@@ -62,6 +62,14 @@ class QuoteSettings extends Page
                 TextInput::make('quote_reminder_max')->label('Το πολύ')->numeric()->integer()->minValue(0)->maxValue(10)->suffix('υπενθυμίσεις')->required()
                     ->helperText('Ανά προσφορά. Ο πελάτης μπορεί να τις σταματήσει από το email.'),
             ]),
+            Section::make('Σχέδιο PDF προσφοράς')
+                ->description('Έτσι φαίνεται το PDF που κατεβάζει ο πελάτης και που επισυνάπτεται στα email. Δείτε κάθε σχέδιο με την πιο πρόσφατη προσφορά από το «Προεπισκόπηση PDF» πάνω δεξιά.')
+                ->schema([
+                    \Filament\Forms\Components\Radio::make('pdf_design')->label('')->required()
+                        ->options(collect(\App\Services\Quotes\QuotePdf::DESIGNS)->map(fn ($d) => $d['label'])->all())
+                        ->descriptions(collect(\App\Services\Quotes\QuotePdf::DESIGNS)->map(fn ($d) => $d['text'])->all())
+                        ->columns(2),
+                ]),
             Section::make('Κουπόνι καλωσορίσματος')->columns(3)
                 ->description('Κάθε νέος πελάτης παίρνει με email προσωπικό κωδικό μίας χρήσης, μόλις επιβεβαιώσει το email του (ή ενεργοποιήσει λογαριασμό που ανοίξατε εσείς). Ένας ανά λογαριασμό, άρα ένας ανά ΑΦΜ.')
                 ->schema([
@@ -146,7 +154,13 @@ class QuoteSettings extends Page
 
     protected function getHeaderActions(): array
     {
+        $latest = \App\Models\Quote::query()->latest('id')->value('id');
+
         return [
+            \Filament\Actions\ActionGroup::make(collect(\App\Services\Quotes\QuotePdf::DESIGNS)->map(fn ($d, $key) => Action::make('pdf_'.$key)->label($d['label'])
+                ->url($latest ? route('admin.quote-pdf', [$latest, $key]) : null)->openUrlInNewTab())->values()->all())
+                ->label('Προεπισκόπηση PDF')->icon('heroicon-o-document-magnifying-glass')->button()->color('gray')
+                ->visible((bool) $latest),
             Action::make('testMail')->label('Δοκιμαστικό email')->icon('heroicon-o-envelope')->color('gray')
                 ->modalDescription('Στέλνει ένα σύντομο email με τον ίδιο τρόπο που φεύγουν οι ενημερώσεις προς τους πελάτες, και δείχνει αμέσως αν ο server το δέχτηκε.')
                 ->fillForm(fn () => ['to' => \Filament\Facades\Filament::auth()->user()?->email])

@@ -104,3 +104,17 @@ Route::get('/diaxeirisi-arxeia/email/{event}', function (\App\Models\OrderEvent 
 
     return response((new \App\Mail\OrderUpdated($event->order, $event))->render())->header('Cache-Control', 'private, no-store');
 })->middleware('auth:admin')->name('admin.order-email');
+
+// Προεπισκόπηση PDF προσφοράς σε οποιοδήποτε σχέδιο (για επιλογή σχεδίου από τη διαχείριση)
+Route::get('/diaxeirisi-arxeia/pdf/{quoteId}/{design}', function (int $quoteId, string $design) {
+    abort_unless(\Illuminate\Support\Facades\Auth::guard('admin')->user()?->canAccessArea('sales'), 403);
+    abort_unless(isset(\App\Services\Quotes\QuotePdf::DESIGNS[$design]), 404);
+    $quote = \App\Models\Quote::withTrashed()->findOrFail($quoteId);
+
+    return response(\App\Services\Quotes\QuotePdf::render($quote, $design), 200, [
+        'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'inline; filename="'.$design.'-'.\App\Services\Quotes\QuotePdf::filename($quote).'"',
+        'Cache-Control' => 'private, no-store',
+    ]);
+})->whereNumber('quoteId')->middleware('auth:admin')->name('admin.quote-pdf');
+
