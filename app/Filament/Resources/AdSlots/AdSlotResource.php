@@ -47,7 +47,8 @@ class AdSlotResource extends Resource
             TextInput::make('name')->label('Όνομα θέσης')->required()->maxLength(100),
             TextInput::make('code')->label('Κωδικός')->required()->alphaDash()->maxLength(40)
                 ->unique(ignoreRecord: true)->helperText('Σταθερό αναγνωριστικό, π.χ. sidebar-top.'),
-            TextInput::make('dimensions')->label('Διαστάσεις')->maxLength(60)->placeholder('300×250'),
+            TextInput::make('dimensions')->label('Διαστάσεις')->maxLength(60)->placeholder('300×250')
+                ->helperText('Σε pixels. Δύο διαστάσεις με « · » (π.χ. 728×90 · κινητό 320×100) = ο πελάτης ανεβάζει και τις δύο. Με « / » = όποια από τις δύο. Με αυτές ελέγχονται αυτόματα τα banner.'),
             Select::make('device')->label('Συσκευές')->options(AdSlot::DEVICES)->default('all')->required()->native(false),
             TextInput::make('price_per_day')->label('Τιμή ανά ημέρα')->numeric()->minValue(0)->maxValue(100000)->step(0.01)->suffix('€')
                 ->helperText('Χωρίς ΦΠΑ. Κενό = η θέση δεν πωλείται ακόμα online.'),

@@ -56,7 +56,7 @@ class ScreenResource extends Resource
                 TextInput::make('map_url')->label('Link χάρτη')->url()->maxLength(500)->rule('starts_with:https://'),
                 TextInput::make('dimensions')->label('Διαστάσεις')->maxLength(60)->placeholder('π.χ. 4×3 μ.'),
                 TextInput::make('resolution')->label('Ανάλυση (pixels)')->maxLength(30)->placeholder('π.χ. 1280×960')
-                    ->helperText('Με βάση αυτήν ετοιμάζεται το γραφικό.'),
+                    ->helperText('Πλάτος × ύψος της οθόνης σε pixels. Με αυτό ελέγχεται αυτόματα το γραφικό που ανεβάζει ο πελάτης.'),
                 Textarea::make('description')->label('Περιγραφή για τον πελάτη')->rows(3)->maxLength(1000)->columnSpanFull(),
                 FileUpload::make('photo_path')->label('Φωτογραφία')->columnSpanFull()
                     ->disk('public')->directory('screens')->visibility('public')->image()->imageEditor()->maxSize(4096),
