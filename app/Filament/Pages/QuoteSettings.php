@@ -38,7 +38,7 @@ class QuoteSettings extends Page
     public const KEYS = [
         'quote_valid_days', 'quote_reminder_days', 'quote_reminder_max', 'notify_emails',
         'welcome_coupon_enabled', 'welcome_coupon_type', 'welcome_coupon_value', 'welcome_coupon_days', 'welcome_coupon_min', 'welcome_coupon_prefix',
-        'campaign_per_minute', 'max_staff_discount', 'pdf_design', 'callback_emails', 'callback_floating', 'bank_accounts', 'payment_due_days', 'payment_office_enabled', 'notify_deposit_declared', 'notify_registered', 'notify_quote_saved', 'notify_quote_changed', 'notify_quote_submitted', 'notify_quote_deleted', 'notify_quote_pdf', 'notify_wizard_used',
+        'campaign_per_minute', 'max_staff_discount', 'pdf_design', 'spot_tolerance_seconds', 'spot_min_kbps', 'spot_good_kbps', 'banner_max_kb', 'callback_emails', 'callback_floating', 'bank_accounts', 'payment_due_days', 'payment_office_enabled', 'notify_deposit_declared', 'notify_registered', 'notify_quote_saved', 'notify_quote_changed', 'notify_quote_submitted', 'notify_quote_deleted', 'notify_quote_pdf', 'notify_wizard_used',
     ];
 
     /** @var array<string, mixed>|null */
@@ -69,6 +69,18 @@ class QuoteSettings extends Page
                         ->options(collect(\App\Services\Quotes\QuotePdf::DESIGNS)->map(fn ($d) => $d['label'])->all())
                         ->descriptions(collect(\App\Services\Quotes\QuotePdf::DESIGNS)->map(fn ($d) => $d['text'])->all())
                         ->columns(2),
+                ]),
+            Section::make('Υλικό καμπάνιας: έλεγχος αρχείων')->columns(4)
+                ->description('Όταν ο πελάτης ανεβάζει σποτ ή banner, το site ελέγχει αυτόματα το αρχείο. Η διάρκεια του σποτ δεν απορρίπτει ποτέ: μόνο σας σημειώνεται. Βάλτε 0 για να μην ελέγχεται κάτι.')
+                ->schema([
+                    TextInput::make('spot_tolerance_seconds')->label('Ανοχή διάρκειας σποτ')->numeric()->integer()->minValue(0)->maxValue(60)->suffix('δευτ.')->required()
+                        ->helperText('Πέρα από ±τόσα δευτερόλεπτα, σημείωση «η διάρκεια διαφέρει».'),
+                    TextInput::make('spot_min_kbps')->label('Ελάχιστη ποιότητα MP3')->numeric()->integer()->minValue(0)->maxValue(320)->suffix('kbps')->required()
+                        ->helperText('Κάτω από αυτό, το αρχείο δεν γίνεται δεκτό.'),
+                    TextInput::make('spot_good_kbps')->label('Επιθυμητή ποιότητα MP3')->numeric()->integer()->minValue(0)->maxValue(320)->suffix('kbps')->required()
+                        ->helperText('Κάτω από αυτό, γίνεται δεκτό με σημείωση.'),
+                    TextInput::make('banner_max_kb')->label('Μέγεθος banner')->numeric()->integer()->minValue(0)->maxValue(10000)->suffix('KB')->required()
+                        ->helperText('Πάνω από αυτό, σημείωση για συμπίεση.'),
                 ]),
             Section::make('Κουπόνι καλωσορίσματος')->columns(3)
                 ->description('Κάθε νέος πελάτης παίρνει με email προσωπικό κωδικό μίας χρήσης, μόλις επιβεβαιώσει το email του (ή ενεργοποιήσει λογαριασμό που ανοίξατε εσείς). Ένας ανά λογαριασμό, άρα ένας ανά ΑΦΜ.')

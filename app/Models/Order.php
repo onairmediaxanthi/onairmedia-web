@@ -54,7 +54,7 @@ class Order extends Model
     public const OPEN = ['received', 'awaiting_payment', 'payment_review', 'materials', 'production', 'scheduled', 'running'];
 
     /** Τι δέχεται το ανέβασμα υλικού (ήχος, εικόνα, βίντεο, έγγραφα, αρχεία γραφιστικών) */
-    public const FILE_TYPES = ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'mp4', 'mov',
+    public const FILE_TYPES = ['mp3', 'wav', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'mp4', 'mov',
         'pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'zip', 'ai', 'psd', 'eps'];
 
     public const FILE_MAX_MB = 50;
@@ -70,6 +70,7 @@ class Order extends Model
             'total' => 'decimal:2', 'paid_amount' => 'decimal:2',
             'paid_at' => 'datetime', 'deposit_declared_at' => 'datetime',
             'payment_due_on' => 'date', 'starts_on' => 'date', 'ends_on' => 'date',
+            'brief' => 'array', 'files_purged_at' => 'datetime',
         ];
     }
 
@@ -113,6 +114,18 @@ class Order extends Model
     public function files(): HasMany
     {
         return $this->hasMany(OrderFile::class)->latest();
+    }
+
+    /** Αρχεία που υπάρχουν ακόμα στον server */
+    public function storedFiles(): HasMany
+    {
+        return $this->hasMany(OrderFile::class)->whereNull('purged_at')->latest();
+    }
+
+    /** Η καμπάνια τελείωσε και υπάρχουν αρχεία που πιάνουν χώρο */
+    public function canPurgeFiles(): bool
+    {
+        return in_array($this->stage, ['completed', 'cancelled'], true) && $this->storedFiles()->exists();
     }
 
     /** Ο πελάτης μπορεί να ανεβάζει υλικό όσο η παραγγελία είναι ανοιχτή και πριν τελειώσει η καμπάνια */

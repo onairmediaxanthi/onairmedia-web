@@ -133,6 +133,26 @@ class ViewOrder extends ViewRecord
                 ])
                 ->action(fn (array $data) => $this->run(fn ($o, $u) => $this->service()->schedule($o, $u, $data['starts_on'], $data['ends_on'], $data['note'] ?? null, (bool) $data['notify']), 'Ο προγραμματισμός αποθηκεύτηκε')),
 
+            Action::make('zip')->label('Λήψη υλικού (ZIP)')->icon('heroicon-o-archive-box-arrow-down')->color('gray')
+                ->visible(fn (Order $record) => $record->storedFiles()->exists())
+                ->url(fn (Order $record) => route('admin.order-zip', $record)),
+
+            Action::make('purge')->label('Διαγραφή αρχείων')->icon('heroicon-o-trash')->color('warning')
+                ->visible(fn (Order $record) => $record->canPurgeFiles())
+                ->modalHeading('Διαγραφή αρχείων υλικού από τον server')
+                ->modalDescription(function (Order $record) {
+                    $fs = $record->storedFiles()->get();
+
+                    return 'Η καμπάνια έχει τελειώσει. Θα διαγραφούν οριστικά '.$fs->count().' αρχεία ('.\App\Models\OrderFile::make(['size' => $fs->sum('size')])->sizeLabel().'), για να μην πιάνουν χώρο. '
+                        .'Το αποδεικτικό κατάθεσης και το τιμολόγιο μένουν. Αν δεν τα έχετε κατεβάσει, κλείστε αυτό το παράθυρο και πατήστε πρώτα «Λήψη υλικού (ZIP)».';
+                })
+                ->modalSubmitActionLabel('Οριστική διαγραφή')
+                ->schema([
+                    \Filament\Forms\Components\Checkbox::make('archived')->label('Έχω κατεβάσει και αρχειοθετήσει τα αρχεία σε τοπικό δίσκο')->accepted()
+                        ->validationMessages(['accepted' => 'Επιβεβαιώστε ότι τα αρχειοθετήσατε.']),
+                ])
+                ->action(fn (array $data) => $this->run(fn ($o, $u) => $this->service()->purgeFiles($o, $u, (bool) $data['archived']), 'Τα αρχεία διαγράφηκαν')),
+
             Action::make('message')->label('Μήνυμα / σημείωση')->icon('heroicon-o-chat-bubble-left-ellipsis')->color('gray')
                 ->schema([
                     Textarea::make('text')->label('Κείμενο')->rows(4)->required()->maxLength(3000),

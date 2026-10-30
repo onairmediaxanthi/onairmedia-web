@@ -173,50 +173,147 @@ class OrderService
      * @param  list<UploadedFile|string>  $files  αρχεία ή ήδη αποθηκευμένα paths (από τη διαχείριση)
      * @param  array<string, string>  $names  path => αρχικό όνομα, για τα αποθηκευμένα
      */
-    public function addFiles(Order $order, array $files, ?User $by, string $from = 'customer', ?string $note = null, bool $notify = false, array $names = []): int
+    public function addFiles(Order $order, array $files, ?User $by, string $from = 'customer', ?string $note = null, bool $notify = false, array $names = [], ?string $slot = null): int
     {
         if ($from === 'customer' && ! $order->acceptsFiles()) {
             throw new InvalidArgumentException('Η παραγγελία δεν δέχεται πια αρχεία.');
         }
+        $plan = MaterialPlan::for($order);
+        $box = $slot !== null ? ($plan[$slot] ?? null) : null;
+        if ($from === 'customer' && ! $box) {
+            throw new InvalidArgumentException('Διαλέξτε για ποιο μέσο είναι το αρχείο.');
+        }
+
+        // Πρώτα ελέγχονται όλα· αν ένα δεν ταιριάζει, δεν αποθηκεύεται κανένα (και ο πελάτης βλέπει γιατί)
+        $metas = [];
+        if ($box) {
+            $existing = $order->files()->where('slot', $slot)->whereNull('purged_at')->count();
+            if ($from === 'customer' && $existing + count($files) > $box['max_files']) {
+                throw new InvalidArgumentException('Έως '.$box['max_files'].' αρχεία για «'.$box['title'].'». Σβήστε κάποιο πριν ανεβάσετε άλλο.');
+            }
+            $errors = [];
+            foreach ($files as $i => $f) {
+                if ($f instanceof UploadedFile) {
+                    try {
+                        $metas[$i] = MaterialPlan::check($box, $f);
+                    } catch (InvalidArgumentException $e) {
+                        $errors[] = $e->getMessage();
+                    }
+                }
+            }
+            if ($errors) {
+                throw new InvalidArgumentException(implode(' ', $errors));
+            }
+        }
+
         $added = [];
-        foreach ($files as $f) {
+        $warnings = [];
+        foreach ($files as $i => $f) {
             if ($f instanceof UploadedFile) {
                 $path = $f->store('orders/'.$order->ulid.'/yliko', 'local');
                 $name = mb_substr(preg_replace('/[^\pL\pN ._()-]/u', '_', $f->getClientOriginalName()), 0, 180);
                 $size = (int) $f->getSize();
+                $meta = $metas[$i] ?? \App\Support\FileInspector::inspect($f->getRealPath(), $f->getClientOriginalExtension());
             } else {
                 $path = $f;
                 $name = mb_substr($names[$f] ?? basename($f), 0, 180);
                 $size = (int) (Storage::disk('local')->size($f) ?: 0);
+                $meta = \App\Support\FileInspector::inspect(Storage::disk('local')->path($f), pathinfo($name, PATHINFO_EXTENSION));
             }
-            $order->files()->create(['path' => $path, 'name' => $name, 'size' => $size, 'from' => $from, 'user_id' => $by?->id]);
+            $order->files()->create(['path' => $path, 'name' => $name, 'size' => $size, 'from' => $from, 'user_id' => $by?->id, 'slot' => $slot, 'meta' => $meta ?: null]);
             $added[] = $name;
+            foreach ((array) ($meta['warnings'] ?? []) as $w) {
+                $warnings[] = $name.': '.$w;
+            }
         }
         if (! $added) {
             return 0;
         }
-        $list = implode(', ', array_slice($added, 0, 6)).(count($added) > 6 ? ' και άλλα '.(count($added) - 6) : '');
+        $list = ($box ? $box['title'].': ' : '').implode(', ', array_slice($added, 0, 6)).(count($added) > 6 ? ' και άλλα '.(count($added) - 6) : '');
+        $body = trim($list."\n".implode("\n", $warnings)."\n".($note ?? ''));
         if ($from === 'customer') {
-            $this->log($order, null, count($added) === 1 ? 'Ανεβάσατε 1 αρχείο' : 'Ανεβάσατε '.count($added).' αρχεία', trim($list."\n".($note ?? '')));
-            CustomerEvents::record('files_uploaded', $order->user, $order->quote, ['order' => $order->number, 'files' => count($added)]);
+            $this->log($order, null, count($added) === 1 ? 'Ανεβάσατε 1 αρχείο' : 'Ανεβάσατε '.count($added).' αρχεία', $body);
+            CustomerEvents::record('files_uploaded', $order->user, $order->quote, ['order' => $order->number, 'files' => count($added), 'slot' => $slot]);
         } else {
-            $this->log($order, null, count($added) === 1 ? 'Σας στείλαμε 1 αρχείο' : 'Σας στείλαμε '.count($added).' αρχεία', trim($list."\n".($note ?? '')), $by, false, $notify);
+            $this->log($order, null, count($added) === 1 ? 'Σας στείλαμε 1 αρχείο' : 'Σας στείλαμε '.count($added).' αρχεία', $body, $by, false, $notify);
         }
 
         return count($added);
+    }
+
+    /** Ο πελάτης σβήνει δικό του αρχείο (πριν ξεκινήσει η καμπάνια), π.χ. για να ανεβάσει σωστό */
+    public function removeFile(Order $order, \App\Models\OrderFile $file): void
+    {
+        if ($file->order_id !== $order->id || $file->from !== 'customer' || ! in_array($order->stage, ['received', 'awaiting_payment', 'payment_review', 'materials'], true)) {
+            throw new InvalidArgumentException('Το αρχείο δεν μπορεί πια να αφαιρεθεί. Επικοινωνήστε μαζί μας.');
+        }
+        Storage::disk('local')->delete($file->path);
+        $file->delete();
+        $this->log($order, null, 'Αφαιρέσατε το αρχείο '.$file->name, null);
+    }
+
+    /** Κείμενο πελάτη για ένα κουτί (κείμενο σποτ, σύνδεσμος banner…) */
+    public function saveBrief(Order $order, string $slot, ?string $text): Order
+    {
+        if (! $order->acceptsFiles() || ! isset(MaterialPlan::for($order)[$slot])) {
+            throw new InvalidArgumentException('Δεν γίνεται πια αλλαγή.');
+        }
+        $brief = (array) ($order->brief ?? []);
+        $text = trim((string) $text);
+        $before = $brief[$slot] ?? null;
+        if ($text === '') {
+            unset($brief[$slot]);
+        } else {
+            $brief[$slot] = mb_substr($text, 0, 3000);
+        }
+        $order->brief = $brief ?: null;
+        $order->save();
+        if ($text !== '' && $text !== $before) {
+            $this->log($order, null, 'Στείλατε κείμενο: '.(MaterialPlan::for($order)[$slot]['title'] ?? $slot), mb_strimwidth($text, 0, 400, '…'));
+        }
+
+        return $order;
     }
 
     /** Ο πελάτης δηλώνει ότι έστειλε όλο το υλικό */
     public function materialsDone(Order $order, ?string $note = null): Order
     {
         $this->expect($order, ['materials']);
-        if (! $order->files()->where('from', 'customer')->exists() && blank($note)) {
-            throw new InvalidArgumentException('Ανεβάστε πρώτα τα αρχεία, ή γράψτε μας πώς θα μας τα στείλετε.');
+        if (! MaterialPlan::complete($order) && blank($note)) {
+            $missing = collect(MaterialPlan::status($order))->filter(fn ($s) => $s['state'] === 'missing')->keys()
+                ->map(fn ($k) => MaterialPlan::for($order)[$k]['title'])->implode(', ');
+            throw new InvalidArgumentException('Λείπει ακόμα: '.$missing.'. Αν θα τα στείλετε αλλιώς, γράψτε μας πώς στο πεδίο σημείωσης.');
         }
         $this->move($order, 'production', 'Στείλατε όλο το υλικό', $note, null, notify: false);
         CustomerEvents::record('materials_done', $order->user, $order->quote, ['order' => $order->number]);
 
         return $order;
+    }
+
+    /**
+     * Μετά τη λήξη: σβήνει από τον server τα αρχεία υλικού (όχι αποδεικτικό κατάθεσης και τιμολόγιο, που είναι λογιστικά).
+     * Μόνο αφού το προσωπικό επιβεβαιώσει ότι τα αρχειοθέτησε.
+     */
+    public function purgeFiles(Order $order, ?User $staff, bool $archived): int
+    {
+        if (! $archived) {
+            throw new InvalidArgumentException('Επιβεβαιώστε πρώτα ότι τα αρχεία έχουν αρχειοθετηθεί.');
+        }
+        if (! in_array($order->stage, ['completed', 'cancelled'], true)) {
+            throw new InvalidArgumentException('Τα αρχεία σβήνονται μόνο μετά τη λήξη ή την ακύρωση της καμπάνιας.');
+        }
+        $files = $order->storedFiles()->get();
+        $bytes = 0;
+        foreach ($files as $f) {
+            Storage::disk('local')->delete($f->path);
+            $bytes += (int) $f->size;
+            $f->forceFill(['purged_at' => now()])->save();
+        }
+        $order->forceFill(['files_purged_at' => now()])->save();
+        $this->log($order, null, 'Διαγράφηκαν '.$files->count().' αρχεία υλικού ('.\App\Models\OrderFile::make(['size' => $bytes])->sizeLabel().')',
+            'Το προσωπικό επιβεβαίωσε ότι αρχειοθετήθηκαν σε τοπικό δίσκο.', $staff, internal: true);
+
+        return $files->count();
     }
 
     public function cancel(Order $order, ?User $staff, string $reason, bool $notify = true): Order
@@ -238,7 +335,12 @@ class OrderService
             throw new InvalidArgumentException('Άγνωστο στάδιο.');
         }
 
-        return $this->move($order, $stage, Order::STAGES[$stage]['customer'], $note, $staff, $notify);
+        $this->move($order, $stage, Order::STAGES[$stage]['customer'], $note, $staff, $notify);
+        if ($stage === 'completed') {
+            $this->remindPurge($order);
+        }
+
+        return $order;
     }
 
     /** Μήνυμα προς τον πελάτη ή εσωτερική σημείωση, χωρίς αλλαγή σταδίου */
@@ -272,10 +374,30 @@ class OrderService
         }
         foreach (Order::query()->where('stage', 'running')->whereNotNull('ends_on')->whereDate('ends_on', '<', today())->get() as $o) {
             $this->move($o, 'completed', 'Η καμπάνια ολοκληρώθηκε', null, null, true);
+            $this->remindPurge($o);
             $finished++;
         }
 
         return [$started, $finished];
+    }
+
+    /** Στη λήξη: υπενθύμιση στο προσωπικό να αρχειοθετήσει και να σβήσει τα αρχεία */
+    public function remindPurge(Order $order): void
+    {
+        $count = $order->storedFiles()->count();
+        if (! $count) {
+            return;
+        }
+        try {
+            $staff = User::query()->whereIn('role', [\App\Enums\UserRole::Admin->value, \App\Enums\UserRole::Sales->value])->whereNull('disabled_at')->get();
+            \Filament\Notifications\Notification::make()->title('Ολοκληρώθηκε: '.$order->number)
+                ->body($count.' αρχεία υλικού πιάνουν χώρο. Κατεβάστε τα (ZIP) και διαγράψτε τα από τον server.')
+                ->icon('heroicon-o-archive-box-arrow-down')->iconColor('warning')
+                ->actions([\Filament\Actions\Action::make('open')->label('Άνοιγμα')->url(\App\Filament\Resources\Orders\OrderResource::getUrl('view', ['record' => $order], panel: 'admin'))->markAsRead()])
+                ->sendToDatabase($staff);
+        } catch (Throwable $e) {
+            Log::warning('Purge reminder failed: '.$e->getMessage());
+        }
     }
 
     protected function move(Order $order, string $stage, string $title, ?string $note, ?User $staff, bool $notify): Order

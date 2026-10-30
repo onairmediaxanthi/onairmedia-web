@@ -25,6 +25,9 @@ class ListOrders extends ListRecords
                 ->modifyQueryUsing(fn ($query) => $query->whereIn('stage', ['production', 'scheduled', 'running'])),
             'unpaid' => Tab::make('Ανεξόφλητες')
                 ->modifyQueryUsing(fn ($query) => $query->whereNull('paid_at')->where('stage', '!=', 'cancelled')),
+            'purge' => Tab::make('Αρχεία για διαγραφή')->icon('heroicon-o-archive-box')
+                ->badge(Order::query()->whereIn('stage', ['completed', 'cancelled'])->whereHas('files', fn ($q) => $q->whereNull('purged_at'))->count() ?: null)->badgeColor('warning')
+                ->modifyQueryUsing(fn ($query) => $query->whereIn('stage', ['completed', 'cancelled'])->whereHas('files', fn ($q) => $q->whereNull('purged_at'))),
             'done' => Tab::make('Ολοκληρωμένες')->modifyQueryUsing(fn ($query) => $query->where('stage', 'completed')),
             'cancelled' => Tab::make('Ακυρωμένες')->modifyQueryUsing(fn ($query) => $query->where('stage', 'cancelled')),
             'all' => Tab::make('Όλες'),

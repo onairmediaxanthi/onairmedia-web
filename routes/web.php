@@ -80,6 +80,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/to-studio-mou/paraggelies/{order}/katathesi', [\App\Http\Controllers\OrderController::class, 'deposit'])->middleware('throttle:5,1,orders.deposit')->name('orders.deposit');
         Route::post('/to-studio-mou/paraggelies/{order}/yliko', [\App\Http\Controllers\OrderController::class, 'upload'])->middleware('throttle:20,1,orders.upload')->name('orders.upload');
         Route::post('/to-studio-mou/paraggelies/{order}/yliko/oloklirosi', [\App\Http\Controllers\OrderController::class, 'materialsDone'])->middleware('throttle:5,1,orders.materials-done')->name('orders.materials-done');
+        Route::post('/to-studio-mou/paraggelies/{order}/keimeno', [\App\Http\Controllers\OrderController::class, 'brief'])->middleware('throttle:30,1,orders.brief')->name('orders.brief');
+        Route::delete('/to-studio-mou/paraggelies/{order}/yliko/{file}', [\App\Http\Controllers\OrderController::class, 'removeFile'])->middleware('throttle:30,1,orders.file-remove')->name('orders.file-remove');
         Route::get('/to-studio-mou/paraggelies/{order}/yliko/{file}', [\App\Http\Controllers\OrderController::class, 'file'])->middleware('throttle:60,1,orders.file')->name('orders.file');
         Route::get('/to-studio-mou/paraggelies/{order}/timologio', [\App\Http\Controllers\OrderController::class, 'invoice'])->middleware('throttle:20,1,orders.invoice')->name('orders.invoice');
     });
@@ -118,3 +120,34 @@ Route::get('/diaxeirisi-arxeia/pdf/{quoteId}/{design}', function (int $quoteId, 
     ]);
 })->whereNumber('quoteId')->middleware('auth:admin')->name('admin.quote-pdf');
 
+
+// Όλο το υλικό μιας παραγγελίας σε ZIP, για αρχειοθέτηση πριν τη διαγραφή
+Route::get('/diaxeirisi-arxeia/zip/{order}', function (\App\Models\Order $order) {
+    abort_unless(\Illuminate\Support\Facades\Auth::guard('admin')->user()?->canAccessArea('sales'), 403);
+    $files = $order->storedFiles()->get();
+    abort_if($files->isEmpty(), 404);
+    $plan = \App\Services\Orders\MaterialPlan::for($order);
+    $tmp = tempnam(sys_get_temp_dir(), 'ord');
+    $zip = new ZipArchive;
+    $zip->open($tmp, ZipArchive::OVERWRITE);
+    $seen = [];
+    foreach ($files as $f) {
+        $disk = \Illuminate\Support\Facades\Storage::disk('local');
+        if (! $disk->exists($f->path)) {
+            continue;
+        }
+        $folder = $f->from === 'staff' ? 'Από την ομάδα' : \Illuminate\Support\Str::slug($plan[$f->slot]['title'] ?? 'Αλλα', '-', 'el');
+        $name = $folder.'/'.$f->name;
+        $name = isset($seen[$name]) ? $folder.'/'.$f->id.'-'.$f->name : $name;
+        $seen[$name] = true;
+        $zip->addFile($disk->path($f->path), $name);
+    }
+    if ($order->brief) {
+        $txt = collect($order->brief)->map(fn ($t, $k) => '== '.($plan[$k]['title'] ?? $k)." ==\n".$t)->implode("\n\n");
+        $zip->addFromString('Κείμενα πελάτη.txt', $txt);
+    }
+    $zip->close();
+    $base = preg_replace('/[^A-Za-z0-9-]/', '', \Illuminate\Support\Str::ascii((string) $order->number)) ?: 'order-'.$order->id;
+
+    return response()->download($tmp, 'yliko-'.$base.'.zip', ['Cache-Control' => 'private, no-store'])->deleteFileAfterSend();
+})->middleware('auth:admin')->name('admin.order-zip');

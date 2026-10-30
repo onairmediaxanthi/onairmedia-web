@@ -116,64 +116,7 @@
 
                 {{-- Υλικό καμπάνιας --}}
                 @if ($order->acceptsFiles() || $files->isNotEmpty())
-                    <div id="yliko" class="rounded-3xl border p-6 sm:p-8 {{ $order->stage === 'materials' ? 'border-onair bg-onair/5' : 'border-line bg-surface' }}">
-                        <div class="flex flex-wrap items-center justify-between gap-3">
-                            <h2 class="text-xl font-bold">Υλικό καμπάνιας</h2>
-                            @if ($order->stage === 'materials')<span class="rounded-full bg-onair px-3 py-1 text-xs font-bold text-white">Περιμένουμε από εσάς</span>@endif
-                        </div>
-                        @if ($order->stage === 'materials' && ($ask = $events->firstWhere('stage', 'materials')) && $ask->note)
-                            <div class="mt-4 rounded-2xl bg-surface p-4">
-                                <p class="text-sm font-semibold text-slate">Τι χρειαζόμαστε</p>
-                                <p class="mt-1 whitespace-pre-line">{{ $ask->note }}</p>
-                            </div>
-                        @endif
-
-                        @if ($files->isNotEmpty())
-                            <ul class="mt-4 divide-y divide-line">
-                                @foreach ($files as $f)
-                                    <li class="flex items-center justify-between gap-3 py-3">
-                                        <span class="min-w-0">
-                                            <a href="{{ route('orders.file', [$order, $f]) }}" class="block truncate font-semibold hover:text-onair">{{ $f->name }}</a>
-                                            <span class="block text-sm text-slate">{{ $f->sizeLabel() }} · {{ $f->from === 'customer' ? 'από εσάς' : 'από την ομάδα μας' }} · {{ $f->created_at->format('d/m/Y') }}</span>
-                                        </span>
-                                        @if ($f->from === 'staff')<span class="shrink-0 rounded-full bg-blue-500/15 px-2.5 py-0.5 text-xs font-bold text-blue-700 dark:text-blue-300">Για εσάς</span>@endif
-                                    </li>
-                                @endforeach
-                            </ul>
-                        @endif
-
-                        @if ($order->acceptsFiles())
-                            <form method="POST" action="{{ route('orders.upload', $order) }}" enctype="multipart/form-data" class="mt-5 space-y-3"
-                                  x-data="{ names: [], busy: false, tooBig: false,
-                                      pick(list) { this.names = [...list].map(f => f.name); this.tooBig = [...list].reduce((s, f) => s + f.size, 0) > {{ \App\Models\Order::BATCH_MAX_MB }} * 1048576 || [...list].some(f => f.size > {{ \App\Models\Order::FILE_MAX_MB }} * 1048576) } }"
-                                  @submit="if (tooBig) { $event.preventDefault(); return; } busy = true">
-                                @csrf
-                                <label class="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-line bg-surface px-4 py-7 text-center hover:border-onair"
-                                       @dragover.prevent @drop.prevent="$refs.files.files = $event.dataTransfer.files; pick($event.dataTransfer.files)">
-                                    <x-ui-icon name="upload" class="h-7 w-7 text-onair" />
-                                    <span class="font-semibold" x-text="names.length ? names.join(', ') : 'Διαλέξτε ή σύρετε εδώ αρχεία'"></span>
-                                    <span class="text-sm text-slate">Σποτ (MP3, WAV), λογότυπα, φωτογραφίες, PDF, Word, ZIP · έως {{ \App\Models\Order::FILE_MAX_MB }} MB το καθένα, 10 τη φορά</span>
-                                    <input x-ref="files" type="file" name="files[]" multiple class="sr-only" accept="{{ collect(\App\Models\Order::FILE_TYPES)->map(fn ($e) => '.'.$e)->implode(',') }}"
-                                           @change="pick($event.target.files)">
-                                </label>
-                                <p x-show="tooBig" x-cloak class="text-sm text-red-600 dark:text-red-400">Πολύ μεγάλα για μία αποστολή: έως {{ \App\Models\Order::FILE_MAX_MB }} MB το καθένα και {{ \App\Models\Order::BATCH_MAX_MB }} MB συνολικά. Ανεβάστε τα σε ομάδες, ή γράψτε μας σύνδεσμο (WeTransfer, Google Drive) στη σημείωση.</p>
-                                @error('files')<p class="text-sm text-red-600 dark:text-red-400">{{ $message }}</p>@enderror
-                                @foreach ($errors->get('files.*') as $msgs)<p class="text-sm text-red-600 dark:text-red-400">{{ $msgs[0] }}</p>@break @endforeach
-                                <input name="note" maxlength="1000" placeholder="Σημείωση ή σύνδεσμος για μεγάλα αρχεία (WeTransfer, Google Drive)" class="block w-full rounded-xl border border-line bg-surface px-4 py-3 text-[16px] outline-none focus:border-onair focus:ring-2 focus:ring-onair/25">
-                                 <button :disabled="busy || tooBig || ! names.length" class="rounded-full border-2 border-onair px-6 py-2.5 font-semibold text-onair hover:bg-onair hover:text-white disabled:opacity-50">
-                                    <span x-show="! busy">Ανέβασμα</span><span x-show="busy" x-cloak>Ανεβαίνει…</span>
-                                </button>
-                            </form>
-                        @endif
-
-                        @if ($order->stage === 'materials')
-                            <form method="POST" action="{{ route('orders.materials-done', $order) }}" class="mt-6 border-t border-line pt-5">
-                                @csrf
-                                <p class="text-[15px] text-slate">Ανεβάσατε ό,τι χρειάζεται; Πείτε μας για να ξεκινήσουμε.</p>
-                                <x-form.button class="mt-3">Έστειλα όλο το υλικό</x-form.button>
-                            </form>
-                        @endif
-                    </div>
+                    @include('orders._materials')
                 @endif
 
                 {{-- Ιστορικό --}}

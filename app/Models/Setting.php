@@ -70,6 +70,11 @@ class Setting extends Model
         'callback_floating' => true,
         'max_staff_discount' => 50,
         'pdf_design' => 'classic',
+        // Υλικό καμπάνιας: όρια ελέγχου αρχείων
+        'spot_tolerance_seconds' => 3,
+        'spot_min_kbps' => 128,
+        'spot_good_kbps' => 256,
+        'banner_max_kb' => 300,
         'metro_cities' => ['Αθήνα', 'Θεσσαλονίκη', 'Πάτρα'],
         'metro_price_sponsored_article' => null,
         'metro_price_article_writing' => null,

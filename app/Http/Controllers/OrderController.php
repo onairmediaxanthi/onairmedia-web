@@ -37,6 +37,8 @@ class OrderController extends Controller
             'order' => $order->load('quote'),
             'events' => $order->events()->where('internal', false)->get(),
             'files' => $order->files()->get(),
+            'plan' => \App\Services\Orders\MaterialPlan::for($order),
+            'slotStatus' => \App\Services\Orders\MaterialPlan::status($order),
             'accounts' => \App\Support\BankAccounts::all(),
         ]);
     }
@@ -68,6 +70,7 @@ class OrderController extends Controller
             'files' => ['required', 'array', 'max:10'],
             'files.*' => ['file', 'max:'.(Order::FILE_MAX_MB * 1024), 'extensions:'.implode(',', Order::FILE_TYPES)],
             'note' => ['nullable', 'string', 'max:1000'],
+            'slot' => ['required', 'string', 'max:40'],
         ], [
             'files.required' => 'Διαλέξτε τουλάχιστον ένα αρχείο.',
             'files.max' => 'Έως 10 αρχεία κάθε φορά.',
@@ -77,12 +80,41 @@ class OrderController extends Controller
         ]);
 
         try {
-            $n = $service->addFiles($order, $request->file('files', []), $request->user(), 'customer', $request->input('note'));
+            $n = $service->addFiles($order, $request->file('files', []), $request->user(), 'customer', $request->input('note'), slot: $request->input('slot'));
+        } catch (InvalidArgumentException $e) {
+            return redirect()->to(route('orders.show', $order).'#slot-'.str_replace(':', '-', (string) $request->input('slot')))
+                ->with('slot_error', [$request->input('slot'), $e->getMessage()]);
+        }
+        $warn = $order->files()->where('slot', $request->input('slot'))->latest('id')->take($n)->get()->flatMap->warnings()->all();
+
+        return redirect()->to(route('orders.show', $order).'#slot-'.str_replace(':', '-', (string) $request->input('slot')))
+            ->with('status', ($n === 1 ? 'Το αρχείο ανέβηκε.' : 'Ανέβηκαν '.$n.' αρχεία.').($warn ? ' Σημείωση: '.implode(' ', $warn) : ''));
+    }
+
+    public function brief(Request $request, Order $order, OrderService $service): RedirectResponse
+    {
+        $this->own($request, $order);
+        $data = $request->validate(['slot' => ['required', 'string', 'max:40'], 'text' => ['nullable', 'string', 'max:3000']]);
+        try {
+            $service->saveBrief($order, $data['slot'], $data['text'] ?? null);
         } catch (InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
         }
 
-        return back()->with('status', $n === 1 ? 'Το αρχείο ανέβηκε.' : 'Ανέβηκαν '.$n.' αρχεία.');
+        return redirect()->to(route('orders.show', $order).'#slot-'.str_replace(':', '-', $data['slot']))->with('status', 'Το κείμενο αποθηκεύτηκε.');
+    }
+
+    public function removeFile(Request $request, Order $order, \App\Models\OrderFile $file, OrderService $service): RedirectResponse
+    {
+        $this->own($request, $order);
+        abort_unless($file->order_id === $order->id, 404);
+        try {
+            $service->removeFile($order, $file);
+        } catch (InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->to(route('orders.show', $order).'#slot-'.str_replace(':', '-', (string) $file->slot))->with('status', 'Το αρχείο αφαιρέθηκε.');
     }
 
     public function materialsDone(Request $request, Order $order, OrderService $service): RedirectResponse
@@ -101,7 +133,7 @@ class OrderController extends Controller
     public function file(Request $request, Order $order, \App\Models\OrderFile $file): StreamedResponse
     {
         $this->own($request, $order);
-        abort_unless($file->order_id === $order->id && Storage::disk('local')->exists($file->path), 404);
+        abort_unless($file->order_id === $order->id && ! $file->isPurged() && Storage::disk('local')->exists($file->path), 404);
 
         return Storage::disk('local')->download($file->path, $file->name, ['Cache-Control' => 'private, no-store']);
     }

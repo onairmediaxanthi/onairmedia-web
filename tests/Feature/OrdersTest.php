@@ -61,6 +61,11 @@ class OrdersTest extends TestCase
         return $u;
     }
 
+    protected function fixture(string $name): UploadedFile
+    {
+        return new UploadedFile(base_path('tests/fixtures/'.$name), $name, null, null, true);
+    }
+
     protected function order(string $method = 'bank'): Order
     {
         $q = app(QuoteService::class)->create($this->customer, 'Καμπάνια', 'manual',
@@ -121,14 +126,16 @@ class OrdersTest extends TestCase
         $this->assertTrue($order->isPaid());
         $this->assertSame('materials', $order->stage);
 
-        // Ο πελάτης ανεβάζει υλικό και ολοκληρώνει
-        $this->get(route('orders.show', $order->refresh()))->assertSee('Περιμένουμε από εσάς')->assertSee('Έστειλα όλο το υλικό');
-        $this->post(route('orders.materials-done', $order))->assertSessionHas('error'); // χωρίς αρχεία
-        $this->post(route('orders.upload', $order), ['files' => [UploadedFile::fake()->create('spot.mp3', 900, 'audio/mpeg'), UploadedFile::fake()->image('logo.png')]])
-            ->assertSessionHasNoErrors();
-        $this->post(route('orders.upload', $order), ['files' => [UploadedFile::fake()->create('virus.exe', 10)]])->assertSessionHasErrors();
-        $this->assertSame(2, $order->files()->count());
+        // Ο πελάτης ανεβάζει το σποτ στο σωστό κουτί και ολοκληρώνει
+        $this->get(route('orders.show', $order->refresh()))->assertSee('Περιμένουμε το υλικό σας')->assertSee('Ραδιοφωνικό σποτ 30″')->assertSee('Λείπει:')->assertSee('Έστειλα όλο το υλικό');
+        $this->post(route('orders.materials-done', $order))->assertSessionHas('error'); // λείπει το σποτ
+        $this->post(route('orders.upload', $order), ['slot' => 'radio:30', 'files' => [$this->fixture('spot-10s-320.mp3')]])->assertSessionHas('status');
+        $this->post(route('orders.upload', $order), ['slot' => 'radio:30', 'files' => [UploadedFile::fake()->create('virus.exe', 10)]])->assertSessionHasErrors();
+        $this->assertSame(1, $order->files()->count());
         $file = $order->files()->first();
+        $this->assertSame('radio:30', $file->slot);
+        $this->assertSame(320, $file->meta['kbps']);
+        $this->assertNotEmpty($file->warnings()); // 10″ αντί για 30″: σημείωση, όχι απόρριψη
         $this->get(route('orders.file', [$order, $file]))->assertOk();
         $this->post(route('orders.materials-done', $order))->assertSessionHasNoErrors()->assertSessionMissing('error');
         $this->assertSame('production', $order->refresh()->stage);
@@ -168,13 +175,13 @@ class OrdersTest extends TestCase
     public function test_orders_are_private(): void
     {
         $order = $this->order();
-        $file = app(OrderService::class)->addFiles($order, [UploadedFile::fake()->create('spot.mp3', 10)], $this->customer);
+        app(OrderService::class)->addFiles($order, [UploadedFile::fake()->image('logo.png', 800, 400)], $this->customer, slot: 'logo');
         $f = $order->files()->first();
 
         $this->actingAs($this->makeCustomer('094014201'));
         $this->get(route('orders.show', $order))->assertNotFound();
         $this->get(route('orders.file', [$order, $f]))->assertNotFound();
-        $this->post(route('orders.upload', $order), ['files' => [UploadedFile::fake()->create('a.mp3', 10)]])->assertNotFound();
+        $this->post(route('orders.upload', $order), ['slot' => 'logo', 'files' => [UploadedFile::fake()->image('a.png')]])->assertNotFound();
 
         $this->actingAs($this->staff(UserRole::Studio), 'admin');
         $this->get(route('admin.order-file', $f))->assertForbidden();
@@ -246,5 +253,112 @@ class OrdersTest extends TestCase
         $this->actingAs($this->staff(UserRole::Admin), 'admin');
         Livewire::test(\App\Filament\Pages\QuoteSettings::class)->callAction('testMail', ['to' => 'test@example.com']);
         Mail::assertSent(\App\Mail\TestMail::class, fn ($m) => $m->hasTo('test@example.com'));
+    }
+
+    public function test_material_slots_follow_what_was_bought(): void
+    {
+        $slot = \App\Models\AdSlot::query()->create(['code' => 'lb', 'name' => 'Κορυφή σελίδας', 'dimensions' => '728×90 · κινητό 320×100', 'price_per_day' => 5, 'is_active' => true]);
+        $screen = \App\Models\Screen::query()->create(['slug' => 'othoni', 'name' => 'Οθόνη Πόλης', 'resolution' => '1280x720', 'slot_seconds' => 10, 'price_per_day' => 10, 'is_active' => true]);
+        \App\Models\Setting::putMany(['price_spot_production' => 60]);
+        $station = Station::query()->orderBy('sort')->value('id');
+        $q = app(QuoteService::class)->create($this->customer, 'Όλα', 'manual', [
+            ['type' => 'radio', 'station_id' => $station, 'spots_per_day' => 4, 'seconds' => 20],
+            ['type' => 'banner', 'slot_id' => $slot->id],
+            ['type' => 'led', 'screen_id' => $screen->id],
+        ], 10, null);
+        app(QuoteService::class)->submit($q, null);
+        $order = $q->refresh()->order;
+        $plan = \App\Services\Orders\MaterialPlan::for($order);
+
+        $this->assertSame(['radio:20', 'banner:'.$slot->id, 'led:'.$screen->id, 'logo'], array_keys($plan));
+        $this->assertFalse($plan['radio:20']['we_make']);
+        $this->assertSame(['mp3', 'wav'], $plan['radio:20']['accept']);
+        $this->assertCount(2, $plan['banner:'.$slot->id]['image']['sizes']); // υπολογιστής + κινητό
+        $svc = app(OrderService::class);
+
+        // Ήχος: πολύ χαμηλή ποιότητα απορρίπτεται, 192 kbps γίνεται δεκτό με σημείωση, η διάρκεια δεν απορρίπτει ποτέ
+        $this->expectFail(fn () => $svc->addFiles($order, [$this->fixture('spot-10s-64.mp3')], $this->customer, slot: 'radio:20'), 'χαμηλή ποιότητα');
+        $svc->addFiles($order, [$this->fixture('spot-14s-192.mp3')], $this->customer, slot: 'radio:20');
+        $f = $order->files()->where('slot', 'radio:20')->first();
+        $this->assertSame(192, $f->meta['kbps']);
+        $this->assertCount(2, $f->warnings()); // 192 kbps + διάρκεια 14″ αντί 20″
+
+        // Η ανοχή διάρκειας ορίζεται στις ρυθμίσεις
+        \App\Models\Setting::putMany(['spot_tolerance_seconds' => 10]);
+        $svc->addFiles($order, [$this->fixture('spot-14s-192.mp3')], $this->customer, slot: 'radio:20');
+        $this->assertCount(1, $order->files()->where('slot', 'radio:20')->latest('id')->first()->warnings());
+
+        // WAV
+        $wav = tempnam(sys_get_temp_dir(), 'w').'.wav';
+        $data = str_repeat("\0", 44100 * 4 * 2);
+        file_put_contents($wav, 'RIFF'.pack('V', 36 + strlen($data)).'WAVEfmt '.pack('VvvVVvv', 16, 1, 2, 44100, 44100 * 4, 4, 16).'data'.pack('V', strlen($data)).$data);
+        $this->assertEquals(['channels' => 2, 'sample_rate' => 44100, 'bits' => 16, 'seconds' => 2.0], \App\Support\FileInspector::inspect($wav, 'wav'));
+
+        // Banner: λάθος διάσταση απορρίπτεται, το διπλάσιο γίνεται δεκτό, χρειάζονται και οι δύο διαστάσεις
+        $this->expectFail(fn () => $svc->addFiles($order, [UploadedFile::fake()->image('b.png', 700, 90)], $this->customer, slot: 'banner:'.$slot->id), '728×90');
+        $svc->addFiles($order, [UploadedFile::fake()->image('b.png', 1456, 180)], $this->customer, slot: 'banner:'.$slot->id);
+        $st = \App\Services\Orders\MaterialPlan::status($order->refresh());
+        $this->assertSame('missing', $st['banner:'.$slot->id]['state']);
+        $this->assertStringContainsString('320×100', implode(' ', $st['banner:'.$slot->id]['missing']));
+        $svc->addFiles($order, [UploadedFile::fake()->image('m.png', 320, 100)], $this->customer, slot: 'banner:'.$slot->id);
+
+        // LED: ακριβής ανάλυση
+        $this->expectFail(fn () => $svc->addFiles($order, [UploadedFile::fake()->image('l.png', 1920, 1080)], $this->customer, slot: 'led:'.$screen->id), '1280×720');
+        $svc->addFiles($order, [UploadedFile::fake()->image('l.png', 1280, 720)], $this->customer, slot: 'led:'.$screen->id);
+        $this->assertTrue(\App\Services\Orders\MaterialPlan::complete($order->refresh()));
+
+        // Με αγορασμένη παραγωγή σποτ, ζητείται κείμενο αντί για αρχείο
+        $q2 = app(QuoteService::class)->create($this->customer, 'Σποτ από εμάς', 'manual', [
+            ['type' => 'radio', 'station_id' => $station, 'spots_per_day' => 2], ['type' => 'creative', 'key' => 'spot_production'],
+        ], 5, null);
+        app(QuoteService::class)->submit($q2, null);
+        $o2 = $q2->refresh()->order;
+        $p2 = \App\Services\Orders\MaterialPlan::for($o2);
+        $this->assertTrue($p2['radio:30']['we_make']);
+        $this->assertFalse(\App\Services\Orders\MaterialPlan::complete($o2));
+        $this->actingAs($this->customer)->post(route('orders.brief', $o2), ['slot' => 'radio:30', 'text' => 'Black Friday στο Καφέ Πλατεία'])->assertSessionHas('status');
+        $this->assertTrue(\App\Services\Orders\MaterialPlan::complete($o2->refresh()));
+        $this->get(route('orders.show', $o2))->assertSee('Αυτό το φτιάχνουμε εμείς')->assertSee('Black Friday στο Καφέ Πλατεία');
+    }
+
+    public function test_files_are_purged_only_after_campaign_and_archive_confirmation(): void
+    {
+        $order = $this->order();
+        $svc = app(OrderService::class);
+        $staff = $this->staff();
+        $svc->addFiles($order, [$this->fixture('spot-10s-320.mp3')], $this->customer, slot: 'radio:30');
+        $svc->addFiles($order, [UploadedFile::fake()->image('logo.png', 900, 300)], $this->customer, slot: 'logo');
+        $paths = $order->files()->pluck('path');
+
+        $this->expectFail(fn () => $svc->purgeFiles($order, $staff, true), 'μετά τη λήξη');
+        $svc->setStage($order, 'completed', $staff, null, false);
+        $this->assertTrue($order->canPurgeFiles());
+        $this->assertTrue($staff->notifications()->get()->contains(fn ($n) => str_starts_with($n->data['title'] ?? '', 'Ολοκληρώθηκε'))); // υπενθύμιση στο προσωπικό
+
+        $this->actingAs($staff, 'admin');
+        $this->get(route('admin.order-zip', $order))->assertOk()->assertDownload();
+        $this->get('/admin/paraggelies?activeTab=purge')->assertOk()->assertSee($order->number);
+
+        $this->expectFail(fn () => $svc->purgeFiles($order, $staff, false), 'αρχειοθετηθεί');
+        Livewire::test(ViewOrder::class, ['record' => $order->ulid])->callAction('purge', ['archived' => true])->assertHasNoActionErrors();
+
+        foreach ($paths as $p) {
+            Storage::disk('local')->assertMissing($p);
+        }
+        $order->refresh();
+        $this->assertNotNull($order->files_purged_at);
+        $this->assertSame(2, $order->files()->whereNotNull('purged_at')->count()); // οι εγγραφές μένουν
+        $this->assertFalse($order->canPurgeFiles());
+        $this->actingAs($this->customer)->get(route('orders.show', $order))->assertSee('Τα αρχεία αρχειοθετήθηκαν');
+    }
+
+    protected function expectFail(callable $fn, string $contains): void
+    {
+        try {
+            $fn();
+            $this->fail('Περίμενα απόρριψη: '.$contains);
+        } catch (\InvalidArgumentException $e) {
+            $this->assertStringContainsString($contains, $e->getMessage());
+        }
     }
 }
