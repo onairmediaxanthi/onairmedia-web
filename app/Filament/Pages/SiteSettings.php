@@ -85,6 +85,20 @@ class SiteSettings extends Page
                 KeyValue::make('socials')->label('')->keyLabel('Δίκτυο')->valueLabel('Link')
                     ->keyPlaceholder('facebook')->valuePlaceholder('https://...'),
             ]),
+            Section::make('Τι παίζουν οι σταθμοί & Top 40')->columns(3)->collapsible()
+                ->description('Κάθε λεπτό γράφεται το τραγούδι που παίζει κάθε σταθμός. Μόνιμο μένει μόνο το Top 40 κάθε μήνα· οι μεταδόσεις σβήνονται αυτόματα κάθε βράδυ, όπως ορίζετε εδώ.')
+                ->schema([
+                    \Filament\Forms\Components\Toggle::make('airplay_enabled')->label('Καταγραφή ενεργή')->inline(false),
+                    TextInput::make('chart_size')->label('Μέγεθος λίστας')->numeric()->integer()->minValue(5)->maxValue(100)->suffix('θέσεις')->required(),
+                    TextInput::make('chart_min_plays')->label('Ελάχιστες μεταδόσεις')->numeric()->integer()->minValue(1)->maxValue(100)->required()
+                        ->helperText('Τόσες τουλάχιστον μέσα στην εβδομάδα για να μπει στη λίστα.'),
+                    TextInput::make('airplay_keep_days')->label('Αυτόματη διαγραφή μεταδόσεων μετά από')->numeric()->integer()->minValue(1)->maxValue(730)->suffix('ημέρες')->required()
+                        ->helperText('Κάθε μετάδοση με ώρα (για «τι έπαιξε» και εξαγωγή CSV). Περίπου 1 MB ανά 10 ημέρες για 12 σταθμούς. Τα μηνιαία Top 40 μένουν, μέχρι να τα σβήσετε εσείς από το «Top 40».'),
+                    \Filament\Forms\Components\Toggle::make('airplay_require_artist')->label('Μόνο «Καλλιτέχνης - Τίτλος»')->inline(false)
+                        ->helperText('Ό,τι έρχεται χωρίς καλλιτέχνη (συνήθως όνομα εκπομπής ή jingle) δεν γράφεται.'),
+                    \Filament\Forms\Components\TagsInput::make('airplay_ignore')->label('Λέξεις που σημαίνουν «όχι τραγούδι»')->columnSpan(2)
+                        ->placeholder('π.χ. διαφήμιση')->helperText('Αν ο τίτλος περιέχει μία από αυτές (ως λέξη, χωρίς τόνους/κεφαλαία), δεν γράφεται.'),
+                ]),
         ]);
     }
 

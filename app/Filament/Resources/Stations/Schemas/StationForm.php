@@ -62,6 +62,13 @@ class StationForm
                     TextInput::make('now_playing_mount')->label('Mount για «τι παίζει τώρα»')
                         ->placeholder('/star888xanthi')
                         ->helperText('Το τελευταίο κομμάτι του stream link με «/» μπροστά. Κενό = δεν εμφανίζεται τραγούδι.'),
+                    \Filament\Forms\Components\Toggle::make('airplay_enabled')->label('Καταγραφή τραγουδιών')->default(true)
+                        ->helperText('Γράφεται κάθε τραγούδι που παίζει (κάθε λεπτό), για ιστορικό, στατιστικά και Top 40.'),
+                    \Filament\Forms\Components\Toggle::make('chart_public')->label('Top 40 στη σελίδα του σταθμού')->default(true)
+                        ->helperText('Εμφανίζει το εβδομαδιαίο Top 40 και τα «Μόλις έπαιξαν» στη δημόσια σελίδα.'),
+                    \Filament\Schemas\Components\Text::make(fn ($record) => $record?->last_seen_at
+                        ? 'Τελευταία ενημέρωση από το live24: '.$record->last_seen_at->locale('el')->diffForHumans().($record->last_title ? ' · «'.$record->last_title.'»' : '')
+                        : 'Δεν έχει έρθει ακόμα πληροφορία από το live24.')->visibleOn('edit'),
                 ]),
 
                 Tab::make('Κοινό')->icon('heroicon-o-user-group')->schema(array_merge(

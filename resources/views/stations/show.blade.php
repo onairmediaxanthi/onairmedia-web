@@ -62,6 +62,8 @@
                 <p class="mt-4 text-slate max-w-prose">{{ $station->name }} στους {{ $station->frequency_label }}: {{ mb_strtolower($station->genre ?? 'μουσική') }} για όλη την Ξάνθη, όλο το εικοσιτετράωρο.</p>
             @endif
 
+            @include('stations._charts')
+
             @if ($audience)
                 <section class="mt-12" aria-labelledby="koino-title">
                     <h2 id="koino-title" class="text-2xl font-bold">Ποιοι ακούνε</h2>

@@ -31,6 +31,22 @@ class NowPlaying
     }
 
     /**
+     * Φρέσκια ανάγνωση (για την καταγραφή κάθε λεπτό). Ανανεώνει και την cache του player,
+     * ώστε οι επισκέπτες να μην προκαλούν επιπλέον κλήσεις στο live24.
+     *
+     * @return array<string, array{artist: ?string, title: ?string, raw: ?string}>
+     */
+    public function fresh(): array
+    {
+        $all = $this->fetch(Station::query()->active()->whereNotNull('now_playing_mount')->get(['slug', 'now_playing_mount']));
+        if ($all) {
+            Cache::put('now-playing:all', $all, self::TTL_SECONDS);
+        }
+
+        return $all;
+    }
+
+    /**
      * @param  Collection<int, Station>  $stations
      * @return array<string, array{artist: ?string, title: ?string, raw: ?string}>
      */

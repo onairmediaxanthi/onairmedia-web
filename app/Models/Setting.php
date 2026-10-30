@@ -71,6 +71,13 @@ class Setting extends Model
         'callback_floating' => true,
         'max_staff_discount' => 50,
         'pdf_design' => 'classic',
+        // Τι παίζουν οι σταθμοί & Top 40
+        'airplay_enabled' => true,
+        'airplay_keep_days' => 30,
+        'chart_size' => 40,
+        'chart_min_plays' => 2,
+        'airplay_require_artist' => true,
+        'airplay_ignore' => ['live24', 'on air', 'onair', 'jingle', 'διαφημιση', 'διαφήμιση', 'spot', 'ειδησεις', 'ειδήσεις', 'δελτιο', 'δελτίο', 'advertisement', 'commercial'],
         // Υλικό καμπάνιας: όρια ελέγχου αρχείων
         'spot_tolerance_seconds' => 3,
         'spot_min_kbps' => 128,
@@ -96,10 +103,9 @@ class Setting extends Model
     /** @return array<string, mixed> */
     public static function allValues(): array
     {
-        return Cache::rememberForever('settings:all', fn () => array_merge(
-            self::DEFAULTS,
-            static::query()->pluck('value', 'key')->all(),
-        ));
+        // Στην cache μόνο ό,τι έχει αποθηκευτεί· οι προεπιλογές μπαίνουν κάθε φορά, ώστε μια νέα ρύθμιση
+        // (μετά από ενημέρωση του site) να ισχύει αμέσως, χωρίς να χρειάζεται καθάρισμα της cache.
+        return array_merge(self::DEFAULTS, Cache::rememberForever('settings:stored', fn () => static::query()->pluck('value', 'key')->all()));
     }
 
     public static function get(string $key, mixed $default = null): mixed
@@ -113,7 +119,7 @@ class Setting extends Model
         foreach ($values as $key => $value) {
             static::query()->updateOrCreate(['key' => $key], ['value' => $value]);
         }
-        Cache::forget('settings:all');
+        Cache::forget('settings:stored');
     }
 
     public static function url(string $key): ?string
